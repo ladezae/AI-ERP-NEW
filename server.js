@@ -55,8 +55,8 @@ app.get('/api/erp/test', (req, res) => {
   });
 });
 
-// 【修正 2】：使用 Express 5 支援的 '/*' 萬用路由
-app.get('/*', (req, res) => {
+// 【修正 2】：萬用路由，將所有前端路由導回 index.html
+app.get('/{*path}', (req, res) => {
   const indexPath = join(distPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
