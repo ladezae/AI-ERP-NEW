@@ -1,7 +1,6 @@
 import { Injectable, signal, OnDestroy } from '@angular/core';
 import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase.config';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export type AiRole = string;
 
@@ -11,6 +10,8 @@ export type AiRole = string;
 export class AiService implements OnDestroy {
   private unsubscribeConfig: any = null;
   private firestore = db;
+  private readonly GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+  private readonly GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
   
   // --- 【狀態管理 Signals】 ---
   sharedKey = signal<string>('');
@@ -30,20 +31,66 @@ export class AiService implements OnDestroy {
 
   // --- 【1. 萬用通訊核心】 ---
   async sendMessage(prompt: string, image?: string, context?: any): Promise<string> {
-    const genAI = await this.getGenAIInstance();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const finalPrompt = context ? `上下文環境: ${JSON.stringify(context)}\n\n使用者問題: ${prompt}` : prompt;
-    
+    const apiKey = await this.getGroqApiKey();
+    const finalPrompt = context
+      ? `上下文環境: ${JSON.stringify(context)}\n\n使用者問題: ${prompt}`
+      : prompt;
+
+    const userContent: any[] = [];
+
+    // 如果有圖片，使用 Groq 多模態 image_url + text 格式
     if (image && image.includes('base64,')) {
-      const result = await model.generateContent([
-        finalPrompt, 
-        { inlineData: { mimeType: "image/jpeg", data: image.split(',')[1] } }
-      ]);
-      return result.response.text();
+      const [header, base64Data] = image.split(',');
+      const mimeMatch = header.match(/data:(.*);base64/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+
+      userContent.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:${mimeType};base64,${base64Data}`
+        }
+      });
     }
-    
-    const result = await model.generateContent(finalPrompt);
-    return result.response.text();
+
+    // 主文字提示
+    userContent.push({
+      type: 'text',
+      text: finalPrompt
+    });
+
+    const response = await fetch(this.GROQ_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.GROQ_MODEL,
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: userContent
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Groq API error ${response.status}: ${errorBody}`);
+    }
+
+    const data = await response.json();
+    const message = data?.choices?.[0]?.message;
+    const content = message?.content;
+
+    // Groq 可能回傳字串或陣列片段，兩種都處理
+    if (Array.isArray(content)) {
+      return content.map((part: any) => part?.text ?? '').join('');
+    }
+
+    return content ?? '';
   }
 
   // --- 【2. 業務專屬方法】 ---
@@ -133,10 +180,12 @@ export class AiService implements OnDestroy {
     return null;
   }
 
-  private async getGenAIInstance() { 
+  private async getGroqApiKey(): Promise<string> {
     const key = this.getStoredKey() || await this.fetchSharedKey();
-    if (!key) throw new Error("API Key缺失，請先配置。");
-    return new GoogleGenerativeAI(key);
+    if (!key || !key.trim()) {
+      throw new Error("API Key缺失，請先在系統設定中配置 Groq API Key。");
+    }
+    return key.trim();
   }
 
   ngOnDestroy() { 
