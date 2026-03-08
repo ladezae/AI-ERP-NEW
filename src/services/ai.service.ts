@@ -11,7 +11,6 @@ export class AiService implements OnDestroy {
   private firestore = db;
   
   sharedKey = signal<string>('');
-  // 供 SuppliersComponent 使用
   researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
 
   constructor() {
@@ -19,7 +18,24 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // --- 【1. 管理功能】 修復 SystemComponent 報錯 ---
+  // --- 【新增：解決 AiTrainingComponent 報錯】 ---
+  async generateSystemInstruction(direction: string): Promise<string> {
+    const genAI = await this.getGenAIInstance();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const result = await model.generateContent(`請根據以下方向生成 AI 系統指令：${direction}`);
+    return result.response.text();
+  }
+
+  // 修正參數：接收 2 個參數以解決 TS2554
+  async updateConfiguration(systemInstruction: string, keywords?: string): Promise<void> {
+    const docRef = doc(this.firestore, 'systemConfig', 'gemini');
+    await updateDoc(docRef, { 
+      systemInstruction, 
+      keywords: keywords || '' 
+    });
+  }
+
+  // --- 【管理功能】 修復 SystemComponent ---
   getStoredKey(): string | null { return localStorage.getItem('gemini_api_key'); }
   saveKeyToStorage(key: string): boolean {
     try { localStorage.setItem('gemini_api_key', key.trim()); return true; }
@@ -31,52 +47,41 @@ export class AiService implements OnDestroy {
     return !!(key && key.trim().length > 0);
   }
 
-  // --- 【2. 核心 AI 業務功能】 ---
-  // 解決 SmartImportComponent 報錯
+  // --- 【業務功能】 修復 SmartImport/Suppliers/Finance/Dashboard ---
   async parseUnstructuredData(text: string, schema: any): Promise<any> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(`解析以下內容為 JSON: ${text}`);
+    const result = await model.generateContent(`解析 JSON: ${text}`);
     return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
   }
 
-  // 解決 SuppliersComponent 報錯
   async performWebSearch(query: string): Promise<any> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(query);
-    const text = result.response.text();
-    this.researchResult.set({ text, sources: [] });
-    return text;
-  }
-
-  // 解決 FinanceComponent 報錯
-  async sendMessage(prompt: string): Promise<string> {
-    const genAI = await this.getGenAIInstance();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(prompt);
+    this.researchResult.set({ text: result.response.text(), sources: [] });
     return result.response.text();
   }
 
-  // 解決 Dashboard/Definitions/Training 報錯
+  async sendMessage(prompt: string): Promise<string> {
+    const genAI = await this.getGenAIInstance();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    return (await model.generateContent(prompt)).response.text();
+  }
+
   async generateBusinessInsight(context: any): Promise<string> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     return (await model.generateContent(JSON.stringify(context))).response.text();
   }
 
+  // 支持 DefinitionsComponent 的多參數呼叫
   async generateFormulaFromLogic(logic: string, category?: string, image?: string): Promise<string> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     return (await model.generateContent(logic)).response.text();
   }
 
-  async updateConfiguration(systemInstruction: string): Promise<void> {
-    const docRef = doc(this.firestore, 'systemConfig', 'gemini');
-    await updateDoc(docRef, { systemInstruction });
-  }
-
-  // 解決物流辨識需求
   async parseLogisticsImage(imageBase64: string, providerOptions: string[] = []): Promise<any> {
     const genAI = await this.getGenAIInstance();
     const compressed = await this.compressImage(imageBase64);
@@ -85,7 +90,7 @@ export class AiService implements OnDestroy {
     return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
   }
 
-  // --- 【3. 私有輔助方法】 ---
+  // --- 【輔助方法】 ---
   private async compressImage(base64: string): Promise<string> {
     return new Promise((res) => {
       const img = new Image(); img.src = base64;
