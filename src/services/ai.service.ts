@@ -25,15 +25,21 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // 【修復 1】：新增 ensureApiKey 方法
+  // 【修復 1】：新增 getStoredKey 方法，供 SystemComponent 確認 Key 狀態
+  getStoredKey(): string | null {
+    return localStorage.getItem('gemini_api_key');
+  }
+
+  // 【修復 2】：新增 ensureApiKey 方法，供組件檢查權限
   async ensureApiKey(): Promise<boolean> {
-    const key = localStorage.getItem('gemini_api_key') || await this.fetchSharedKey();
+    const key = this.getStoredKey() || await this.fetchSharedKey();
     return !!(key && key.trim().length > 0);
   }
 
-  // 【修復 2】：補回儲存與清除方法
+  // 【修復 3】：儲存與清除方法，確保本地端功能正常
   saveKeyToStorage(key: string): boolean {
     try {
+      if (!key) return false;
       localStorage.setItem('gemini_api_key', key.trim());
       return true;
     } catch (e) {
@@ -54,7 +60,7 @@ export class AiService implements OnDestroy {
 
       const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
-        systemInstruction: "你是一個台灣物流單據 OCR 專家，請回傳純 JSON 格式，包含 provider 和 trackingNumber。" 
+        systemInstruction: "你是一個台灣物流單據 OCR 專家，請回傳 JSON 格式。" 
       });
 
       const result = await model.generateContent([
@@ -119,7 +125,7 @@ export class AiService implements OnDestroy {
   }
 
   private async getGenAIInstance(): Promise<GoogleGenerativeAI> {
-    let apiKey = localStorage.getItem('gemini_api_key') || await this.fetchSharedKey();
+    let apiKey = this.getStoredKey() || await this.fetchSharedKey();
     if (!apiKey) {
       const win = window as any;
       apiKey = win.GEMINI_API_KEY || win.API_KEY;
