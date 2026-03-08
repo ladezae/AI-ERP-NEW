@@ -20,6 +20,28 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
+  // 【新增：解決 DashboardComponent 報錯】
+  async generateBusinessInsight(context: any): Promise<string> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const prompt = `你是一個商業分析專家，請根據以下數據提供洞察建議：\n${JSON.stringify(context)}`;
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) { throw error; }
+  }
+
+  // 【新增：解決 DefinitionsComponent 報錯】
+  async generateFormulaFromLogic(logic: string): Promise<string> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const prompt = `請將以下商業邏輯轉化為 Excel 或 Google Sheet 公式：\n邏輯描述: ${logic}`;
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) { throw error; }
+  }
+
   // 【新增：解決 FinanceComponent 報錯】
   async sendMessage(prompt: string): Promise<string> {
     try {
@@ -27,10 +49,7 @@ export class AiService implements OnDestroy {
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
       const result = await model.generateContent(prompt);
       return result.response.text();
-    } catch (error) {
-      console.error("AI 對話失敗", error);
-      throw error;
-    }
+    } catch (error) { throw error; }
   }
 
   // 【新增：解決 SmartImportComponent 報錯】
@@ -38,13 +57,10 @@ export class AiService implements OnDestroy {
     try {
       const genAI = await this.getGenAIInstance();
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const prompt = `請根據以下結構解析文字並回傳純 JSON：\n結構: ${JSON.stringify(schema)}\n內容: ${text}`;
+      const prompt = `請根據結構解析文字並回傳純 JSON：\n結構: ${JSON.stringify(schema)}\n內容: ${text}`;
       const result = await model.generateContent(prompt);
       return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
-    } catch (error) {
-      console.error("資料解析失敗", error);
-      throw error;
-    }
+    } catch (error) { throw error; }
   }
 
   // 【保留：解決 SuppliersComponent 報錯】
@@ -59,7 +75,7 @@ export class AiService implements OnDestroy {
     } catch (error) { throw error; }
   }
 
-  // 【核心功能：物流辨識】
+  // 【物流辨識功能】
   async parseLogisticsImage(imageBase64: string, providerOptions: string[] = []): Promise<any> {
     try {
       const genAI = await this.getGenAIInstance();
@@ -73,7 +89,7 @@ export class AiService implements OnDestroy {
     } catch (error) { throw error; }
   }
 
-  // 其他管理方法 ...
+  // 管理與初始化邏輯 ...
   getStoredKey(): string | null { return localStorage.getItem('gemini_api_key'); }
   async ensureApiKey(): Promise<boolean> { 
     const key = this.getStoredKey() || await this.fetchSharedKey();
