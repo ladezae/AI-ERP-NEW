@@ -507,7 +507,7 @@ export class SystemComponent {
 
       this.isTraining.set(true);
       try {
-          const result = await this.aiService.parseLogisticsImage(tpl.imageUrl, [tpl.logistics], tpl.roi, tpl.trackingUrlPattern?.replace('{{id}}', '{trackingId}'));
+          const result = await this.aiService.parseLogisticsImage(tpl.imageUrl, [tpl.logistics]);
           this.trainingResult.set(result);
           
           // --- NEW: Integration Demo ---
