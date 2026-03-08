@@ -3,7 +3,7 @@ import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase.config';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// 【新增：解決 TS2305 找不到 AiRole 的問題】
+// 【匯出型別】
 export type AiRole = string;
 
 @Injectable({
@@ -25,7 +25,7 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // 【新增：解決 TS2339 找不到 setRole 的問題】
+  // 【角色切換方法】
   setRole(role: AiRole): void {
     this.currentRole.set(role);
   }
@@ -88,31 +88,11 @@ export class AiService implements OnDestroy {
   }
 
   // --- 【4. 基礎管理與同步】 ---
-  getStoredKey(): string | null { return localStorage.getItem('gemini_api_key'); }
+  getStoredKey(): string | null { 
+    return localStorage.getItem('gemini_api_key'); 
+  }
   
   saveKeyToStorage(key: string): boolean {
-    try { localStorage.setItem('gemini_api_key', key.trim()); return true; }
-    catch (e) { return false; }
-  }
-  
-  clearStoredKey(): void { localStorage.removeItem('gemini_api_key'); }
-  
-  async ensureApiKey(): Promise<boolean> { 
-    const key = this.getStoredKey() || await this.fetchSharedKey();
-    return !!(key && key.trim().length > 0);
-  }
-
-  private subscribeToConfigurationChanges() {
-    this.unsubscribeConfig = onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data['apiKey']) this.sharedKey.set(data['apiKey'].trim());
-        if (data['keywords']) this.knowledgeBase.set(data['keywords']);
-        if (data['systemInstruction']) this.currentSystemInstruction.set(data['systemInstruction']);
-        if (data['role']) this.currentRole.set(data['role']);
-      }
-    });
-  }
-
-  async fetchSharedKey(): Promise<string | null> {
-    const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
+    try { 
+      localStorage.setItem('gemini_api_key', key.trim()); 
+      return true
