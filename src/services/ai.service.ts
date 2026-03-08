@@ -11,6 +11,7 @@ export class AiService implements OnDestroy {
   private firestore = db;
   
   sharedKey = signal<string>('');
+  // 供 SuppliersComponent 使用
   researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
 
   constructor() {
@@ -18,40 +19,38 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // --- 【1. 基礎管理功能】 修復 SystemComponent 報錯 ---
-  getStoredKey(): string | null { 
-    return localStorage.getItem('gemini_api_key'); 
-  }
-
+  // --- 【1. 管理功能】 修復 SystemComponent 報錯 ---
+  getStoredKey(): string | null { return localStorage.getItem('gemini_api_key'); }
   saveKeyToStorage(key: string): boolean {
-    try { 
-      localStorage.setItem('gemini_api_key', key.trim()); 
-      return true; 
-    } catch (e) { return false; }
+    try { localStorage.setItem('gemini_api_key', key.trim()); return true; }
+    catch (e) { return false; }
   }
-
-  clearStoredKey(): void { 
-    localStorage.removeItem('gemini_api_key'); 
-  }
-
+  clearStoredKey(): void { localStorage.removeItem('gemini_api_key'); }
   async ensureApiKey(): Promise<boolean> { 
     const key = this.getStoredKey() || await this.fetchSharedKey();
     return !!(key && key.trim().length > 0);
   }
 
-  // --- 【2. 核心 AI 方法】 修復各組件缺失方法 ---
-  async updateConfiguration(systemInstruction: string): Promise<void> {
-    const docRef = doc(this.firestore, 'systemConfig', 'gemini');
-    await updateDoc(docRef, { systemInstruction });
-  }
-
-  async generateFormulaFromLogic(logic: string, category?: string, image?: string): Promise<string> {
+  // --- 【2. 核心 AI 業務功能】 ---
+  // 解決 SmartImportComponent 報錯
+  async parseUnstructuredData(text: string, schema: any): Promise<any> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(`邏輯: ${logic}, 類別: ${category}`);
-    return result.response.text();
+    const result = await model.generateContent(`解析以下內容為 JSON: ${text}`);
+    return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
   }
 
+  // 解決 SuppliersComponent 報錯
+  async performWebSearch(query: string): Promise<any> {
+    const genAI = await this.getGenAIInstance();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const result = await model.generateContent(query);
+    const text = result.response.text();
+    this.researchResult.set({ text, sources: [] });
+    return text;
+  }
+
+  // 解決 FinanceComponent 報錯
   async sendMessage(prompt: string): Promise<string> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -59,6 +58,25 @@ export class AiService implements OnDestroy {
     return result.response.text();
   }
 
+  // 解決 Dashboard/Definitions/Training 報錯
+  async generateBusinessInsight(context: any): Promise<string> {
+    const genAI = await this.getGenAIInstance();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    return (await model.generateContent(JSON.stringify(context))).response.text();
+  }
+
+  async generateFormulaFromLogic(logic: string, category?: string, image?: string): Promise<string> {
+    const genAI = await this.getGenAIInstance();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    return (await model.generateContent(logic)).response.text();
+  }
+
+  async updateConfiguration(systemInstruction: string): Promise<void> {
+    const docRef = doc(this.firestore, 'systemConfig', 'gemini');
+    await updateDoc(docRef, { systemInstruction });
+  }
+
+  // 解決物流辨識需求
   async parseLogisticsImage(imageBase64: string, providerOptions: string[] = []): Promise<any> {
     const genAI = await this.getGenAIInstance();
     const compressed = await this.compressImage(imageBase64);
@@ -67,7 +85,7 @@ export class AiService implements OnDestroy {
     return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
   }
 
-  // --- 【3. 輔助與監聽邏輯】 ---
+  // --- 【3. 私有輔助方法】 ---
   private async compressImage(base64: string): Promise<string> {
     return new Promise((res) => {
       const img = new Image(); img.src = base64;
@@ -82,7 +100,7 @@ export class AiService implements OnDestroy {
   }
 
   private subscribeToConfigurationChanges() {
-    this.unsubscribeConfig = onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
+    onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
       if (snap.exists() && snap.data()['apiKey']) this.sharedKey.set(snap.data()['apiKey'].trim());
     });
   }
