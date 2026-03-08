@@ -12,27 +12,29 @@ export class AiService implements OnDestroy {
   
   sharedKey = signal<string>('');
   researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
+  // 【新增：解決 AiTrainingComponent 報錯】
+  knowledgeBase = signal<string[]>([]);
 
   constructor() {
     this.subscribeToConfigurationChanges();
     this.fetchSharedKey();
   }
 
-  // --- 【新增：解決 AiTrainingComponent 報錯】 ---
-  async generateSystemInstruction(direction: string): Promise<string> {
-    const genAI = await this.getGenAIInstance();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(`請根據以下方向生成 AI 系統指令：${direction}`);
-    return result.response.text();
-  }
-
-  // 修正參數：接收 2 個參數以解決 TS2554
-  async updateConfiguration(systemInstruction: string, keywords?: string): Promise<void> {
+  // --- 【AI 訓練與設定功能】 ---
+  // 修正參數類型為 string[] 以解決 TS2345 錯誤
+  async updateConfiguration(systemInstruction: string, keywords?: string[]): Promise<void> {
     const docRef = doc(this.firestore, 'systemConfig', 'gemini');
     await updateDoc(docRef, { 
       systemInstruction, 
-      keywords: keywords || '' 
+      keywords: keywords || [] 
     });
+  }
+
+  async generateSystemInstruction(direction: string): Promise<string> {
+    const genAI = await this.getGenAIInstance();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const result = await model.generateContent(`生成 AI 系統指令：${direction}`);
+    return result.response.text();
   }
 
   // --- 【管理功能】 修復 SystemComponent ---
@@ -47,7 +49,7 @@ export class AiService implements OnDestroy {
     return !!(key && key.trim().length > 0);
   }
 
-  // --- 【業務功能】 修復 SmartImport/Suppliers/Finance/Dashboard ---
+  // --- 【各組件業務功能】 ---
   async parseUnstructuredData(text: string, schema: any): Promise<any> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -75,7 +77,6 @@ export class AiService implements OnDestroy {
     return (await model.generateContent(JSON.stringify(context))).response.text();
   }
 
-  // 支持 DefinitionsComponent 的多參數呼叫
   async generateFormulaFromLogic(logic: string, category?: string, image?: string): Promise<string> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -90,7 +91,7 @@ export class AiService implements OnDestroy {
     return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
   }
 
-  // --- 【輔助方法】 ---
+  // --- 【輔助邏輯】 ---
   private async compressImage(base64: string): Promise<string> {
     return new Promise((res) => {
       const img = new Image(); img.src = base64;
@@ -107,6 +108,8 @@ export class AiService implements OnDestroy {
   private subscribeToConfigurationChanges() {
     onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
       if (snap.exists() && snap.data()['apiKey']) this.sharedKey.set(snap.data()['apiKey'].trim());
+      // 同步知識庫資料
+      if (snap.exists() && snap.data()['keywords']) this.knowledgeBase.set(snap.data()['keywords']);
     });
   }
 
