@@ -1,4 +1,17 @@
-"dependencies": {
+{
+  "name": "new-angular-erp-ai",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "gcp-build": "ng build",
+    "build": "ng build",
+    "lint": "tsc --noEmit",
+    "preview": "ng serve --configuration=production"
+  },
+  "dependencies": {
     "@angular/build": "^21.0.0",
     "@angular/cdk": "^21.1.5",
     "@angular/cli": "^21.0.0",
@@ -25,3 +38,4 @@
     "xlsx": "latest",
     "zone.js": "^0.15.1"
   }
+}
