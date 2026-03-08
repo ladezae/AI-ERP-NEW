@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-// 【修正 1】：讓 Cloud Run 決定 Port，如果沒有才用 3000
-const port = process.env.PORT || 3000;
+// 【修正 1】：讓 Cloud Run 決定 Port，如果沒有才用 8080
+const port = process.env.PORT || 8080;
 
 // Log the directory being served
 const distPath = join(__dirname, 'dist');
