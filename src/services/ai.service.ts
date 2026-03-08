@@ -20,6 +20,34 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
+  // 【新增：解決 FinanceComponent 報錯】
+  async sendMessage(prompt: string): Promise<string> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) {
+      console.error("AI 對話失敗", error);
+      throw error;
+    }
+  }
+
+  // 【新增：解決 SmartImportComponent 報錯】
+  async parseUnstructuredData(text: string, schema: any): Promise<any> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const prompt = `請根據以下結構解析文字並回傳純 JSON：\n結構: ${JSON.stringify(schema)}\n內容: ${text}`;
+      const result = await model.generateContent(prompt);
+      return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
+    } catch (error) {
+      console.error("資料解析失敗", error);
+      throw error;
+    }
+  }
+
+  // 【保留：解決 SuppliersComponent 報錯】
   async performWebSearch(query: string): Promise<any> {
     try {
       const genAI = await this.getGenAIInstance();
@@ -28,12 +56,24 @@ export class AiService implements OnDestroy {
       const text = result.response.text();
       this.researchResult.set({ text: text, sources: [] });
       return text;
-    } catch (error) {
-      console.error("搜尋失敗", error);
-      throw error;
-    }
+    } catch (error) { throw error; }
   }
 
+  // 【核心功能：物流辨識】
+  async parseLogisticsImage(imageBase64: string, providerOptions: string[] = []): Promise<any> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const compressed = await this.compressImage(imageBase64);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const result = await model.generateContent([
+        "辨識台灣物流單據並回傳 JSON (provider, trackingNumber)。",
+        { inlineData: { mimeType: "image/jpeg", data: compressed.split(',')[1] } }
+      ]);
+      return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
+    } catch (error) { throw error; }
+  }
+
+  // 其他管理方法 ...
   getStoredKey(): string | null { return localStorage.getItem('gemini_api_key'); }
   async ensureApiKey(): Promise<boolean> { 
     const key = this.getStoredKey() || await this.fetchSharedKey();
@@ -45,33 +85,13 @@ export class AiService implements OnDestroy {
   }
   clearStoredKey(): void { localStorage.removeItem('gemini_api_key'); }
 
-  // 確保這裡的括號對稱，解決 TS1005
-  async parseLogisticsImage(imageBase64: string, providerOptions: string[] = []): Promise<any> {
-    try {
-      const genAI = await this.getGenAIInstance();
-      const compressed = await this.compressImage(imageBase64);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const result = await model.generateContent([
-        "你是一個台灣物流單據 OCR 專家，請回傳純 JSON 格式，包含 provider 和 trackingNumber。",
-        { inlineData: { mimeType: "image/jpeg", data: compressed.split(',')[1] } }
-      ]);
-      return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
-    } catch (error) {
-      console.error("AI 辨識錯誤", error);
-      throw error;
-    }
-  }
-
   private async compressImage(base64: string): Promise<string> {
     return new Promise((res) => {
       const img = new Image(); img.src = base64;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const maxWidth = 1024;
-        const scale = Math.min(1, maxWidth / img.width);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
+        canvas.width = 1024; canvas.height = (img.height / img.width) * 1024;
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
         res(canvas.toDataURL('image/jpeg', 0.8));
       };
@@ -81,21 +101,17 @@ export class AiService implements OnDestroy {
 
   private subscribeToConfigurationChanges() {
     if (!this.firestore) return;
-    const docRef = doc(this.firestore, 'systemConfig', 'gemini');
-    this.unsubscribeConfig = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists() && docSnap.data()['apiKey']) {
-        this.sharedKey.set(docSnap.data()['apiKey'].trim());
-      }
+    onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
+      if (snap.exists() && snap.data()['apiKey']) this.sharedKey.set(snap.data()['apiKey'].trim());
     });
   }
 
   async fetchSharedKey(): Promise<string | null> {
     try {
       if (!this.firestore) return null;
-      const docRef = doc(this.firestore, 'systemConfig', 'gemini');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && docSnap.data()['apiKey']) {
-        const key = docSnap.data()['apiKey'].trim();
+      const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
+      if (snap.exists() && snap.data()['apiKey']) {
+        const key = snap.data()['apiKey'].trim();
         this.sharedKey.set(key);
         return key;
       }
