@@ -55,8 +55,8 @@ app.get('/api/erp/test', (req, res) => {
   });
 });
 
-// 【修正 2】：拿掉導致當機的斜線，改為標準的 '*' 萬用路由
-app.get('*', (req, res) => {
+// 【修正 2】：使用 Express 5 支援的 '/*' 萬用路由
+app.get('/*', (req, res) => {
   const indexPath = join(distPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
