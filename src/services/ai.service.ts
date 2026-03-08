@@ -25,26 +25,34 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // 【修復 1】：新增 getStoredKey 方法，供 SystemComponent 確認 Key 狀態
+  // 【修復 1】：新增 SuppliersComponent 要求的搜尋方法
+  async performWebSearch(query: string): Promise<string> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const result = await model.generateContent(`請搜尋並總結以下內容：${query}`);
+      return result.response.text();
+    } catch (error) {
+      return "搜尋失敗，請檢查 API Key";
+    }
+  }
+
+  // 【修復 2】：補齊所有基礎管理方法
   getStoredKey(): string | null {
     return localStorage.getItem('gemini_api_key');
   }
 
-  // 【修復 2】：新增 ensureApiKey 方法，供組件檢查權限
   async ensureApiKey(): Promise<boolean> {
     const key = this.getStoredKey() || await this.fetchSharedKey();
     return !!(key && key.trim().length > 0);
   }
 
-  // 【修復 3】：儲存與清除方法，確保本地端功能正常
   saveKeyToStorage(key: string): boolean {
     try {
       if (!key) return false;
       localStorage.setItem('gemini_api_key', key.trim());
       return true;
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
   clearStoredKey(): void {
@@ -68,10 +76,8 @@ export class AiService implements OnDestroy {
         { inlineData: { mimeType: "image/jpeg", data: base64Data } }
       ]);
 
-      const text = result.response.text();
-      return JSON.parse(text.replace(/```json|```/g, '').trim());
+      return JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
     } catch (error) {
-      console.error("AI 辨識失敗", error);
       throw error;
     }
   }
@@ -101,7 +107,6 @@ export class AiService implements OnDestroy {
       if (docSnap.exists() && docSnap.data()['apiKey']) {
         const key = docSnap.data()['apiKey'].trim();
         this.sharedKey.set(key);
-        this.keySource.set('server');
       }
     });
   }
