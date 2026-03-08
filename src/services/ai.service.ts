@@ -3,6 +3,9 @@ import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase.config';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// 【新增：解決 TS2305 找不到 AiRole 的問題】
+export type AiRole = string;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -15,11 +18,16 @@ export class AiService implements OnDestroy {
   researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
   knowledgeBase = signal<string[]>([]);
   currentSystemInstruction = signal<string>('');
-  currentRole = signal<string>('default');
+  currentRole = signal<AiRole>('default');
 
   constructor() {
     this.subscribeToConfigurationChanges();
     this.fetchSharedKey();
+  }
+
+  // 【新增：解決 TS2339 找不到 setRole 的問題】
+  setRole(role: AiRole): void {
+    this.currentRole.set(role);
   }
 
   // --- 【1. 萬用通訊核心】 ---
@@ -74,7 +82,6 @@ export class AiService implements OnDestroy {
     return text;
   }
 
-  // 確保這個方法的括號完整閉合
   async updateConfiguration(systemInstruction: string, keywords?: string[]): Promise<void> {
     const docRef = doc(this.firestore, 'systemConfig', 'gemini');
     await updateDoc(docRef, { systemInstruction, keywords: keywords || [] });
@@ -109,19 +116,3 @@ export class AiService implements OnDestroy {
 
   async fetchSharedKey(): Promise<string | null> {
     const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
-    if (snap.exists() && snap.data()['apiKey']) {
-      const key = snap.data()['apiKey'].trim();
-      this.sharedKey.set(key);
-      return key;
-    }
-    return null;
-  }
-
-  private async getGenAIInstance() { 
-    const key = this.getStoredKey() || await this.fetchSharedKey();
-    if (!key) throw new Error("API Key缺失，請先配置。");
-    return new GoogleGenerativeAI(key);
-  }
-
-  ngOnDestroy() { if (this.unsubscribeConfig) this.unsubscribeConfig(); }
-}
