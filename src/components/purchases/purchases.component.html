@@ -1,0 +1,1110 @@
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="p-8 h-full flex flex-col">
+  
+  <!-- View 0: List (History) -->
+  @if (currentStep() === 'list') {
+    <header class="mb-6 flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">採購管理</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm md:text-base">建立採購單、追蹤進貨進度與供應商交期。</p>
+      </div>
+      <!-- Button Group -->
+      <div class="flex space-x-3 ml-4">
+          <button 
+            (click)="openAiWizard()"
+            class="px-3 py-2 md:px-4 md:py-2 bg-purple-600 text-white rounded-md shadow-sm hover:bg-purple-700 transition-colors flex items-center space-x-1 md:space-x-2 whitespace-nowrap">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+            <span class="hidden md:inline">AI 自動採購</span>
+            <span class="md:hidden">AI</span>
+          </button>
+          
+          <button 
+            (click)="startCreateProcess()"
+            class="px-3 py-2 md:px-4 md:py-2 bg-sky-500 text-white rounded-md shadow-sm hover:bg-sky-600 transition-colors flex items-center space-x-1 md:space-x-2 whitespace-nowrap">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <span class="hidden md:inline">新增採購單</span>
+            <span class="md:hidden">新增</span>
+          </button>
+      </div>
+    </header>
+
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 transition-colors flex-1 overflow-hidden flex flex-col">
+      <!-- Search & Filter Row -->
+      <div class="flex flex-col md:flex-row gap-4 mb-4 items-center flex-wrap">
+        <!-- Search Input -->
+        <div class="relative w-full md:w-64">
+          <input 
+            type="text" 
+            placeholder="搜尋歷史單號、供應商代碼/名稱..." 
+            class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+            [value]="searchTerm()"
+            (input)="onSearchTermChange($event)"
+            />
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+        </div>
+
+        <!-- Supplier Filter -->
+        <select 
+            (change)="onListSupplierFilterChange($event)" 
+            class="w-full md:w-48 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm">
+            <option value="">全部供應商</option>
+            @for(s of suppliers(); track s.code) {
+                <option [value]="s.code">{{ s.code }} - {{ s.shortName }}</option>
+            }
+        </select>
+
+        <!-- NEW: Action Required Filter Button -->
+        <button 
+            (click)="toggleActionRequiredFilter()"
+            class="px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm flex items-center justify-center space-x-1 border"
+            [class.bg-amber-500]="statusFilter() === 'ACTION_REQUIRED'"
+            [class.text-white]="statusFilter() === 'ACTION_REQUIRED'"
+            [class.border-amber-500]="statusFilter() === 'ACTION_REQUIRED'"
+            [class.bg-white]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:bg-slate-700]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.text-slate-600]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:text-slate-200]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.border-slate-300]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:border-slate-600]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.hover:bg-slate-50]="statusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:hover:bg-slate-600]="statusFilter() !== 'ACTION_REQUIRED'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>應處理</span>
+        </button>
+
+        <!-- Status Filter -->
+        <select 
+            [value]="statusFilter() === 'ACTION_REQUIRED' ? '' : statusFilter()"
+            (change)="onStatusFilterChange($event)" 
+            class="w-full md:w-36 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm">
+            <option value="">全部狀態</option>
+            @for (status of statusOptions; track status) {
+                <option [value]="status">{{ status }}</option>
+            }
+        </select>
+      </div>
+
+      <!-- Data Table -->
+      <div class="overflow-x-auto flex-1">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 table-fixed">
+          <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10">
+            <tr>
+              <th appResizable tableId="purchases" colId="id" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">採購單號 / 日期</th>
+              <th appResizable tableId="purchases" colId="supplier" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">供應商 / LINE</th>
+              
+              <!-- Updated Columns: Increased min-width for Product Details -->
+              <th appResizable tableId="purchases" colId="product" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider min-w-[400px]">商品明細 (訂購)</th>
+              <th appResizable tableId="purchases" colId="received" scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider w-24">到貨</th>
+              <th appResizable tableId="purchases" colId="transit" scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider w-24">在途</th>
+              <th appResizable tableId="purchases" colId="itemStatus" scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider w-28">明細狀態</th>
+              
+              <th appResizable tableId="purchases" colId="status" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">單據狀態</th>
+              
+              <!-- Updated Column: Invoice Management -->
+              <th appResizable tableId="purchases" colId="invoice" scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">發票管理</th>
+              
+              <th appResizable tableId="purchases" colId="date" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">預計交期</th>
+              <th appResizable tableId="purchases" colId="actions" scope="col" class="relative px-6 py-3 bg-slate-50 dark:bg-slate-700">
+                <span class="sr-only">操作</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+            @for (group of groupedPurchaseOrders(); track group.poNumber) {
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                <!-- Col 1: PO Number (Full) & Date -->
+                <td class="px-6 py-4 whitespace-nowrap align-top">
+                  <div class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{{ group.poNumber }}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mb-1.5">{{ group.purchaseDate | taiwanDate }}</div>
+                </td>
+
+                <!-- Col 2: Supplier & LINE -->
+                <td class="px-6 py-4 whitespace-nowrap align-top">
+                  <div class="text-sm text-slate-900 dark:text-white">{{ group.supplierName }}</div>
+                  <div class="text-xs text-slate-400">{{ group.supplierCode }}</div>
+                  
+                  @if (group.supplierLineId) {
+                      <div class="text-xs font-bold text-green-600 dark:text-green-400 mt-1 flex items-center">
+                          LINE: {{ group.supplierLineId }}
+                      </div>
+                  }
+
+                  <div class="text-[10px] mt-1 px-1.5 py-0.5 rounded w-fit" [ngClass]="group.supplierTaxType === '免稅' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">{{ group.supplierTaxType }}</div>
+                </td>
+                
+                <!-- Col 3: Product Name & Ordered Qty -->
+                <td class="px-6 py-4 align-top">
+                  <div class="flex flex-col w-full">
+                    @for (item of group.displayItems; track $index) {
+                      <div class="min-h-[2.5rem] py-1.5 flex items-start justify-between text-sm border-b border-slate-100 dark:border-slate-700/50 last:border-0 pr-2">
+                         <div class="font-medium whitespace-normal break-words leading-tight flex-1 mr-4" 
+                              [class.text-slate-900]="!(item.currentProductTransit > item.quantity)"
+                              [class.dark:text-white]="!(item.currentProductTransit > item.quantity)"
+                              [class.text-amber-600]="item.currentProductTransit > item.quantity"
+                              [class.dark:text-amber-400]="item.currentProductTransit > item.quantity">
+                              {{ item.name }}
+                              @if (item.currentProductTransit > item.quantity) {
+                                  <span class="text-[10px] ml-1 text-amber-500 dark:text-amber-400 font-normal inline-block">(總在途{{ item.currentProductTransit }})</span>
+                              }
+                         </div>
+                         <div class="text-xs text-slate-500 font-mono whitespace-nowrap flex-shrink-0 pt-0.5">x {{ item.quantity }} {{ item.unit }}</div>
+                      </div>
+                    }
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-1 text-right pt-1">
+                      共 {{ group.totalItems }} 品項
+                  </div>
+                </td>
+
+                <!-- Col 4: Received Quantity (EDITABLE) -->
+                <td class="px-6 py-4 align-top p-0">
+                   <div class="flex flex-col w-full items-center">
+                    @for (item of group.displayItems; track $index) {
+                      <div class="h-9 w-full flex items-center justify-center border-b border-slate-100 dark:border-slate-700/50 last:border-0 min-h-[2.5rem] py-1.5">
+                         <input type="number"
+                                [value]="item.receivedQuantity"
+                                (change)="updateReceivedQuantityList(item.purchaseId, $event)"
+                                class="w-16 text-center px-1 py-0.5 text-xs border border-transparent hover:border-slate-300 focus:border-sky-500 focus:ring-0 rounded bg-transparent focus:bg-white dark:focus:bg-slate-700 font-mono font-bold transition-colors"
+                                [class.text-slate-900]="!(item.receivedQuantity > item.quantity)"
+                                [class.dark:text-white]="!(item.receivedQuantity > item.quantity)"
+                                [class.text-rose-600]="item.receivedQuantity > item.quantity"
+                                [class.dark:text-rose-400]="item.receivedQuantity > item.quantity"
+                                min="0">
+                      </div>
+                    }
+                  </div>
+                </td>
+
+                <!-- Col 5: Transit Quantity (Ordered - Received) -->
+                <td class="px-6 py-4 align-top p-0">
+                   <div class="flex flex-col w-full items-center">
+                    @for (item of group.displayItems; track $index) {
+                      <div class="h-9 w-full flex items-center justify-center text-sm border-b border-slate-100 dark:border-slate-700/50 last:border-0 font-mono min-h-[2.5rem] py-1.5"
+                           [class.text-slate-400]="item.transitContent <= 0"
+                           [class.text-slate-800]="item.transitContent > 0"
+                           [class.dark:text-slate-200]="item.transitContent > 0">
+                         {{ item.transitContent > 0 ? item.transitContent : '-' }}
+                      </div>
+                    }
+                  </div>
+                </td>
+
+                <!-- Col 6: Item Status -->
+                <td class="px-6 py-4 align-top p-0">
+                   <div class="flex flex-col w-full items-center">
+                    @for (item of group.displayItems; track $index) {
+                      <div class="h-9 w-full flex items-center justify-center border-b border-slate-100 dark:border-slate-700/50 last:border-0 min-h-[2.5rem] py-1.5">
+                         <span class="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap" [ngClass]="item.status.class">
+                            {{ item.status.label }}
+                         </span>
+                      </div>
+                    }
+                  </div>
+                </td>
+
+                <!-- Col 7: Overall Status -->
+                <td class="px-6 py-4 whitespace-nowrap align-top">
+                  <select
+                    [value]="group.status"
+                    (change)="updatePoStatus(group.poNumber, $event)"
+                    (click)="$event.stopPropagation()"
+                    class="block w-full pl-3 pr-8 py-1.5 text-xs font-bold rounded-full border-0 focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 cursor-pointer appearance-none transition-colors duration-200"
+                    
+                    [class.bg-gray-200]="group.status === 'AI建議'"
+                    [class.text-gray-800]="group.status === 'AI建議'"
+                    [class.dark:bg-gray-600]="group.status === 'AI建議'"
+                    [class.dark:text-gray-200]="group.status === 'AI建議'"
+
+                    [class.bg-amber-100]="group.status === '員工確認' || group.status === '審核中'"
+                    [class.text-amber-800]="group.status === '員工確認' || group.status === '審核中'"
+                    [class.dark:bg-amber-900]="group.status === '員工確認' || group.status === '審核中'"
+                    [class.dark:text-amber-100]="group.status === '員工確認' || group.status === '審核中'"
+
+                    [class.bg-indigo-100]="group.status === '審核通過(要下單)'"
+                    [class.text-indigo-800]="group.status === '審核通過(要下單)'"
+                    [class.dark:bg-indigo-900]="group.status === '審核通過(要下單)'"
+                    [class.dark:text-indigo-100]="group.status === '審核通過(要下單)'"
+
+                    [class.bg-sky-100]="group.status === '已下訂'"
+                    [class.text-sky-800]="group.status === '已下訂'"
+                    [class.dark:bg-sky-900]="group.status === '已下訂'"
+                    [class.dark:text-sky-100]="group.status === '已下訂'"
+
+                    [class.bg-teal-100]="group.status === '廠商確認'"
+                    [class.text-teal-800]="group.status === '廠商確認'"
+                    [class.dark:bg-teal-900]="group.status === '廠商確認'"
+                    [class.dark:text-teal-100]="group.status === '廠商確認'"
+
+                    [class.bg-purple-100]="group.status === '部份到貨'"
+                    [class.text-purple-800]="group.status === '部份到貨'"
+                    [class.dark:bg-purple-900]="group.status === '部份到貨'"
+                    [class.dark:text-purple-100]="group.status === '部份到貨'"
+
+                    [class.bg-emerald-100]="group.status === '已結案'"
+                    [class.text-emerald-800]="group.status === '已結案'"
+                    [class.dark:bg-emerald-900]="group.status === '已結案'"
+                    [class.dark:text-emerald-100]="group.status === '已結案'"
+
+                    [class.bg-slate-200]="group.status === '取消'"
+                    [class.text-slate-700]="group.status === '取消'"
+                    [class.dark:bg-slate-700]="group.status === '取消'"
+                    [class.dark:text-slate-300]="group.status === '取消'">
+                    
+                    <option value="AI建議">AI建議</option>
+                    <option value="員工確認">員工確認</option>
+                    <option value="審核通過(要下單)">審核通過(要下單)</option>
+                    <option value="已下訂">已下訂</option>
+                    <option value="廠商確認">廠商確認</option>
+                    <option value="部份到貨">部份到貨</option>
+                    <option value="已結案">已結案</option>
+                    <option value="取消">取消</option>
+                  </select>
+                  
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
+                      建立者: {{ group.purchaser }}
+                  </div>
+                </td>
+                
+                <!-- Col 8: Invoice Management (Checkbox & Invoice Rule) -->
+                <td class="px-6 py-4 whitespace-nowrap align-top text-center">
+                   <div class="flex flex-col items-center justify-center">
+                       <label class="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" 
+                                 [checked]="group.invoiceStatus" 
+                                 (change)="updateInvoiceStatus(group.poNumber, $event)" 
+                                 (click)="$event.stopPropagation()"
+                                 class="sr-only peer">
+                          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 dark:peer-focus:ring-sky-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-sky-600"></div>
+                       </label>
+                       <span class="text-xs font-medium mt-1" 
+                             [class.text-sky-600]="group.invoiceStatus" 
+                             [class.dark:text-sky-400]="group.invoiceStatus"
+                             [class.text-slate-400]="!group.invoiceStatus">
+                           {{ group.invoiceStatus ? '已收到發票' : '未收到' }}
+                       </span>
+                       
+                       <!-- Invoice Rule Badge (Moved here) -->
+                       <div class="mt-2">
+                          @if (group.supplierInvoiceRule.includes('隨貨')) {
+                               <span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 whitespace-nowrap">
+                                  {{ group.supplierInvoiceRule }}
+                              </span>
+                          } @else {
+                               <span class="text-[10px] px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800 whitespace-nowrap">
+                                  {{ group.supplierInvoiceRule }}
+                              </span>
+                          }
+                       </div>
+                   </div>
+                </td>
+
+                <!-- Col 9: Delivery Date & Overdue Warning -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 align-top">
+                  <div class="flex flex-col">
+                      <span>{{ (group.expectedDelivery | taiwanDate) || '-' }}</span>
+                      
+                      <!-- Overdue Warning -->
+                      @if (group.isOverdue) {
+                         <div class="flex items-center mt-1 text-red-600 dark:text-red-400 font-bold text-xs bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded w-fit">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                             </svg>
+                             已逾期
+                         </div>
+                      }
+                  </div>
+                </td>
+
+                <!-- Col 10: Actions -->
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-top">
+                  <div class="flex justify-end items-center h-full space-x-2">
+                    @if (group.purchaseNote) {
+                      <div class="relative group cursor-pointer hover:opacity-80" 
+                           (mouseenter)="showNoteTooltip($event, group.purchaseNote)" 
+                           (mouseleave)="hideNoteTooltip()"
+                           (click)="openNoteModal(group, $event)"
+                           title="點擊編輯備註">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-rose-500 transform hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                          </svg>
+                      </div>
+                    }
+
+                    <!-- PRINT BUTTON (New) -->
+                    <button (click)="printPurchaseOrder(group)" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white" title="列印採購單">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    </button>
+
+                    <button (click)="receiveFullOrder(group)" class="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 font-bold whitespace-nowrap flex items-center text-xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                      全收
+                    </button>
+                    <button (click)="reviseOrder(group)" class="text-sky-600 hover:text-sky-900 dark:text-sky-400 dark:hover:text-sky-300 text-xs">
+                      編輯
+                    </button>
+                    <button (click)="deleteOrder(group)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-xs">
+                      刪除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="10" class="px-6 py-10 text-center text-slate-500 dark:text-slate-400">
+                  尚無採購紀錄。
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- View 1: Wizard Overlay (Include AI Wizard) -->
+  @if (currentStep() !== 'list') {
+    <div class="fixed inset-0 z-50 bg-slate-100 dark:bg-slate-900 flex flex-col h-full animate-[slide-up_0.3s_ease-out]">
+        
+        <!-- Wizard Header -->
+        <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 shadow-sm flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center space-x-3">
+                <button (click)="goBack()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="返回上一步">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">
+                        @switch (currentStep()) {
+                            @case ('ai-wizard') { AI 智慧自動採購 (Auto-Purchase) }
+                            @case ('select-supplier') { 步驟 1: 選擇供應商 }
+                            @case ('select-products') { 步驟 2: 挑選商品 }
+                            @case ('cart-adjust') { 步驟 3: 填寫數量 }
+                            @case ('review') { 步驟 4: 確認採購單 }
+                            @case ('generate-text') { 步驟 5: 產生通訊文案 }
+                        }
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        @if (currentStep() === 'ai-wizard') {
+                            分析庫存並建議補貨量
+                        } @else if (selectedSupplier()) {
+                            {{ selectedSupplier()?.shortName }}
+                        } @else {
+                            建立新採購單
+                        }
+                    </p>
+                </div>
+            </div>
+            
+            <button type="button" (click)="cancelProcess()" class="text-sm text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/30 px-4 py-2 rounded-md transition-colors font-medium border border-transparent hover:border-red-200 dark:hover:border-red-800">
+                取消 / 關閉
+            </button>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="flex-1 overflow-y-auto relative pb-28">
+            
+            <!-- AI Wizard Step -->
+            @if (currentStep() === 'ai-wizard') {
+                <div class="p-6 max-w-5xl mx-auto space-y-6">
+                    
+                    <!-- 1. Config Panel -->
+                    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white flex flex-col md:flex-row items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                AI 庫存分析引擎
+                            </h3>
+                            <p class="text-purple-100 text-sm mt-1">計算邏輯: 虛擬庫存 = (現有庫存 + 在途) - 未出貨訂單需求。若低於安全庫存，將自動補貨至安全水位。</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 flex items-center space-x-3 bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                            <select [(ngModel)]="aiTargetSupplierCode" class="bg-white/90 text-slate-800 text-sm rounded border-none focus:ring-2 focus:ring-purple-300 py-2 px-3 font-medium">
+                                <option value="all">全部分析 (All Suppliers)</option>
+                                @for(s of suppliers(); track s.code) {
+                                    <option [value]="s.code">{{ s.code }} - {{ s.shortName }}</option>
+                                }
+                            </select>
+                            <button (click)="runAiAnalysis()" 
+                                    [disabled]="isAiCalculating()"
+                                    class="bg-white text-purple-700 hover:bg-gray-100 px-4 py-2 rounded font-bold transition-colors flex items-center shadow-md disabled:opacity-70 disabled:cursor-not-allowed">
+                                @if (isAiCalculating()) {
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-purple-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    分析中...
+                                } @else {
+                                    開始計算
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Results List - Divided into Recommended and Safe -->
+                    @if (aiAnalysisResult().recommended.length > 0 || aiAnalysisResult().safe.length > 0) {
+                        <div class="space-y-12 pb-24">
+                            
+                            <!-- SECTION 1: RECOMMENDED (Urgent) -->
+                            @if (aiAnalysisResult().recommended.length > 0) {
+                                <div>
+                                    <h2 class="text-xl font-bold text-rose-600 dark:text-rose-400 mb-4 flex items-center border-b border-rose-200 dark:border-rose-800 pb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                        🔴 推薦採購區 (需補貨)
+                                    </h2>
+                                    
+                                    <div class="space-y-6">
+                                        @for (group of aiAnalysisResult().recommended; track group.supplier.code; let gIdx = $index) {
+                                            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md border-l-4 border-l-rose-500 border-y border-r border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                <!-- Group Header -->
+                                                <div class="bg-rose-50 dark:bg-rose-900/20 px-6 py-4 border-b border-rose-100 dark:border-rose-800 flex justify-between items-center">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="font-bold text-lg text-slate-800 dark:text-white">{{ group.supplier.shortName }}</div>
+                                                        <div class="text-xs text-slate-500 dark:text-slate-400">{{ group.supplier.code }}</div>
+                                                        <!-- Free Shipping Status -->
+                                                        @if (group.supplier.freeShippingThreshold && group.supplier.freeShippingThreshold > 0) {
+                                                            @if (group.meetsThreshold) {
+                                                                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-bold">已達免運</span>
+                                                            } @else {
+                                                                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-bold">未達免運 (差 {{ group.supplier.freeShippingThreshold - group.totalSuggestedQty }})</span>
+                                                            }
+                                                        }
+                                                    </div>
+                                                    <div class="text-sm font-medium text-slate-600 dark:text-slate-300">
+                                                        建議品項: {{ group.items.length }}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Items Table -->
+                                                <table class="w-full text-sm text-left">
+                                                    <thead class="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+                                                        <tr class="text-slate-500 dark:text-slate-400">
+                                                            <th class="px-6 py-3 font-medium w-10 text-center">選</th>
+                                                            <th class="px-6 py-3 font-medium">商品名稱</th>
+                                                            <th class="px-6 py-3 font-medium text-center">虛擬庫存</th>
+                                                            <th class="px-6 py-3 font-medium text-center">安全水位</th>
+                                                            <th class="px-6 py-3 font-medium text-left">建議原因 (AI Score)</th>
+                                                            <th class="px-6 py-3 font-medium text-center w-32">建議採購量</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                                        @for (item of group.items; track item.product.id; let iIdx = $index) {
+                                                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" [class.opacity-50]="!item.isSelected">
+                                                                <td class="px-6 py-3 text-center">
+                                                                    <input type="checkbox" [checked]="item.isSelected" (change)="toggleAiItemSelection('recommended', gIdx, iIdx)" class="rounded text-purple-600 focus:ring-purple-500 cursor-pointer">
+                                                                </td>
+                                                                <td class="px-6 py-3">
+                                                                    <div class="font-medium text-slate-800 dark:text-white">{{ item.product.name }}</div>
+                                                                    <div class="text-xs text-slate-400">{{ item.product.id }}</div>
+                                                                </td>
+                                                                <td class="px-6 py-3 text-center whitespace-nowrap">
+                                                                    <span class="text-lg font-bold" [class.text-red-600]="item.virtualStock <= 0" [class.text-amber-500]="item.virtualStock > 0 && item.virtualStock < item.product.safetyStock">
+                                                                        {{ item.virtualStock }}
+                                                                    </span>
+                                                                    <span class="text-sm text-slate-500 dark:text-slate-400 ml-2 font-medium">
+                                                                        (現{{item.product.stock}} + 途{{item.transitQty}} - 需{{item.demandQty}})
+                                                                    </span>
+                                                                </td>
+                                                                <td class="px-6 py-3 text-center text-slate-600 dark:text-slate-300">
+                                                                    {{ item.product.safetyStock }}
+                                                                </td>
+                                                                <td class="px-6 py-3">
+                                                                    <div class="flex flex-wrap gap-1">
+                                                                        @for (reason of item.scoreReason; track reason) {
+                                                                            <span class="px-1.5 py-0.5 rounded text-[10px] border"
+                                                                                  [class.bg-red-50]="reason.includes('耗盡')" [class.text-red-600]="reason.includes('耗盡')" [class.border-red-100]="reason.includes('耗盡')"
+                                                                                  [class.bg-amber-50]="reason.includes('低於')" [class.text-amber-600]="reason.includes('低於')" [class.border-amber-100]="reason.includes('低於')"
+                                                                                  [class.bg-purple-50]="reason.includes('A級')" [class.text-purple-600]="reason.includes('A級')" [class.border-purple-100]="reason.includes('A級')">
+                                                                                {{ reason }}
+                                                                            </span>
+                                                                        }
+                                                                        <span class="text-xs font-bold ml-1 text-slate-400">({{ item.score }}分)</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="px-6 py-3 text-center">
+                                                                    <input type="number" 
+                                                                           [value]="item.suggestedQty" 
+                                                                           (input)="updateAiItemQty('recommended', gIdx, iIdx, $event)"
+                                                                           class="w-20 text-center py-1 border border-purple-300 rounded focus:ring-purple-500 font-bold bg-purple-50 dark:bg-slate-900 dark:border-purple-800 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400">
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- SECTION 2: SAFE (Optional) -->
+                            @if (aiAnalysisResult().safe.length > 0) {
+                                <div class="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                                    <h2 class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        🟢 安全商品區 (暫無需求)
+                                    </h2>
+                                    
+                                    <div class="space-y-6 opacity-80 hover:opacity-100 transition-opacity">
+                                        @for (group of aiAnalysisResult().safe; track group.supplier.code; let gIdx = $index) {
+                                            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                <!-- Group Header -->
+                                                <div class="bg-emerald-50 dark:bg-emerald-900/10 px-6 py-3 border-b border-emerald-100 dark:border-emerald-800 flex justify-between items-center">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="font-bold text-slate-700 dark:text-slate-200">{{ group.supplier.shortName }}</div>
+                                                        <div class="text-xs text-slate-400">{{ group.supplier.code }}</div>
+                                                    </div>
+                                                    <div class="text-xs text-slate-500">
+                                                        安全品項: {{ group.items.length }}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Items Table -->
+                                                <table class="w-full text-xs text-left">
+                                                    <thead class="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+                                                        <tr class="text-slate-400">
+                                                            <th class="px-6 py-2 w-10 text-center">加</th>
+                                                            <th class="px-6 py-2">商品名稱</th>
+                                                            <th class="px-6 py-2 text-center">虛擬庫存</th>
+                                                            <th class="px-6 py-2 text-center">安全水位</th>
+                                                            <th class="px-6 py-2">狀態</th>
+                                                            <th class="px-6 py-2 text-center w-24">手動加購</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                                        @for (item of group.items; track item.product.id; let iIdx = $index) {
+                                                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                                                <td class="px-6 py-2 text-center">
+                                                                    <input type="checkbox" [checked]="item.isSelected" (change)="toggleAiItemSelection('safe', gIdx, iIdx)" class="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                                </td>
+                                                                <td class="px-6 py-2">
+                                                                    <div class="font-medium text-slate-700 dark:text-slate-300">{{ item.product.name }}</div>
+                                                                </td>
+                                                                <td class="px-6 py-2 text-center text-slate-600 dark:text-slate-400">
+                                                                    {{ item.virtualStock }}
+                                                                </td>
+                                                                <td class="px-6 py-2 text-center text-slate-400">
+                                                                    {{ item.product.safetyStock }}
+                                                                </td>
+                                                                <td class="px-6 py-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                                                                    庫存充足
+                                                                </td>
+                                                                <td class="px-6 py-2 text-center">
+                                                                    <input type="number" 
+                                                                           [value]="item.suggestedQty" 
+                                                                           (input)="updateAiItemQty('safe', gIdx, iIdx, $event)"
+                                                                           class="w-16 text-center py-1 border border-slate-300 dark:border-slate-600 rounded focus:ring-emerald-500 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 disabled:bg-slate-100 disabled:text-slate-300">
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    } @else if (!isAiCalculating()) {
+                        <!-- Empty State -->
+                        <div class="text-center py-20 text-slate-400">
+                            <p>點擊上方「開始計算」以進行庫存分析。</p>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Step 1: Select Supplier -->
+            @if (currentStep() === 'select-supplier') {
+                <div class="p-4 max-w-3xl mx-auto space-y-4">
+                    <div class="relative">
+                        <input 
+                          type="text" 
+                          placeholder="搜尋供應商代碼、簡稱、統編..." 
+                          class="w-full pl-10 pr-4 py-3 text-lg border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sky-500 shadow-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                          [value]="wizardSearchTerm()"
+                          (input)="onWizardSearchChange($event)"
+                          autoFocus
+                        />
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                           <svg class="h-6 w-6 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @for (sup of wizardFilteredSuppliers(); track sup.code) {
+                            <button (click)="selectSupplier(sup)" class="flex flex-col text-left bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:ring-1 hover:ring-sky-500 transition-all shadow-sm group">
+                                <div class="flex justify-between items-start w-full">
+                                    <div class="flex flex-col justify-center">
+                                        <span class="font-bold text-lg text-slate-800 dark:text-white group-hover:text-sky-600 transition-colors">{{ sup.shortName }}</span>
+                                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ sup.fullName }}</span>
+                                    </div>
+                                    <span class="text-3xl font-black font-mono text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 px-3 py-1 rounded-lg border border-sky-100 dark:border-sky-800 tracking-tight shadow-sm">{{ sup.code }}</span>
+                                </div>
+                                <div class="mt-3 w-full border-t border-slate-100 dark:border-slate-700 pt-2 flex justify-end items-center">
+                                     <span class="text-xs font-bold text-sky-600 opacity-0 group-hover:opacity-100 transition-opacity">點擊選擇 &rarr;</span>
+                                </div>
+                            </button>
+                        } @empty {
+                            <div class="col-span-full text-center py-12 text-slate-500">
+                                找不到符合的供應商
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Step 2: Select Products -->
+            @if (currentStep() === 'select-products') {
+                <div class="h-full flex flex-col">
+                    <!-- Sticky Search -->
+                    <div class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-900 p-4 pb-2 border-b border-transparent">
+                        <div class="max-w-3xl mx-auto relative flex space-x-2">
+                             <input 
+                              type="text" 
+                              placeholder="搜尋商品名稱、商品編號(ID)..." 
+                              class="w-full pl-10 pr-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sky-500 shadow-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                              [value]="wizardSearchTerm()"
+                              (input)="onWizardSearchChange($event)"
+                            />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                               <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </div>
+                            
+                            <!-- Updated Supplier Filter inside Wizard -->
+                            <select 
+                                (change)="onListSupplierFilterChange($event)" 
+                                class="w-full md:w-48 border border-slate-300 dark:border-slate-600 rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm">
+                                <option value="">全部供應商</option>
+                                @for(s of suppliers(); track s.code) {
+                                    <option [value]="s.code">{{ s.code }} - {{ s.shortName }}</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Product Grid -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div class="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 pb-24">
+                            @for (prod of wizardFilteredProducts(); track prod.id) {
+                                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between h-full relative overflow-hidden group hover:border-sky-300 dark:hover:border-sky-700 transition-colors">
+                                    
+                                    <!-- Left: Info -->
+                                    <div class="flex-1 min-w-0 pr-3">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <h3 class="font-bold text-slate-800 dark:text-white truncate text-base" [title]="prod.name">{{ prod.name }}</h3>
+                                        </div>
+                                        <div class="flex items-center text-xs text-slate-500 dark:text-slate-400 space-x-3">
+                                             <span class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-300 font-mono">{{ prod.id }}</span>
+                                             <span>成本: <span class="font-medium text-slate-700 dark:text-slate-300">${{ prod.costBeforeTax }}</span></span>
+                                             <span [class.text-red-600]="prod.stock < prod.safetyStock" [class.dark:text-red-400]="prod.stock < prod.safetyStock" [class.font-bold]="prod.stock < prod.safetyStock">庫存: {{ prod.stock }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right: Action (Stepper) -->
+                                    <div class="flex-shrink-0">
+                                        @if (getCartItem(prod.id)) {
+                                            <!-- NEW: Remove Button Absolute -->
+                                            <button (click)="removeFromCart(prod.id); $event.stopPropagation()" 
+                                                    class="absolute top-2 right-2 p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-full shadow-sm transition-colors z-10"
+                                                    title="取消選取">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
+
+                                            <!-- Editable Quantity Stepper -->
+                                            <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg overflow-hidden border border-sky-300 dark:border-sky-600 shadow-sm mt-4">
+                                                <button (click)="updateCartQty(prod.id, -1)" class="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors">
+                                                    @if (getCartItem(prod.id)!.quantity === 1) {
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    } @else {
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+                                                    }
+                                                </button>
+                                                <input type="number" 
+                                                       [value]="getCartItem(prod.id)!.quantity" 
+                                                       (input)="onQtyInput(prod.id, $event)"
+                                                       class="w-10 text-center bg-transparent border-none text-sm font-bold text-slate-800 dark:text-white focus:ring-0 p-0 appearance-none h-8">
+                                                <button (click)="updateCartQty(prod.id, 1)" class="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-sky-200 dark:hover:bg-sky-800 hover:text-sky-700 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                                </button>
+                                            </div>
+                                        } @else {
+                                            <!-- Add Button -->
+                                            <button (click)="addToCart(prod)" class="w-9 h-9 rounded-full bg-sky-100 dark:bg-slate-700 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:bg-sky-500 group-hover:text-white transition-colors shadow-sm" title="加入清單">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            } @empty {
+                                <div class="col-span-full text-center py-12">
+                                    <div class="text-slate-400 mb-2 text-4xl">📦</div>
+                                    <p class="text-slate-500">找不到相關商品。</p>
+                                    <p class="text-xs text-slate-400 mt-1">請確認該供應商是否有此商品。</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Step 3: Cart Adjust (Quantity) -->
+            @if (currentStep() === 'cart-adjust') {
+                <div class="h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-4 max-w-3xl mx-auto w-full px-4">
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-white">請填寫數量</h3>
+                        <span class="text-sm text-slate-500 dark:text-slate-400">已選 {{ cart().length }} 項商品</span>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm flex-1 overflow-y-auto max-w-3xl mx-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">商品名稱</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase w-32">數量</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">成本</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">小計</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                @for (item of cart(); track item.product.id) {
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-medium text-slate-900 dark:text-white">{{ item.product.name }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">{{ item.product.id }} | 庫存: {{ item.product.stock }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <input type="number" 
+                                                   [value]="item.quantity" 
+                                                   (input)="onQtyInput(item.product.id, $event)"
+                                                   class="w-20 text-center py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-lg" min="1">
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm text-slate-600 dark:text-slate-300">
+                                            ${{ item.product.costBeforeTax | number }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm font-bold text-slate-800 dark:text-white">
+                                            ${{ item.product.costBeforeTax * item.quantity | number }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <button (click)="removeFromCart(item.product.id)" class="text-slate-400 hover:text-red-500 p-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-end text-xl font-bold text-slate-800 dark:text-white space-x-6 px-4 max-w-3xl mx-auto w-full mb-24">
+                        <span class="text-sm font-normal text-slate-500 dark:text-slate-400 mt-2">預估成本總計</span>
+                        <span>${{ cartTotal() | number }}</span>
+                    </div>
+                </div>
+            }
+
+            <!-- Step 4: Confirm Purchase Order (Review Summary Card) -->
+            @if (currentStep() === 'review') {
+                <div class="h-full flex flex-col items-center justify-center p-4 overflow-y-auto">
+                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg p-8 w-full max-w-3xl" [formGroup]="poHeaderForm">
+                        <h3 class="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center border-b border-slate-100 dark:border-slate-700 pb-4">
+                            {{ (editingPoNumber() || tempPoNumber()) ? '採購單確認 (更新)' : '採購單確認 (新增)' }}
+                        </h3>
+                        
+                        <div class="space-y-6 mb-8">
+                            <!-- Top Section: 2 Columns -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                
+                                <!-- Left Column: Supplier & Logistics -->
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">供應商資料</h4>
+                                        <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600">
+                                            <p class="text-lg font-medium dark:text-white">{{ selectedSupplier()?.shortName }}</p>
+                                            <p class="text-sm text-slate-500">{{ selectedSupplier()?.code }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">物流方式</label>
+                                        <select formControlName="logistics" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            <option value="">請選擇</option>
+                                            @for(opt of logisticsOptions; track opt) {
+                                              <option [value]="opt">{{ opt }}</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">採購人員</label>
+                                        <input type="text" formControlName="purchaser" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">單據狀態</label>
+                                        <select formControlName="status" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            @for (status of statusOptions; track status) {
+                                                <option [value]="status">{{ status }}</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    
+                                </div>
+
+                                <!-- Right Column: Date Sequence -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-3">
+                                         <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">採購流程日期</label>
+                                    </div>
+                                    
+                                    <div class="relative pl-6 border-l-2 border-slate-200 dark:border-slate-700 space-y-5">
+                                        <!-- 1. Purchase Date -->
+                                        <div class="relative">
+                                            <div class="absolute -left-[29px] top-2.5 w-3.5 h-3.5 bg-sky-500 rounded-full border-2 border-white dark:border-slate-800 ring-1 ring-sky-200"></div>
+                                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">1. 採購日期 (Purchase)</label>
+                                            <input type="date" formControlName="purchaseDate" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                        </div>
+
+                                        <!-- 2. Expected Shipping -->
+                                        <div class="relative">
+                                            <div class="absolute -left-[29px] top-2.5 w-3.5 h-3.5 bg-purple-400 rounded-full border-2 border-white dark:border-slate-800 ring-1 ring-purple-200"></div>
+                                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">2. 預計出貨 (Shipping)</label>
+                                            <input type="date" formControlName="expectedShippingDate" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            <p class="text-[10px] text-slate-400 mt-1 flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                邏輯: 採購日 + 1 工作天
+                                            </p>
+                                        </div>
+
+                                        <!-- 3. Expected Delivery -->
+                                        <div class="relative">
+                                            <div class="absolute -left-[29px] top-2.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white dark:border-slate-800 ring-1 ring-emerald-200"></div>
+                                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">3. 預計到貨 (Delivery)</label>
+                                            <input type="date" formControlName="expectedDeliveryDate" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            <p class="text-[10px] text-slate-400 mt-1 flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                邏輯: 出貨日 + 1 工作天
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Invoice Status Checkbox -->
+                            <div class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center space-x-3 mt-2">
+                                <input type="checkbox" id="formInvoiceStatus" formControlName="invoiceStatus" class="h-5 w-5 text-sky-600 focus:ring-sky-500 border-gray-300 rounded cursor-pointer">
+                                <label for="formInvoiceStatus" class="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                                    已收到發票 (Invoice Received)
+                                </label>
+                            </div>
+
+                            <!-- Note -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">備註事項</label>
+                                <textarea formControlName="purchaseNote" rows="2" class="w-full p-2 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"></textarea>
+                            </div>
+
+                            <!-- Items Preview -->
+                            <div class="border rounded-lg overflow-hidden dark:border-slate-600 mt-4">
+                                <div class="bg-slate-50 dark:bg-slate-700 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 flex justify-between">
+                                    <span>採購項目 ({{ cart().length }})</span>
+                                    <span>總金額: ${{ cartTotal() | number }}</span>
+                                </div>
+                                <div class="max-h-48 overflow-y-auto p-4 space-y-2">
+                                    @for (item of cart(); track item.product.id) {
+                                        <div class="flex justify-between text-sm items-center">
+                                            <span class="dark:text-slate-200 w-2/3 truncate">{{ item.product.name }}</span>
+                                            <div class="flex items-center space-x-4">
+                                                <!-- Received Qty Input only visible when Editing existing order (receivedQuantity exists) -->
+                                                @if (editingPoNumber()) {
+                                                    <div class="flex items-center space-x-1">
+                                                        <span class="text-xs text-slate-400">已收:</span>
+                                                        <input type="number" 
+                                                               [value]="item.receivedQuantity" 
+                                                               (change)="updateReceivedQuantity(item.product.id, $event)"
+                                                               class="w-12 h-6 text-center text-xs border rounded bg-slate-50 dark:bg-slate-800 dark:text-white">
+                                                    </div>
+                                                }
+                                                <span class="text-slate-500 font-mono">x{{ item.quantity }}</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                @if (editingPoNumber()) {
+                                    <div class="bg-slate-50 dark:bg-slate-700/50 p-2 text-right">
+                                        <button (click)="receiveAllItems()" class="text-xs text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 font-medium">
+                                            一鍵全收 (Set All Received)
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Step 5: Generate Text (Final Step) -->
+            @if (currentStep() === 'generate-text') {
+                <div class="h-full flex flex-col items-center justify-center p-4">
+                    <div class="max-w-2xl w-full bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
+                        <div class="text-center mb-6">
+                            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                                <svg class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-800 dark:text-white">
+                                {{ (editingPoNumber() || tempPoNumber()) ? '更新成功！' : '建立成功！' }}
+                            </h2>
+                            <p class="text-slate-500 dark:text-slate-400 mt-2">您可以選擇範本並複製下方的採購通知。</p>
+                        </div>
+
+                        <!-- Template Selector (Categorized Buttons) -->
+                        <div class="mb-6 space-y-4">
+                            @for (group of categorizedTemplates(); track group.id) {
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase mb-2 flex items-center gap-2 opacity-70 dark:text-slate-300">
+                                        <!-- Render Icon via Path -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="group.iconPath" />
+                                        </svg>
+                                        {{ group.title }}
+                                    </h4>
+                                    <!-- CHANGED HERE: GRID COLS 2 -->
+                                    <div class="grid grid-cols-2 gap-3">
+                                        @for (tpl of group.items; track tpl.id) {
+                                            <button 
+                                                (click)="applyTemplate(tpl.id)"
+                                                class="px-3 py-3 rounded-lg text-sm font-bold border transition-all shadow-sm flex items-center justify-center text-center leading-tight min-h-[50px]"
+                                                [class]="selectedTemplateId() === tpl.id ? group.activeClass : group.colorClass">
+                                                {{ tpl.name }}
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="relative mb-6">
+                            <textarea 
+                                [(ngModel)]="generatedText"
+                                class="w-full h-48 p-4 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 dark:text-slate-200 shadow-inner"
+                            ></textarea>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <button (click)="copyAndFinish()" class="w-full py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-bold text-lg shadow-md transition-colors flex justify-center items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                複製並結束
+                            </button>
+                            
+                            <button (click)="finish()" class="w-full py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 font-medium transition-colors">
+                                直接結束
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Fixed Footer with Previous/Next Controls (Consistent) -->
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center items-center" *ngIf="currentStep() !== 'generate-text'">
+            <div class="max-w-4xl mx-auto w-full flex justify-between items-center px-4">
+                <!-- Previous Button -->
+                <button (click)="currentStep() === 'ai-wizard' ? currentStep.set('list') : goBack()" 
+                        class="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors">
+                    {{ currentStep() === 'select-supplier' ? '取消' : '上一步' }}
+                </button>
+
+                <!-- Status/Next Button -->
+                @if (currentStep() === 'select-products') {
+                    <div class="text-right mr-4">
+                        <div class="text-xs text-slate-500 dark:text-slate-400">已選 {{ cart().length }} 項</div>
+                        <div class="text-2xl font-bold text-sky-600 dark:text-sky-400">${{ cartTotal() | number }}</div>
+                    </div>
+                    <button (click)="goToCartAdjust()" [disabled]="cart().length === 0" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 disabled:bg-slate-300 disabled:cursor-not-allowed font-bold text-lg flex items-center transition-all">
+                        下一步 &rarr;
+                    </button>
+                } 
+                @else if (currentStep() === 'cart-adjust') {
+                    <button (click)="goToReview()" [disabled]="cart().length === 0" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 disabled:bg-slate-300 disabled:cursor-not-allowed font-bold text-lg flex items-center transition-all">
+                        下一步 &rarr;
+                    </button>
+                }
+                @else if (currentStep() === 'review') {
+                    <button (click)="submitOrder()" class="px-8 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow-lg font-bold text-lg transition-colors flex justify-center items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        {{ (editingPoNumber() || tempPoNumber()) ? '確認更新' : '確認下單' }}
+                    </button>
+                }
+                @else if (currentStep() === 'ai-wizard') {
+                    <button (click)="confirmAiGeneration()" 
+                            [disabled]="isGenerating()"
+                            class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg font-bold text-lg flex items-center transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100 hover:scale-105">
+                        @if (isGenerating()) {
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            生成中...
+                        } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            生成採購單 (Generate POs)
+                        }
+                    </button>
+                }
+                @else {
+                    <!-- Placeholder for non-action steps or selections where click drives next -->
+                    <div class="text-slate-400 text-sm italic" *ngIf="currentStep() !== 'select-products' && currentStep() !== 'cart-adjust' && currentStep() !== 'review' && currentStep() !== 'ai-wizard'">
+                        請選擇項目以繼續
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+  }
+</div>
+
+<!-- Print Preview Modal (Keep existing) -->
+@if (showPrintPreview()) {
+  <div class="fixed inset-0 z-[100] bg-slate-900/75 flex flex-col items-center justify-center backdrop-blur-sm animate-[fadeIn_0.2s]">
+    <div class="bg-white dark:bg-slate-800 w-full h-full flex flex-col overflow-hidden shadow-2xl">
+      <!-- Toolbar -->
+      <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+          列印預覽
+        </h3>
+        <div class="flex space-x-3">
+          <button (click)="confirmPrint()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded shadow flex items-center font-bold">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            列印
+          </button>
+          <button (click)="closePrintPreview()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded font-medium">關閉</button>
+        </div>
+      </div>
+      <!-- Preview Area -->
+      <div class="flex-1 bg-slate-100 dark:bg-slate-900 p-4 overflow-hidden flex justify-center">
+         <iframe #previewFrame [src]="previewHtmlSrc()" class="w-full h-full bg-white shadow-lg rounded max-w-[210mm] border-0"></iframe>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Note Tooltip -->
+@if (noteTooltip()) {
+    <div class="fixed z-[200] max-w-sm bg-slate-900/95 text-white text-xs rounded-lg shadow-2xl p-4 text-left transform -translate-x-1/2 -translate-y-full pointer-events-none break-words whitespace-pre-wrap leading-relaxed border border-slate-700 backdrop-blur-sm"
+         [style.top.px]="noteTooltip()!.y"
+         [style.left.px]="noteTooltip()!.x">
+        <div class="font-bold mb-1 text-slate-300 border-b border-slate-700 pb-1">完整備註</div>
+        {{ noteTooltip()!.text }}
+        <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900/95"></div>
+    </div>
+}

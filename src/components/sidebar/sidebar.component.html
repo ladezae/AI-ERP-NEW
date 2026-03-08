@@ -1,0 +1,85 @@
+
+
+<!-- Mobile Toggle Button (Fixed Position) -->
+<button 
+  (click)="toggleMobileMenu()"
+  class="md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-slate-800 text-white shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors focus:outline-none"
+  aria-label="Toggle Menu">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+</button>
+
+<!-- Mobile Backdrop -->
+@if (isMobileMenuOpen()) {
+  <div class="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm transition-opacity" (click)="closeMobileMenu()"></div>
+}
+
+<!-- Sidebar Container -->
+<div class="fixed inset-y-0 left-0 z-40 w-64 bg-slate-800 text-slate-100 flex flex-col h-full overflow-hidden transition-transform duration-300 md:translate-x-0 md:static md:h-full shadow-xl md:shadow-none"
+     [class.-translate-x-full]="!isMobileMenuOpen()">
+  
+  <!-- Header -->
+  <div class="flex items-center justify-center h-20 border-b border-slate-700 flex-shrink-0 relative">
+    <div class="flex items-center space-x-2">
+      <svg class="h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h12A2.25 2.25 0 0 0 20.25 14.25V3M3.75 3v-1.5A2.25 2.25 0 0 1 6 0h12A2.25 2.25 0 0 1 20.25 1.5v1.5M3.75 3h16.5M16.5 6.75h.008v.008H16.5V6.75Zm-2.25 0h.008v.008H14.25V6.75Zm-2.25 0h.008v.008H12V6.75Zm-2.25 0h.008v.008H9.75V6.75Zm-2.25 0h.008v.008H7.5V6.75Zm-2.25 0h.008v.008H5.25V6.75Zm11.25 4.5h.008v.008H16.5v-4.5Zm-2.25 0h.008v.008H14.25v-4.5Zm-2.25 0h.008v.008H12v-4.5Zm-2.25 0h.008v.008H9.75v-4.5Zm-2.25 0h.008v.008H7.5v-4.5Zm-2.25 0h.008v.008H5.25v-4.5Z" />
+      </svg>
+      <h1 class="text-xl font-bold">ERP AI 平台</h1>
+    </div>
+    
+    <!-- Close Button (Mobile Only, Inside Sidebar) -->
+    <button (click)="closeMobileMenu()" class="md:hidden absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-white">
+       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg>
+    </button>
+  </div>
+
+  <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+    @for (item of navItems; track item.key) {
+      <a
+        (click)="selectView(item.key)"
+        class="flex items-center px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+        [class]="activeView() === item.key ? 'bg-sky-500 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'">
+        <span [innerHTML]="item.icon | safeHtml"></span>
+        <span class="ml-4 font-medium">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="px-4 py-4 border-t border-slate-700 flex-shrink-0 flex items-center justify-between">
+      <div class="flex items-center space-x-3 min-w-0 mr-2">
+        <img class="h-8 w-8 rounded-full object-cover flex-shrink-0" [src]="dataService.currentUser()?.avatarUrl" alt="User avatar">
+        <div class="overflow-hidden min-w-0">
+          <p class="font-semibold text-white truncate text-sm">{{ dataService.currentUser()?.name }}</p>
+          <p class="text-xs text-slate-400 truncate">{{ dataService.currentUser()?.roleName }}</p>
+        </div>
+      </div>
+      
+      <div class="flex space-x-1">
+        <button (click)="clearChatHistory()" 
+                class="flex-shrink-0 p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-full transition-colors" 
+                title="清除對話紀錄">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+
+        <button (click)="refreshData()" 
+                class="flex-shrink-0 p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full transition-colors" 
+                title="刷新資料"
+                [disabled]="dataService.isRefreshing()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" [class.animate-spin]="dataService.isRefreshing()">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+        </button>
+
+        <button (click)="logout()" class="flex-shrink-0 p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full transition-colors" title="登出系統">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+          </svg>
+        </button>
+      </div>
+  </div>
+</div>

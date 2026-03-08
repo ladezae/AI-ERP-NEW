@@ -1,0 +1,7 @@
+{
+  "name": "新 ANGULAR ERP AI 平台",
+  "description": "一個現代化的企業資源規劃 (ERP) 應用程式，整合了雲端與裝置端 (Edge AI) 助理。提供客戶專屬入口網站、智慧洞察、語音指令及自動化單據管理。",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

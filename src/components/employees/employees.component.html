@@ -1,0 +1,356 @@
+
+
+
+<div class="p-8 h-full overflow-y-auto">
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold text-slate-800 dark:text-white">員工與權限管理</h1>
+    <p class="text-slate-500 dark:text-slate-400 mt-1">管理公司員工帳號、部門歸屬以及系統操作權限。</p>
+  </header>
+
+  <!-- Tabs -->
+  <div class="border-b border-slate-200 dark:border-slate-700 mb-6">
+    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+      <button 
+        (click)="setActiveTab('employees')"
+        [class]="activeTab() === 'employees' 
+          ? 'border-sky-500 text-sky-600 dark:text-sky-400' 
+          : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'"
+        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-5.176-5.97M15 21h6m-6-15h6m-6 3h6m-6 3h6" />
+        </svg>
+        <span>員工列表 (Employees)</span>
+      </button>
+
+      <button 
+        (click)="setActiveTab('roles')"
+        [class]="activeTab() === 'roles' 
+          ? 'border-sky-500 text-sky-600 dark:text-sky-400' 
+          : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'"
+        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+        <span>角色與權限 (Roles & Permissions)</span>
+      </button>
+    </nav>
+  </div>
+
+  @switch (activeTab()) {
+    @case ('employees') {
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 transition-colors">
+        <!-- Action Bar -->
+        <div class="flex justify-between items-center mb-4">
+          <div class="relative w-full max-w-sm">
+            <input 
+              type="text" 
+              placeholder="搜尋員工、Email、職位..." 
+              class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+              [value]="searchTerm()"
+              (input)="onSearchTermChange($event)"
+              />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+          </div>
+          <button 
+            (click)="openAddEmployeeModal()"
+            class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <span>新增員工</span>
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto max-h-[65vh]">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-700/50 sticky top-0 z-10 shadow-sm">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700/50">員工資訊</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700/50">部門 / 職稱</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700/50">角色權限</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700/50">狀態</th>
+                <th scope="col" class="relative px-6 py-3 bg-slate-50 dark:bg-slate-700/50">
+                  <span class="sr-only">操作</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+              @for (emp of filteredEmployees(); track emp.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <img class="h-10 w-10 rounded-full object-cover" [src]="emp.avatarUrl" alt="">
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-slate-900 dark:text-white">{{ emp.name }}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">{{ emp.email }}</div>
+                        @if(emp.account) {
+                           <div class="text-[10px] text-sky-500 mt-0.5 font-mono">Login: {{emp.account}}</div>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-slate-900 dark:text-white">{{ emp.department }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ emp.jobTitle }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300">
+                      {{ emp.roleName }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      [class.bg-green-100]="emp.status === 'Active'"
+                      [class.text-green-800]="emp.status === 'Active'"
+                      [class.dark:bg-green-900/40]="emp.status === 'Active'"
+                      [class.dark:text-green-300]="emp.status === 'Active'"
+                      [class.bg-gray-100]="emp.status !== 'Active'"
+                      [class.text-gray-800]="emp.status !== 'Active'"
+                      [class.dark:bg-gray-700]="emp.status !== 'Active'"
+                      [class.dark:text-gray-300]="emp.status !== 'Active'">
+                      {{ emp.status === 'Active' ? '啟用中' : '已停用' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button (click)="openEditEmployeeModal(emp)" class="text-sky-600 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-300">編輯</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                   <td colspan="5" class="text-center py-10 text-slate-500 dark:text-slate-400">找不到符合搜尋條件的員工。</td>
+               </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @case ('roles') {
+      <!-- Roles Action Bar -->
+      <div class="flex justify-end mb-4">
+          <button 
+            (click)="openAddRoleModal()"
+            class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <span>新增角色</span>
+          </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (role of roles(); track role.id) {
+          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full transition-colors">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 flex justify-between items-start">
+              <div>
+                 <h3 class="text-lg font-bold text-slate-800 dark:text-white">{{ role.name }}</h3>
+                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ role.description }}</p>
+              </div>
+              <button (click)="openEditRoleModal(role)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 text-sm font-medium">
+                設定權限
+              </button>
+            </div>
+            
+            <div class="p-6 flex-1">
+               <h4 class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase mb-3">存取權限摘要</h4>
+               <ul class="space-y-2">
+                 @for (perm of role.permissions; track perm.moduleId) {
+                   @if (perm.canRead) {
+                      <li class="flex items-center text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        <span class="text-slate-700 dark:text-slate-300 w-24">{{ perm.moduleName }}</span>
+                        <div class="flex space-x-1 ml-auto">
+                           @if (perm.canWrite) { <span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">編輯</span> }
+                           @if (perm.canDelete) { <span class="text-xs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">刪除</span> }
+                        </div>
+                      </li>
+                   }
+                 }
+               </ul>
+            </div>
+            
+            <div class="bg-slate-50 dark:bg-slate-700/50 px-6 py-3 border-t border-slate-100 dark:border-slate-700">
+               <div class="text-xs text-slate-400 dark:text-slate-500">ID: {{ role.id }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- Employee Modal -->
+@if (showEmployeeModal()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeEmployeeModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <form [formGroup]="employeeForm" (ngSubmit)="onEmployeeSubmit()">
+          <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[85vh] overflow-y-auto">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+              {{ isEditMode() ? '編輯員工資料' : '新增員工' }}
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div class="col-span-full border-b dark:border-slate-700 pb-2 mb-2">
+                 <h4 class="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase">基本資料</h4>
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">員工編號 (ID)</label>
+                  <input type="text" formControlName="id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 disabled:bg-slate-100 disabled:text-slate-500 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">姓名</label>
+                  <input type="text" formControlName="name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">Email</label>
+                  <input type="email" formControlName="email" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">電話</label>
+                  <input type="tel" formControlName="phone" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">部門</label>
+                  <select formControlName="department" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                     <option value="">請選擇</option>
+                     @for (dept of departments; track dept) {
+                       <option [value]="dept">{{ dept }}</option>
+                     }
+                  </select>
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">職稱</label>
+                  <input type="text" formControlName="jobTitle" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">到職日期</label>
+                  <input type="date" formControlName="joinDate" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               
+               <div class="col-span-full border-b dark:border-slate-700 pb-2 mb-2 mt-4">
+                 <h4 class="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase">權限與帳戶</h4>
+               </div>
+               
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">系統角色</label>
+                  <select formControlName="roleId" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                     <option value="">請選擇</option>
+                     @for (r of roles(); track r.id) {
+                       <option [value]="r.id">{{ r.name }}</option>
+                     }
+                  </select>
+               </div>
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">帳號狀態</label>
+                  <select formControlName="status" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                     <option value="Active">啟用中 (Active)</option>
+                     <option value="Inactive">已停用 (Inactive)</option>
+                  </select>
+               </div>
+               
+               <!-- Login Credentials Group -->
+               <div class="col-span-full bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-600 mt-2">
+                   <h5 class="text-xs font-bold text-sky-600 dark:text-sky-400 mb-3 uppercase">系統登入憑證 (Login Credentials)</h5>
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">登入帳號 (選填)</label>
+                          <input type="text" formControlName="account" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="用於系統登入">
+                       </div>
+                       <div>
+                          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">登入密碼 (選填)</label>
+                          <input type="text" formControlName="password" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="設定密碼">
+                       </div>
+                   </div>
+                   <p class="text-xs text-slate-400 mt-2">* 若不填寫帳號密碼，該員工將無法登入系統。</p>
+               </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100 dark:border-slate-600">
+            <button type="submit" [disabled]="employeeForm.invalid" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-gray-400">
+              儲存
+            </button>
+            <button type="button" (click)="closeEmployeeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Role Permissions Modal -->
+@if (showRoleModal()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeRoleModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+        <form [formGroup]="roleForm" (ngSubmit)="onRoleSubmit()">
+          <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[85vh] overflow-y-auto">
+            <div class="mb-4">
+               <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">{{ isEditMode() ? '編輯角色權限' : '新增角色' }}</h3>
+               
+               <div class="mt-4 grid grid-cols-1 gap-4">
+                   <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">角色名稱 (Role Name)</label>
+                      <input type="text" formControlName="name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                   </div>
+                   <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">描述 (Description)</label>
+                      <input type="text" formControlName="description" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                   </div>
+               </div>
+            </div>
+            
+            <div class="overflow-x-auto border dark:border-slate-600 rounded-lg mt-4">
+               <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                  <thead class="bg-slate-50 dark:bg-slate-700">
+                     <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">模組名稱</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">讀取 (Read)</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">寫入 (Write)</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">刪除 (Delete)</th>
+                     </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700" formArrayName="permissions">
+                     @for (perm of permissionsArray.controls; track $index) {
+                        <tr [formGroupName]="$index">
+                           <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                              {{ perm.get('moduleName')?.value }}
+                           </td>
+                           <td class="px-4 py-3 whitespace-nowrap text-center">
+                              <input type="checkbox" formControlName="canRead" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700">
+                           </td>
+                           <td class="px-4 py-3 whitespace-nowrap text-center">
+                              <input type="checkbox" formControlName="canWrite" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700">
+                           </td>
+                           <td class="px-4 py-3 whitespace-nowrap text-center">
+                              <input type="checkbox" formControlName="canDelete" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700">
+                           </td>
+                        </tr>
+                     }
+                  </tbody>
+               </table>
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100 dark:border-slate-600">
+            <button type="submit" [disabled]="roleForm.invalid" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-gray-400">
+              儲存
+            </button>
+            <button type="button" (click)="closeRoleModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

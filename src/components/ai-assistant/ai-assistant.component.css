@@ -1,0 +1,15 @@
+/* We add a simple animation here as Tailwind config is not available in this environment */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fixed.bottom-24 {
+  animation: slide-up 0.3s ease-out forwards;
+}

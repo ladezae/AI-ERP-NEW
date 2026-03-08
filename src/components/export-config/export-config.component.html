@@ -1,0 +1,460 @@
+
+
+<div class="p-8 h-full flex flex-col">
+  <header class="mb-6 flex justify-between items-start flex-shrink-0">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800 dark:text-white">單據版型設計 (Layout Designer)</h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-1">視覺化拖曳排版，自訂您的訂單、出貨單與報價單樣式。</p>
+    </div>
+    <button (click)="openAddModal()" class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 shadow-sm">
+       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+       <span>新增版型</span>
+    </button>
+  </header>
+
+  <!-- Template Grid List -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pb-4">
+    @for (tpl of exportTemplates(); track tpl.id) {
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-0 shadow-sm hover:shadow-lg transition-all relative group overflow-hidden flex flex-col h-64">
+         <!-- Preview Thumbnail (Mock) -->
+         <div class="h-32 bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 relative overflow-hidden flex justify-center p-4">
+             <div class="w-32 h-40 bg-white shadow-sm text-[4px] text-slate-300 p-2 overflow-hidden flex flex-col gap-1 select-none pointer-events-none transform scale-100 origin-top">
+                 <div class="w-full h-2 bg-slate-200 mb-1"></div> <!-- Header -->
+                 <div class="w-20 h-3 bg-slate-300 mx-auto mb-2"></div> <!-- Title -->
+                 <div class="w-full h-8 border border-slate-200 mb-1"></div> <!-- Info -->
+                 <div class="w-full h-10 border border-slate-200"></div> <!-- Table -->
+             </div>
+             <!-- Hover Overlay -->
+             <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                 <button (click)="openEditModal(tpl)" class="bg-white text-sky-600 p-2 rounded-full shadow hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                 </button>
+                 <button (click)="deleteTemplate(tpl.id)" class="bg-white text-red-500 p-2 rounded-full shadow hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                 </button>
+             </div>
+         </div>
+         
+         <div class="p-5 flex flex-col flex-1 justify-between">
+            <div>
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white truncate">{{ tpl.name }}</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">標題: {{ tpl.title }}</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-1 mt-3">
+               <span class="px-2 py-0.5 rounded text-[10px] border" [class.bg-green-50]="tpl.showPrice" [class.text-green-600]="tpl.showPrice" [class.border-green-200]="tpl.showPrice" [class.bg-slate-50]="!tpl.showPrice" [class.text-slate-500]="!tpl.showPrice">
+                   {{ tpl.showPrice ? '顯示金額' : '隱藏金額' }}
+               </span>
+               <span class="px-2 py-0.5 rounded text-[10px] bg-slate-50 text-slate-500 border border-slate-200">
+                   {{ tpl.sections?.length || 0 }} 個區塊
+               </span>
+            </div>
+         </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Full Screen Designer Modal -->
+@if (showModal() && currentTemplate()) {
+  <div class="fixed inset-0 z-50 flex flex-col bg-slate-100 dark:bg-slate-900 animate-[fadeIn_0.2s_ease-out]">
+      <!-- Header Toolbar -->
+      <div class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-6 shadow-sm z-20">
+          <div class="flex items-center space-x-4">
+              <button (click)="closeModal()" class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <div>
+                  <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                      {{ isEditMode() ? '編輯版型' : '新增版型' }}
+                      <span class="mx-2 text-slate-300">|</span>
+                      <input type="text" [(ngModel)]="currentTemplate()!.name" class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-sky-500 focus:outline-none text-sm px-1 py-0.5 w-48" placeholder="輸入版型名稱">
+                  </h2>
+              </div>
+          </div>
+          
+          <div class="flex items-center space-x-3">
+              @if (previewData().isReal) {
+                  <span class="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded">使用真實資料預覽</span>
+              } @else {
+                  <span class="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded">使用範例資料</span>
+              }
+              <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1 mr-4">
+                  <button (click)="updateZoom(-0.1)" class="p-1 hover:bg-white dark:hover:bg-slate-600 rounded text-slate-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg></button>
+                  <span class="text-xs w-12 text-center text-slate-600 dark:text-slate-300 font-mono">{{ (previewScale() * 100).toFixed(0) }}%</span>
+                  <button (click)="updateZoom(0.1)" class="p-1 hover:bg-white dark:hover:bg-slate-600 rounded text-slate-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></button>
+              </div>
+              <button (click)="saveTemplate()" class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-md font-medium transition-colors">
+                  儲存設計
+              </button>
+          </div>
+      </div>
+
+      <!-- Main Workspace -->
+      <div class="flex-1 flex overflow-hidden">
+          
+          <!-- Left Sidebar: Configuration -->
+          <div class="w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden z-10">
+              <!-- Tabs -->
+              <div class="flex border-b border-slate-200 dark:border-slate-700">
+                  <button (click)="setSidebarTab('layout')" 
+                          class="flex-1 py-3 text-sm font-medium transition-colors border-b-2"
+                          [class.text-sky-600]="sidebarTab() === 'layout'"
+                          [class.border-sky-500]="sidebarTab() === 'layout'"
+                          [class.bg-sky-50]="sidebarTab() === 'layout'"
+                          [class.dark:bg-sky-900/10]="sidebarTab() === 'layout'"
+                          [class.text-slate-500]="sidebarTab() !== 'layout'"
+                          [class.border-transparent]="sidebarTab() !== 'layout'">版面配置</button>
+                  
+                  <button (click)="setSidebarTab('global')" 
+                          class="flex-1 py-3 text-sm font-medium transition-colors border-b-2"
+                          [class.text-sky-600]="sidebarTab() === 'global'"
+                          [class.border-sky-500]="sidebarTab() === 'global'"
+                          [class.bg-sky-50]="sidebarTab() === 'global'"
+                          [class.dark:bg-sky-900/10]="sidebarTab() === 'global'"
+                          [class.text-slate-500]="sidebarTab() !== 'global'"
+                          [class.border-transparent]="sidebarTab() !== 'global'">全域設定</button>
+              </div>
+
+              <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                  
+                  @if (sidebarTab() === 'layout') {
+                      <!-- Section List (Draggable) -->
+                      <div>
+                          <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 px-1">區塊順序 (由上至下)</h3>
+                          <div class="space-y-2">
+                              @for (section of currentTemplate()!.sections ?? []; track section.id; let idx = $index) {
+                                  <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg p-3 group transition-all"
+                                       [class.ring-2]="activeSectionId() === section.id"
+                                       [class.ring-sky-500]="activeSectionId() === section.id"
+                                       [class.border-sky-500]="activeSectionId() === section.id"
+                                       [class.draggable-source]="draggedSectionIndex() === idx"
+                                       (click)="activeSectionId.set(section.id)"
+                                       draggable="true"
+                                       (dragstart)="onDragStart($event, idx)"
+                                       (dragover)="onDragOver($event)"
+                                       (drop)="onDrop($event, idx)">
+                                      
+                                      <div class="flex items-center justify-between">
+                                          <div class="flex items-center space-x-2 overflow-hidden">
+                                              <div class="cursor-move text-slate-400 hover:text-slate-600">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                              </div>
+                                              <span class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                                                  {{ section.type === 'custom_text' ? (section.title || '自訂文字') : 
+                                                     section.type === 'gap' ? '空白間隔' : 
+                                                     getSectionLabel(section.type) }}
+                                              </span>
+                                          </div>
+                                          <div class="flex items-center space-x-1">
+                                              <input type="checkbox" [(ngModel)]="section.visible" class="h-4 w-4 text-sky-600 rounded border-gray-300 focus:ring-sky-500 cursor-pointer" title="顯示/隱藏">
+                                              <button (click)="removeSection(section.id); $event.stopPropagation()" class="p-1 text-slate-400 hover:text-red-500 rounded"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                          </div>
+                                      </div>
+
+                                      <!-- Expandable Settings for Active Section -->
+                                      @if (activeSectionId() === section.id) {
+                                          <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600 space-y-3 animate-[fadeIn_0.2s]">
+                                              <!-- Special Setting for Company Header (Merged Title) -->
+                                              @if (section.type === 'company_header') {
+                                                  <div>
+                                                      <label class="block text-xs text-slate-500 mb-1">單據標題</label>
+                                                      <input type="text" [(ngModel)]="currentTemplate()!.title" class="w-full text-sm p-1.5 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="例如：訂購單">
+                                                      <p class="text-[10px] text-slate-400 mt-1">此標題將顯示於公司抬頭中央。</p>
+                                                  </div>
+                                              }
+                                              
+                                              @if (section.type === 'document_title') {
+                                                  <div>
+                                                      <label class="block text-xs text-slate-500 mb-1">標題文字</label>
+                                                      <input type="text" [(ngModel)]="currentTemplate()!.title" class="w-full text-sm p-1.5 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                                                  </div>
+                                              }
+                                              @if (section.type === 'custom_text') {
+                                                  <div>
+                                                      <label class="block text-xs text-slate-500 mb-1">標題 (選填)</label>
+                                                      <input type="text" [(ngModel)]="section.title" class="w-full text-sm p-1.5 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                                                  </div>
+                                                  <div>
+                                                      <label class="block text-xs text-slate-500 mb-1">內容</label>
+                                                      <textarea [(ngModel)]="section.content" rows="4" class="w-full text-sm p-1.5 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white"></textarea>
+                                                  </div>
+                                              }
+                                              @if (section.type === 'gap') {
+                                                  <div>
+                                                      <label class="block text-xs text-slate-500 mb-1">高度 (mm)</label>
+                                                      <input type="number" [(ngModel)]="section.height" class="w-full text-sm p-1.5 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                                                  </div>
+                                              }
+                                              @if (section.type === 'items_table') {
+                                                   <div>
+                                                      <label class="block text-xs text-slate-500 mb-2">顯示欄位</label>
+                                                      <div class="grid grid-cols-2 gap-2">
+                                                          @for(col of availableColumns; track col.key) {
+                                                              <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                                                                  <input type="checkbox" [checked]="isColumnSelected(col.key)" (change)="toggleColumn(col.key)" class="rounded text-sky-600 border-gray-300">
+                                                                  <span class="text-slate-700 dark:text-slate-300">{{ col.label }}</span>
+                                                              </label>
+                                                          }
+                                                      </div>
+                                                      <label class="flex items-center space-x-2 text-xs cursor-pointer mt-3 pt-2 border-t dark:border-slate-600">
+                                                          <input type="checkbox" [(ngModel)]="currentTemplate()!.showPrice" class="rounded text-sky-600 border-gray-300">
+                                                          <span class="text-slate-700 dark:text-slate-300">顯示金額與總計</span>
+                                                      </label>
+                                                   </div>
+                                              }
+                                          </div>
+                                      }
+                                  </div>
+                              }
+                          </div>
+                      </div>
+
+                      <!-- Add Section Buttons -->
+                      <div>
+                          <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 px-1">加入新區塊</h3>
+                          <div class="grid grid-cols-2 gap-2">
+                              @for (type of sectionTypes; track type.type) {
+                                  <button (click)="addSection(type.type)" class="flex flex-col items-center justify-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-700 hover:border-sky-300 transition-colors text-slate-600 dark:text-slate-300">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" [attr.d]="type.icon" />
+                                      </svg>
+                                      <span class="text--[10px] text-center leading-tight">{{ type.label }}</span>
+                                  </button>
+                              }
+                          </div>
+                      </div>
+                  } @else {
+                      <!-- New Global Settings Form -->
+                      <div class="space-y-6 animate-[fadeIn_0.2s]">
+                          <!-- Basic Info -->
+                          <div class="space-y-3">
+                              <h3 class="text-xs font-bold text-slate-400 uppercase border-b border-slate-200 dark:border-slate-700 pb-1">基本資訊</h3>
+                              <div>
+                                  <label class="block text-xs text-slate-500 mb-1">版型名稱</label>
+                                  <input type="text" [(ngModel)]="currentTemplate()!.name" class="w-full text-sm p-2 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                              </div>
+                              <div>
+                                  <label class="block text-xs text-slate-500 mb-1">單據標題</label>
+                                  <input type="text" [(ngModel)]="currentTemplate()!.title" class="w-full text-sm p-2 border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="例如: 報價單">
+                                  <p class="text-[10px] text-slate-400 mt-1">此標題為預設值，若區塊內有設定標題將優先使用區塊設定。</p>
+                              </div>
+                          </div>
+
+                          <!-- Table Settings -->
+                          <div class="space-y-3">
+                              <h3 class="text-xs font-bold text-slate-400 uppercase border-b border-slate-200 dark:border-slate-700 pb-1">明細表全域設定</h3>
+                              
+                              <label class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700">
+                                  <input type="checkbox" [(ngModel)]="currentTemplate()!.showPrice" class="rounded text-sky-600 border-gray-300">
+                                  <span class="text-slate-700 dark:text-slate-300">顯示金額 (單價/小計/總計)</span>
+                              </label>
+
+                              <div>
+                                  <label class="block text-xs text-slate-500 mb-2">預設顯示欄位</label>
+                                  <div class="space-y-1">
+                                      @for(col of availableColumns; track col.key) {
+                                          <label class="flex items-center space-x-2 text-sm cursor-pointer p-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700">
+                                              <input type="checkbox" [checked]="isColumnSelected(col.key)" (change)="toggleColumn(col.key)" class="rounded text-sky-600 border-gray-300">
+                                              <span class="text-slate-700 dark:text-slate-300">{{ col.label }}</span>
+                                          </label>
+                                      }
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  }
+
+              </div>
+          </div>
+
+          <!-- Right Preview Area -->
+          <div class="flex-1 bg-slate-100 dark:bg-slate-900 overflow-auto p-12 flex justify-center items-start">
+              
+              <!-- A4 Page Container (Explicit Text Black) -->
+              <div class="preview-a4 text-black" [style.transform]="'scale(' + previewScale() + ')'">
+                  
+                  <!-- Dynamic Sections Rendering using previewData() signal -->
+                  @let data = previewData();
+                  
+                  @for (section of currentTemplate()!.sections ?? []; track section.id) {
+                      @if (section.visible) {
+                          <div class="preview-section relative group" 
+                               [class.ring-2]="activeSectionId() === section.id"
+                               [class.ring-sky-500]="activeSectionId() === section.id"
+                               (click)="activeSectionId.set(section.id)">
+                              
+                              @switch (section.type) {
+                                  @case ('company_header') {
+                                      <div class="flex justify-between items-end mb-2">
+                                          <!-- Left: Contact -->
+                                          <div class="text-xs w-1/3 leading-relaxed">
+                                              <div>電話：{{ data.company.phone }}</div>
+                                              <div>傳真：{{ data.company.fax }}</div>
+                                              <div>地址：{{ data.company.address }}</div>
+                                          </div>
+                                          <!-- Center: Title (Bottom Aligned) -->
+                                          <div class="w-1/3 text-center pb-1">
+                                              <h1 class="text-3xl font-bold tracking-widest text-black">
+                                                  {{ currentTemplate()!.title || '訂購單' }}
+                                              </h1>
+                                          </div>
+                                          <!-- Right: Company + Logo -->
+                                          <div class="text-right text-xs w-1/3 flex justify-end items-center gap-3">
+                                              <div class="leading-tight">
+                                                  @if (data.company.brandName) {
+                                                      <div class="font-bold tracking-wide text-black mb-1">{{ data.company.brandName }}</div>
+                                                  }
+                                                  <div class="font-bold text-sm text-black">{{ data.company.name }}</div>
+                                                  <div class="text-black mt-1">統編: {{ data.company.taxId }}</div>
+                                              </div>
+                                              @if (data.brandLogoUrl) {
+                                                  <div class="w-12 h-12 flex-shrink-0">
+                                                      <img [src]="data.brandLogoUrl" class="w-full h-full object-contain">
+                                                  </div>
+                                              }
+                                          </div>
+                                      </div>
+                                  }
+                                  @case ('document_title') {
+                                      <div class="text-center py-2">
+                                          <h1 class="text-2xl font-bold text-black">
+                                              {{ currentTemplate()!.title || '單據標題' }}
+                                          </h1>
+                                      </div>
+                                  }
+                                  @case ('customer_info') {
+                                      <!-- Conditional Merging Logic -->
+                                      <div class="border-black flex text-sm text-black"
+                                           [class.border]="!shouldMergeBottom(section)"
+                                           [class.border-b-0]="shouldMergeBottom(section)"
+                                           [class.border-t]="shouldMergeBottom(section)"
+                                           [class.border-l]="shouldMergeBottom(section)"
+                                           [class.border-r]="shouldMergeBottom(section)"
+                                           [class.mb-4]="!shouldMergeBottom(section)"
+                                           [class.mb-0]="shouldMergeBottom(section)">
+                                          <div class="w-3/5 border-r border-black p-2 space-y-1">
+                                              <div class="flex items-center"><span class="font-bold w-20">客戶名稱：</span><span>{{ data.customer.name }} <span class="text-xs font-normal">({{ data.customer.id }})</span></span></div>
+                                              <div class="flex items-center"><span class="font-bold w-20">抬頭統編：</span><span>{{ data.customer.fullName }}  {{ data.customer.taxId }}</span></div>
+                                              <div class="flex items-center"><span class="font-bold w-20">聯 絡 人：</span><span>{{ data.customer.contact }}</span></div>
+                                              <div class="flex items-center"><span class="font-bold w-20">電　　話：</span><span>{{ data.customer.phone }}</span></div>
+                                              <div class="flex items-center"><span class="font-bold w-20">送貨地址：</span><span>{{ data.customer.address }}</span></div>
+                                          </div>
+                                          <div class="w-2/5 p-2 flex flex-col justify-center space-y-1">
+                                              <div class="flex items-center"><span class="font-bold w-24 text-right">訂單日期：</span><span class="pl-2">{{ data.document.date }}</span></div>
+                                              <div class="flex items-center"><span class="font-bold w-24 text-right">訂單單號：</span><span class="pl-2">{{ data.document.id }}</span></div>
+                                          </div>
+                                      </div>
+                                  }
+                                  @case ('items_table') {
+                                      <div class="border border-black mb-4">
+                                          <table class="w-full text-sm text-black table-fixed">
+                                              <thead class="bg-gray-50 border-b border-black font-bold">
+                                                  <tr>
+                                                      <!-- 12-Column Grid Layout Logic -->
+                                                      @if (isColumnSelected('id')) { <th class="p-2 border-r border-black text-left w-2/12">品號</th> }
+                                                      @if (isColumnSelected('name')) { <th class="p-2 border-r border-black text-left w-4/12">品名</th> }
+                                                      @if (isColumnSelected('unit')) { <th class="p-2 border-r border-black text-center w-1/12">單位</th> }
+                                                      @if (isColumnSelected('qty')) { <th class="p-2 border-r border-black text-right w-1/12">數量</th> }
+                                                      @if (currentTemplate()!.showPrice && isColumnSelected('price')) { <th class="p-2 border-r border-black text-right w-1/12">單價</th> }
+                                                      @if (currentTemplate()!.showPrice && isColumnSelected('total')) { <th class="p-2 border-r border-black text-right w-1/12">金額</th> }
+                                                      @if (isColumnSelected('note')) { <th class="p-2 text-left w-2/12">備註</th> }
+                                                  </tr>
+                                              </thead>
+                                              <tbody>
+                                                  @for (item of data.items; track item.id) {
+                                                      <!-- Rows have no bottom border to look cleaner in print -->
+                                                      <tr class="h-8 last:border-0 align-top">
+                                                          @if (isColumnSelected('id')) { <td class="p-2 border-r border-black">{{ item.id }}</td> }
+                                                          @if (isColumnSelected('name')) { <td class="p-2 border-r border-black font-medium whitespace-normal break-words leading-tight">{{ item.name }}</td> }
+                                                          @if (isColumnSelected('unit')) { <td class="p-2 border-r border-black text-center">{{ item.unit }}</td> }
+                                                          @if (isColumnSelected('qty')) { <td class="p-2 border-r border-black text-right font-bold">{{ item.qty }}</td> }
+                                                          @if (currentTemplate()!.showPrice && isColumnSelected('price')) { <td class="p-2 border-r border-black text-right">{{ item.price | number }}</td> }
+                                                          @if (currentTemplate()!.showPrice && isColumnSelected('total')) { <td class="p-2 border-r border-black text-right">{{ item.total | number }}</td> }
+                                                          @if (isColumnSelected('note')) { <td class="p-2 text-xs truncate">{{ item.note }}</td> }
+                                                      </tr>
+                                                  }
+                                                  <!-- Filler Rows -->
+                                                  @for (i of [1,2,3]; track i) {
+                                                       <tr class="h-8 last:border-0">
+                                                          @if (isColumnSelected('id')) { <td class="p-1 border-r border-black"></td> }
+                                                          @if (isColumnSelected('name')) { <td class="p-1 border-r border-black"></td> }
+                                                          @if (isColumnSelected('unit')) { <td class="p-1 border-r border-black"></td> }
+                                                          @if (isColumnSelected('qty')) { <td class="p-1 border-r border-black"></td> }
+                                                          @if (currentTemplate()!.showPrice && isColumnSelected('price')) { <td class="p-1 border-r border-black"></td> }
+                                                          @if (currentTemplate()!.showPrice && isColumnSelected('total')) { <td class="p-1 border-r border-black"></td> }
+                                                          @if (isColumnSelected('note')) { <td class="p-1"></td> }
+                                                      </tr>
+                                                  }
+                                                  
+                                                  <!-- INTEGRATED TOTALS ROW (Footer inside Table) -->
+                                                  @if (currentTemplate()!.showPrice && isColumnSelected('total')) {
+                                                      <tr class="text-sm text-black border-t border-black">
+                                                          <td colspan="4" class="p-1 px-2 text-right font-bold border-r border-black bg-gray-50">合計</td>
+                                                          <td class="p-1 px-2 text-right border-r border-black font-mono">{{ data.totals.subtotal | number }}</td>
+                                                          @if (isColumnSelected('note')) { <td></td> }
+                                                      </tr>
+                                                      <tr class="text-sm text-black border-t border-black">
+                                                          <td colspan="4" class="p-1 px-2 text-right font-bold border-r border-black bg-gray-50">稅額</td>
+                                                          <td class="p-1 px-2 text-right border-r border-black font-mono">{{ data.totals.tax | number }}</td>
+                                                          @if (isColumnSelected('note')) { <td></td> }
+                                                      </tr>
+                                                      <tr class="text-base text-black border-t border-black">
+                                                          <td colspan="4" class="p-1 px-2 text-right font-bold border-r border-black bg-gray-100">總計</td>
+                                                          <td class="p-1 px-2 text-right border-r border-black font-bold font-mono text-2xl text-blue-900">{{ data.totals.total | number }}</td>
+                                                          @if (isColumnSelected('note')) { <td></td> }
+                                                      </tr>
+                                                  }
+
+                                                  <!-- Footer Row -->
+                                                  <tr class="h-12 border-t border-black">
+                                                      <td colspan="10" class="p-2 align-top text-black">
+                                                          <div class="flex text-xs">
+                                                              <span class="font-bold underline whitespace-nowrap mr-2">訂單備註：</span>
+                                                              <span class="text-black whitespace-pre-wrap font-normal line-clamp-2">{{ data.specialRequests }}</span>
+                                                          </div>
+                                                      </td>
+                                                  </tr>
+                                              </tbody>
+                                          </table>
+                                      </div>
+                                  }
+                                  @case ('amount_summary') {
+                                      <!-- Only show if table is NOT present to prevent duplication in preview -->
+                                      <!-- But generally we hide this if integrated mode is assumed -->
+                                  }
+                                  @case ('cod_amount') {
+                                    <div class="border-2 border-black p-2 mt-4 text-center font-bold text-lg text-red-600">
+                                        代收金額 (COD)：$ {{ data.totals.codAmount | number }}
+                                    </div>
+                                  }
+                                  @case ('custom_text') {
+                                      <div class="mb-4 border border-black p-3 rounded text-sm">
+                                          @if (section.title) {
+                                              <div class="font-bold border-b border-black pb-1 mb-2">{{ section.title }}</div>
+                                          }
+                                          <div class="whitespace-pre-wrap">{{ section.content || '請在左側輸入文字內容...' }}</div>
+                                      </div>
+                                  }
+                                  @case ('signatures') {
+                                      <div class="mt-6 pt-4 border-t-2 border-black grid grid-cols-4 gap-4 text-sm text-black font-medium items-center">
+                                          <div>【&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;】藍單</div>
+                                          <div>【&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;】綠單</div>
+                                          <div>應附發票:</div>
+                                          <div>審核出貨:</div>
+                                      </div>
+                                  }
+                                  @case ('gap') {
+                                      <div [style.height.mm]="section.height" class="w-full bg-slate-100 border-y border-dashed border-black flex items-center justify-center text-xs text-black">
+                                          Gap: {{ section.height }}mm
+                                      </div>
+                                  }
+                              }
+                          </div>
+                      }
+                  }
+              </div>
+          </div>
+      </div>
+  </div>
+}

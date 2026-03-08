@@ -1,0 +1,447 @@
+
+
+<div class="h-full flex flex-col md:flex-row overflow-hidden bg-slate-50 dark:bg-slate-900">
+  
+  <!-- Left List Panel -->
+  <div class="w-full md:w-1/3 lg:w-1/4 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col h-full transition-all duration-300"
+       [class.hidden]="isMaximized()">
+      
+      <!-- Header -->
+      <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between items-center mb-3">
+              <h2 class="text-2xl font-bold text-slate-800 dark:text-white">任務中心</h2>
+              <button (click)="openCreateModal()" class="p-2 bg-sky-500 hover:bg-sky-600 text-white rounded-full shadow-sm transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+              </button>
+          </div>
+          
+          <!-- Search & Filters -->
+          <div class="space-y-3">
+              <input type="text" [(ngModel)]="searchTerm" placeholder="搜尋任務..." class="w-full px-3 py-2 text-base border rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+              
+              <div class="flex space-x-2">
+                  <select [(ngModel)]="filterStatus" class="flex-1 text-sm p-2 border rounded bg-white dark:bg-slate-700 dark:text-white dark:border-slate-600">
+                      <option value="active">進行中</option>
+                      <option value="completed">已完成</option>
+                      <option value="all">全部</option>
+                  </select>
+                  <select [(ngModel)]="filterType" class="flex-1 text-sm p-2 border rounded bg-white dark:bg-slate-700 dark:text-white dark:border-slate-600">
+                      <option value="all">各類型</option>
+                      <option value="Task">任務</option>
+                      <option value="Reminder">提醒</option>
+                      <option value="Requirement">需求</option>
+                  </select>
+              </div>
+          </div>
+      </div>
+
+      <!-- List -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-3">
+          @for (task of filteredTasks(); track task.id) {
+              <div (click)="selectTask(task)" 
+                   class="p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md relative group"
+                   [class.border-sky-500]="selectedTask()?.id === task.id"
+                   [class.bg-sky-50]="selectedTask()?.id === task.id"
+                   [class.dark:bg-slate-700]="selectedTask()?.id === task.id"
+                   [class.border-slate-200]="selectedTask()?.id !== task.id"
+                   [class.dark:border-slate-700]="selectedTask()?.id !== task.id"
+                   [class.bg-white]="selectedTask()?.id !== task.id"
+                   [class.dark:bg-slate-800]="selectedTask()?.id !== task.id">
+                  
+                  <!-- Action Buttons (Delete & Edit) -->
+                  <div class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <!-- Edit Button -->
+                      <button (click)="openEditModal(task, $event)" class="p-1.5 bg-white/80 dark:bg-slate-700/80 rounded-full text-slate-400 hover:text-sky-500 shadow-sm" title="編輯任務">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                      </button>
+                      <!-- Delete Button -->
+                      <button (click)="deleteTask(task, $event)" class="p-1.5 bg-white/80 dark:bg-slate-700/80 rounded-full text-slate-400 hover:text-red-500 shadow-sm" title="刪除任務">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                      </button>
+                  </div>
+
+                  <div class="flex justify-between items-start mb-2 pr-12">
+                      <div class="flex items-center space-x-2">
+                          <span class="w-2.5 h-2.5 rounded-full"
+                                [class.bg-blue-500]="task.type === 'Task'"
+                                [class.bg-green-500]="task.type === 'Reminder'"
+                                [class.bg-red-500]="task.type === 'Requirement'"></span>
+                          <span class="text-sm font-bold text-slate-600 dark:text-slate-300">{{ task.type }}</span>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                          <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold border"
+                                [class.bg-slate-100]="task.status === 'Pending'"
+                                [class.text-slate-600]="task.status === 'Pending'"
+                                [class.border-slate-200]="task.status === 'Pending'"
+                                [class.bg-blue-100]="task.status === 'In Progress'"
+                                [class.text-blue-700]="task.status === 'In Progress'"
+                                [class.border-blue-200]="task.status === 'In Progress'"
+                                [class.bg-amber-100]="task.status === 'On Hold'"
+                                [class.text-amber-700]="task.status === 'On Hold'"
+                                [class.border-amber-200]="task.status === 'On Hold'"
+                                [class.bg-green-100]="task.status === 'Completed'"
+                                [class.text-green-700]="task.status === 'Completed'"
+                                [class.border-green-200]="task.status === 'Completed'"
+                                [class.bg-red-100]="task.status === 'Cancelled'"
+                                [class.text-red-700]="task.status === 'Cancelled'"
+                                [class.border-red-200]="task.status === 'Cancelled'"
+                                [class.bg-slate-200]="task.status === 'Archived'"
+                                [class.text-slate-600]="task.status === 'Archived'"
+                                [class.border-slate-300]="task.status === 'Archived'">
+                              {{ task.status === 'Pending' ? '待處理' : 
+                                 task.status === 'In Progress' ? '進行中' : 
+                                 task.status === 'On Hold' ? '暫停' : 
+                                 task.status === 'Completed' ? '已完成' : 
+                                 task.status === 'Cancelled' ? '取消' : '已歸檔' }}
+                          </span>
+                          <span class="text-xs px-2 py-0.5 rounded font-bold"
+                                [class.bg-red-100]="task.priority === 'High'"
+                                [class.text-red-700]="task.priority === 'High'"
+                                [class.bg-yellow-100]="task.priority === 'Medium'"
+                                [class.text-yellow-700]="task.priority === 'Medium'"
+                                [class.bg-slate-100]="task.priority === 'Low'"
+                                [class.text-slate-700]="task.priority === 'Low'">
+                              {{ task.priority === 'High' ? '高' : task.priority === 'Medium' ? '中' : '低' }}
+                          </span>
+                      </div>
+                  </div>
+                  
+                  <h3 class="font-bold text-slate-800 dark:text-slate-200 text-base line-clamp-1 mb-2 pr-4">{{ task.title }}</h3>
+                  
+                  <div class="flex flex-col space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                      <div class="flex justify-between">
+                         <span>發起: {{ task.creatorName }}</span>
+                         <span>{{ task.updatedAt | taiwanDate }}</span>
+                      </div>
+                      @if(task.deadline) {
+                          <span class="flex items-center font-bold" 
+                                [class.text-red-500]="isOverdue(task)">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              截止日期: {{ task.deadline | date:'MM/dd' }}
+                          </span>
+                      }
+                  </div>
+              </div>
+          } @empty {
+              <div class="text-center py-10 text-slate-400 text-base">
+                  沒有符合的任務
+              </div>
+          }
+      </div>
+  </div>
+
+  <!-- Right Detail/Chat Panel -->
+  <div class="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 h-full relative transition-all duration-300"
+       [class.fixed]="isMaximized()" 
+       [class.inset-0]="isMaximized()" 
+       [class.z-50]="isMaximized()"
+       [class.w-full]="isMaximized()">
+      
+      @if (selectedTask()) {
+          <!-- Header -->
+          <div class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-6 shadow-sm flex-shrink-0">
+              <div class="flex items-center space-x-3 overflow-hidden">
+                  <!-- Mobile Back Button -->
+                  <button (click)="toggleMaximize()" class="md:hidden mr-2 text-slate-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+
+                  <div class="p-2 rounded-lg flex-shrink-0"
+                       [class.bg-blue-100]="selectedTask()?.type === 'Task'"
+                       [class.text-blue-600]="selectedTask()?.type === 'Task'"
+                       [class.bg-green-100]="selectedTask()?.type === 'Reminder'"
+                       [class.text-green-600]="selectedTask()?.type === 'Reminder'"
+                       [class.bg-red-100]="selectedTask()?.type === 'Requirement'"
+                       [class.text-red-600]="selectedTask()?.type === 'Requirement'">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                          <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                      </svg>
+                  </div>
+                  <div class="truncate">
+                      <h2 class="text-xl font-bold text-slate-800 dark:text-white truncate">{{ selectedTask()?.title }}</h2>
+                      <div class="flex items-center text-sm text-slate-500 dark:text-slate-400 space-x-2 truncate mt-1">
+                          <span>指派給: {{ selectedTask()?.assigneeName || '未指派' }}</span>
+                          
+                          <!-- Deadline Info -->
+                          @if(selectedTask()?.deadline) {
+                              <span class="mx-1">•</span>
+                              <span class="flex items-center font-bold" [class.text-red-500]="isOverdue(selectedTask()!)">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                  截止日期: {{ selectedTask()?.deadline }}
+                              </span>
+                          }
+                          @if(selectedTask()?.reminderDate) {
+                              <span class="mx-1">•</span>
+                              <span class="flex items-center text-amber-500 font-bold">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                                  提醒: {{ selectedTask()?.reminderDate | date:'MM/dd HH:mm' }}
+                              </span>
+                          }
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="flex items-center space-x-2 flex-shrink-0">
+                  <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1 space-x-1">
+                      <button (click)="updateStatus('Pending')" 
+                              [class.bg-white]="selectedTask()?.status === 'Pending'"
+                              [class.dark:bg-slate-600]="selectedTask()?.status === 'Pending'"
+                              [class.shadow-sm]="selectedTask()?.status === 'Pending'"
+                              class="px-2 py-1 text-xs rounded transition-all hover:bg-white dark:hover:bg-slate-600">待處理</button>
+                      <button (click)="updateStatus('In Progress')" 
+                              [class.bg-white]="selectedTask()?.status === 'In Progress'"
+                              [class.dark:bg-slate-600]="selectedTask()?.status === 'In Progress'"
+                              [class.shadow-sm]="selectedTask()?.status === 'In Progress'"
+                              class="px-2 py-1 text-xs rounded transition-all hover:bg-white dark:hover:bg-slate-600">進行中</button>
+                      <button (click)="updateStatus('On Hold')" 
+                              [class.bg-white]="selectedTask()?.status === 'On Hold'"
+                              [class.dark:bg-slate-600]="selectedTask()?.status === 'On Hold'"
+                              [class.shadow-sm]="selectedTask()?.status === 'On Hold'"
+                              class="px-2 py-1 text-xs rounded transition-all hover:bg-white dark:hover:bg-slate-600">暫停</button>
+                      <button (click)="updateStatus('Completed')" 
+                              [class.bg-white]="selectedTask()?.status === 'Completed'"
+                              [class.dark:bg-slate-600]="selectedTask()?.status === 'Completed'"
+                              [class.shadow-sm]="selectedTask()?.status === 'Completed'"
+                              class="px-2 py-1 text-xs rounded transition-all hover:bg-white dark:hover:bg-slate-600">完成</button>
+                      <button (click)="updateStatus('Cancelled')" 
+                              [class.bg-white]="selectedTask()?.status === 'Cancelled'"
+                              [class.dark:bg-slate-600]="selectedTask()?.status === 'Cancelled'"
+                              [class.shadow-sm]="selectedTask()?.status === 'Cancelled'"
+                              class="px-2 py-1 text-xs rounded transition-all hover:bg-white dark:hover:bg-slate-600">取消</button>
+                  </div>
+                  
+                  <!-- Edit for Detail View -->
+                  <button (click)="openEditModal(selectedTask()!, $event)" class="p-2 text-slate-500 hover:text-sky-600 hover:bg-slate-100 rounded-full transition-colors" title="編輯任務">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                  </button>
+
+                  <button (click)="toggleMaximize()" class="hidden md:block p-2 text-slate-500 hover:text-sky-600 hover:bg-slate-100 rounded-full transition-colors" [title]="isMaximized() ? '還原視窗' : '最大化視窗'">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          @if (isMaximized()) {
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9L4 4m0 0l5 0m-5 0l0 5M15 15l5 5m0 0l-5 0m5 0l0-5M9 15L4 20m0 0l0-5m0 5l5 0M15 9l5-5m0 0l0 5m0-5l-5 0" />
+                          } @else {
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                          }
+                      </svg>
+                  </button>
+                  <button (click)="deleteTask(selectedTask()!)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                  </button>
+              </div>
+          </div>
+
+          <!-- Content & Chat Area -->
+          <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 dark:bg-slate-900 scroll-smooth">
+              
+              <!-- Original Description Card -->
+              <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div class="flex items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-700">
+                      <div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 mr-3">
+                          {{ selectedTask()?.creatorName?.charAt(0) }}
+                      </div>
+                      <div>
+                          <div class="text-base font-bold text-slate-800 dark:text-white">{{ selectedTask()?.creatorName }}</div>
+                          <div class="text-xs text-slate-500">{{ selectedTask()?.createdAt | taiwanDate }}</div>
+                      </div>
+                  </div>
+                  
+                  @if (selectedTask()?.imageUrl) {
+                      <div class="mb-4">
+                          <img [src]="selectedTask()?.imageUrl" class="max-w-full rounded-lg border border-slate-200 dark:border-slate-600 max-h-96 object-contain">
+                      </div>
+                  }
+
+                  <div class="prose dark:prose-invert text-base leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                      {{ selectedTask()?.description }}
+                  </div>
+              </div>
+
+              <!-- Comments Loop -->
+              @for (comment of selectedTask()?.comments; track comment.id) {
+                  <div class="flex gap-4" [class.flex-row-reverse]="comment.authorId === currentUser()?.id">
+                      <div class="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold border"
+                           [class.bg-sky-100]="comment.authorId === currentUser()?.id"
+                           [class.text-sky-700]="comment.authorId === currentUser()?.id"
+                           [class.bg-slate-100]="comment.authorId !== currentUser()?.id"
+                           [class.text-slate-700]="comment.authorId !== currentUser()?.id">
+                          {{ comment.authorName.charAt(0) }}
+                      </div>
+                      
+                      <div class="max-w-[80%]">
+                          <div class="flex items-baseline mb-1 space-x-2" [class.flex-row-reverse]="comment.authorId === currentUser()?.id">
+                              <span class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ comment.authorName }}</span>
+                              <span class="text-xs text-slate-400">{{ comment.timestamp | taiwanDate }}</span>
+                          </div>
+                          
+                          <div class="p-4 rounded-2xl text-base shadow-sm border"
+                               [class.bg-sky-50]="comment.authorId === currentUser()?.id"
+                               [class.border-sky-100]="comment.authorId === currentUser()?.id"
+                               [class.rounded-tr-none]="comment.authorId === currentUser()?.id"
+                               [class.bg-white]="comment.authorId !== currentUser()?.id"
+                               [class.dark:bg-slate-800]="comment.authorId !== currentUser()?.id"
+                               [class.border-slate-200]="comment.authorId !== currentUser()?.id"
+                               [class.dark:border-slate-700]="comment.authorId !== currentUser()?.id"
+                               [class.rounded-tl-none]="comment.authorId !== currentUser()?.id">
+                              
+                              @if (comment.imageUrl) {
+                                  <img [src]="comment.imageUrl" class="max-w-full rounded-lg mb-2 border border-slate-200 dark:border-slate-600 max-h-80 object-contain bg-white">
+                              }
+                              <div class="whitespace-pre-wrap break-words text-slate-800 dark:text-slate-200 leading-relaxed">{{ comment.content }}</div>
+                          </div>
+                      </div>
+                  </div>
+              }
+          </div>
+
+          <!-- Input Area -->
+          <div class="p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
+              <div class="relative">
+                  <textarea 
+                      [(ngModel)]="replyContent" 
+                      (paste)="onPaste($event)"
+                      placeholder="輸入回覆... (支援 Ctrl+V 貼上截圖)" 
+                      rows="3" 
+                      class="w-full p-4 pr-14 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white resize-none text-base"></textarea>
+                  
+                  <button (click)="sendReply()" [disabled]="!replyContent().trim()" class="absolute right-3 bottom-3 p-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                  </button>
+              </div>
+              <p class="text-sm text-slate-400 mt-2 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  提示：您可以直接貼上截圖 (Ctrl+V)
+              </p>
+          </div>
+
+      } @else {
+          <div class="flex-1 flex flex-col items-center justify-center text-slate-400">
+              <!-- Back Button for Mobile/Maximized empty state -->
+              @if (isMaximized()) {
+                  <button (click)="toggleMaximize()" class="mb-6 flex items-center px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                      返回列表
+                  </button>
+              }
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p class="text-lg font-medium">請選擇左側任務以查看詳情</p>
+          </div>
+      }
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 z-[60] overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeCreateModal()"></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <form [formGroup]="taskForm" (ngSubmit)="saveTask()">
+          <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <h3 class="text-xl leading-6 font-bold text-gray-900 dark:text-white mb-6 border-b pb-2 dark:border-slate-700">
+                {{ isEditMode() ? '編輯任務' : '發起新需求 (New Request)' }}
+            </h3>
+            
+            <div class="space-y-5">
+               <div>
+                  <label class="block text-base font-bold text-gray-700 dark:text-slate-300 mb-1">標題</label>
+                  <input type="text" formControlName="title" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+               </div>
+               
+               <div class="grid grid-cols-2 gap-4">
+                   <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">類型</label>
+                      <select formControlName="type" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                          @for (t of typeOptions; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+                      </select>
+                   </div>
+                   <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">優先級</label>
+                      <select formControlName="priority" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                          @for (p of priorityOptions; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+                      </select>
+                   </div>
+               </div>
+
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">狀態</label>
+                  <select formControlName="status" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                      @for (s of statusOptions; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
+                  </select>
+               </div>
+
+               <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">指派給 (Assignee)</label>
+                  <select formControlName="assigneeId" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                      <option value="">(未指派)</option>
+                      @for (emp of employees(); track emp.id) {
+                          <option [value]="emp.id">{{ emp.name }}</option>
+                      }
+                  </select>
+               </div>
+
+               <!-- New: Date Inputs -->
+               <div class="grid grid-cols-2 gap-4">
+                   <div>
+                      <label class="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-1">截止日期 (Deadline)</label>
+                      <input type="date" formControlName="deadline" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                   </div>
+                   <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">提醒時間 (Reminder)</label>
+                      <input type="datetime-local" formControlName="reminderDate" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                   </div>
+               </div>
+
+               <div>
+                  <label class="block text-base font-bold text-gray-700 dark:text-slate-300 mb-1">詳細說明 (可貼上圖片)</label>
+                  <textarea 
+                    formControlName="description" 
+                    (paste)="onCreatePaste($event)"
+                    rows="6" 
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base border p-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none leading-relaxed"
+                    placeholder="請輸入描述... (Ctrl+V 可貼上截圖)"
+                  ></textarea>
+                  
+                  <!-- Create Image Preview -->
+                  @if (createTaskImage()) {
+                      <div class="mt-2 relative inline-block group">
+                          <img [src]="createTaskImage()" class="max-h-40 rounded border border-slate-300 dark:border-slate-600">
+                          <button type="button" (click)="removeCreateImage()" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                          </button>
+                      </div>
+                  }
+               </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-slate-600">
+            <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+              儲存
+            </button>
+            <button type="button" (click)="closeCreateModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

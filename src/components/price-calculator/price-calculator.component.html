@@ -1,0 +1,445 @@
+
+<div class="p-8 h-full flex flex-col overflow-hidden">
+  <header class="mb-6 flex-shrink-0">
+    <h1 class="text-3xl font-bold text-slate-800 dark:text-white flex items-center">
+        <span class="mr-3 p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg text-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+        </span>
+        多情境價格試算器
+    </h1>
+    <p class="text-slate-500 dark:text-slate-400 mt-2 ml-14">設定成本結構與定價策略，自動試算毛利與建議售價。</p>
+  </header>
+
+  <div class="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
+      
+      <!-- Left Panel: Form -->
+      <div class="flex-1 overflow-y-auto bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 flex flex-col">
+          <form [formGroup]="calcForm">
+              
+              <!-- 1. Global Settings -->
+              <div class="mb-6 bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+                  <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      商品共用設定 (Global)
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                      <div class="lg:col-span-1">
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">供應商</label>
+                          <select (change)="onSupplierFilterChange($event)" class="w-full p-2 border rounded-lg bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm">
+                              <option value="">全部</option>
+                              @for(sup of suppliers(); track sup.code) { <option [value]="sup.code">{{ sup.code }} - {{ sup.shortName }}</option> }
+                          </select>
+                      </div>
+                      <div class="lg:col-span-1">
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">搜尋</label>
+                          <input type="text" [value]="productSearchTerm()" (input)="onProductSearchChange($event)" class="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm" placeholder="ID 或 名稱...">
+                      </div>
+                      <div class="lg:col-span-2">
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">選擇商品</label>
+                          <select (change)="onProductChange($event)" [value]="selectedProductId()" class="w-full p-2 border rounded-lg bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm font-medium">
+                              <option value="">請選擇商品...</option>
+                              @for (p of filteredProductOptions(); track p.id) { <option [value]="p.id">{{ p.name }} (進價: ${{ p.costAfterTax }})</option> }
+                          </select>
+                      </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                      <div>
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">計算基準價格</label>
+                          <select formControlName="basePriceSource" class="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm">
+                              <option value="costAfterTax">含稅成本</option>
+                              <option value="costBeforeTax">未稅成本</option>
+                              <option value="priceAfterTax">含稅售價</option>
+                              <option value="priceBeforeTax">未稅售價</option>
+                          </select>
+                          <p class="text-[10px] text-slate-400 mt-1">基準: ${{ getProductBaseCost() | number }}</p>
+                      </div>
+                      <div>
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">進貨單位</label>
+                          <select formControlName="purchaseUnit" class="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm">
+                              <option [value]="600">一台斤 (600g)</option>
+                              <option [value]="1000">一公斤 (1000g)</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">耗損率 (%)</label>
+                          <input type="number" formControlName="lossRate" class="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm">
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- 1.5 Shopee Fixed Prices (NEW SECTION) -->
+              <div class="mb-6 bg-orange-50 dark:bg-orange-900/10 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <h3 class="text-sm font-bold text-orange-700 dark:text-orange-400 uppercase mb-3 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                      蝦皮固定價格 (Shopee Fixed Prices)
+                  </h3>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                          <label class="block text-[10px] font-bold text-orange-600 dark:text-orange-300 mb-1">獨享包 (Price A)</label>
+                          <input type="number" formControlName="priceASingle" class="w-full p-2 text-sm font-bold border border-orange-200 rounded dark:bg-slate-800 dark:border-orange-900/50 dark:text-white text-center">
+                      </div>
+                      <div>
+                          <label class="block text-[10px] font-bold text-orange-600 dark:text-orange-300 mb-1">分享包 (Price B)</label>
+                          <input type="number" formControlName="priceBShare" class="w-full p-2 text-sm font-bold border border-orange-200 rounded dark:bg-slate-800 dark:border-orange-900/50 dark:text-white text-center">
+                      </div>
+                      <div>
+                          <label class="block text-[10px] font-bold text-orange-600 dark:text-orange-300 mb-1">中包 (Price C - M)</label>
+                          <input type="number" formControlName="priceCM" class="w-full p-2 text-sm font-bold border border-orange-200 rounded dark:bg-slate-800 dark:border-orange-900/50 dark:text-white text-center">
+                      </div>
+                      <div>
+                          <label class="block text-[10px] font-bold text-orange-600 dark:text-orange-300 mb-1">大包 (Price D - L)</label>
+                          <input type="number" formControlName="priceDL" class="w-full p-2 text-sm font-bold border border-orange-200 rounded dark:bg-slate-800 dark:border-orange-900/50 dark:text-white text-center">
+                      </div>
+                      <div>
+                          <label class="block text-[10px] font-bold text-orange-600 dark:text-orange-300 mb-1">特大包 (Price E - XL)</label>
+                          <input type="number" formControlName="priceEXL" class="w-full p-2 text-sm font-bold border border-orange-200 rounded dark:bg-slate-800 dark:border-orange-900/50 dark:text-white text-center">
+                      </div>
+                      <div>
+                          <label class="block text-[10px] font-bold text-orange-600 dark:text-orange-300 mb-1">派對包 (Price F - Party)</label>
+                          <input type="number" formControlName="priceFParty" class="w-full p-2 text-sm font-bold border border-orange-200 rounded dark:bg-slate-800 dark:border-orange-900/50 dark:text-white text-center">
+                      </div>
+                  </div>
+              </div>
+
+              <!-- 2. Spec Pricing Settings (Revised: Larger Text, No Weight) -->
+              <div class="mb-6 bg-indigo-50 dark:bg-indigo-900/10 p-5 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                  <h3 class="text-lg font-black text-indigo-700 dark:text-indigo-300 uppercase mb-4 flex items-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                       規格價格設定 (Specification Pricing)
+                  </h3>
+                  
+                  <div class="flex flex-col gap-3">
+                       <!-- Add Spec Form (No Weight) -->
+                       <div class="flex flex-wrap gap-3 items-end" [formGroup]="specForm">
+                           <div class="flex-1 min-w-[150px]">
+                               <label class="text-sm font-bold text-indigo-500 block mb-1">規格名稱 (Name)</label>
+                               <input type="text" formControlName="specName" placeholder="如: 150g" class="w-full p-2 text-base border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                           </div>
+                           <div class="w-28">
+                               <label class="text-sm font-bold text-indigo-500 block mb-1">目標價</label>
+                               <input type="number" formControlName="targetPrice" class="w-full p-2 text-base border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-center font-bold">
+                           </div>
+                           <div class="w-28">
+                               <label class="text-sm font-bold text-indigo-500 block mb-1">實際售價</label>
+                               <input type="number" formControlName="actualPrice" class="w-full p-2 text-base border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-center font-bold">
+                           </div>
+                           <div class="w-24">
+                               <label class="text-sm font-bold text-indigo-500 block mb-1">市價</label>
+                               <input type="number" formControlName="marketPrice" class="w-full p-2 text-base border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-center">
+                           </div>
+                           <button type="button" (click)="addSpecDefinition()" [disabled]="specForm.invalid" class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded hover:bg-indigo-700 disabled:opacity-50">新增規格</button>
+                       </div>
+
+                       <!-- Spec List (Updated: 6 cols, 3 price types) -->
+                       @if (specDefinitions().length > 0) {
+                           <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3 mt-3">
+                               @for (spec of specDefinitions(); track spec.id) {
+                                   <div (click)="applySpecDefinition(spec)" class="bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-800 p-2.5 rounded-lg cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-all group relative hover:shadow-md flex flex-col justify-between h-full">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <span class="font-bold text-sm text-slate-800 dark:text-white break-words">{{ spec.specName }}</span>
+                                            <button type="button" (click)="removeSpecDefinition(spec.id); $event.stopPropagation()" class="text-slate-400 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                            </button>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="text-slate-400">目標</span>
+                                                <span class="font-bold text-slate-600 dark:text-slate-300">${{ spec.targetPrice }}</span>
+                                            </div>
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="text-indigo-500 font-medium">實際</span>
+                                                <span class="font-bold text-indigo-600 dark:text-indigo-400 text-sm">${{ spec.actualPrice }}</span>
+                                            </div>
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="text-slate-400">市價</span>
+                                                <span class="font-medium text-slate-500 dark:text-slate-400">${{ spec.marketPrice }}</span>
+                                            </div>
+                                        </div>
+                                   </div>
+                               }
+                           </div>
+                           <p class="text-xs text-indigo-400 mt-2 font-bold">* 點擊上方規格卡片可直接套用價格至下方目前情境</p>
+                       } @else {
+                           <div class="text-center text-sm text-indigo-400 py-4 border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded bg-indigo-50/50">
+                               尚未設定規格，請填寫上方表格新增
+                           </div>
+                       }
+                  </div>
+              </div>
+
+              <!-- 3. Scenario Tabs -->
+              <div class="mb-4 overflow-x-auto flex space-x-1 border-b border-slate-200 dark:border-slate-700">
+                  @for (scenario of currentScenarios(); track scenario.id) {
+                      <div class="relative group">
+                          <button type="button" 
+                                  (click)="setActiveTab(scenario.id)"
+                                  (dblclick)="renameScenario(scenario.id)"
+                                  class="px-4 py-2 text-sm font-bold rounded-t-lg border-t border-l border-r whitespace-nowrap min-w-[100px] transition-colors"
+                                  [class.bg-white]="activeScenarioId() === scenario.id"
+                                  [class.dark:bg-slate-800]="activeScenarioId() === scenario.id"
+                                  [class.text-amber-600]="activeScenarioId() === scenario.id"
+                                  [class.dark:text-amber-400]="activeScenarioId() === scenario.id"
+                                  [class.border-slate-300]="activeScenarioId() === scenario.id"
+                                  [class.dark:border-slate-600]="activeScenarioId() === scenario.id"
+                                  [class.bg-slate-100]="activeScenarioId() !== scenario.id"
+                                  [class.dark:bg-slate-700]="activeScenarioId() !== scenario.id"
+                                  [class.text-slate-500]="activeScenarioId() !== scenario.id"
+                                  [class.border-transparent]="activeScenarioId() !== scenario.id">
+                              {{ scenario.name }}
+                          </button>
+                          <button type="button" (click)="removeScenario(scenario.id, $event)" class="absolute top-0.5 right-0.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                          </button>
+                      </div>
+                  }
+                  <button type="button" (click)="addCustomScenario()" class="px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 rounded text-slate-600 dark:text-slate-300 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                  </button>
+              </div>
+
+              <!-- 4. Scenario Content -->
+              <div class="space-y-6">
+                  <!-- Row A: Spec & Mode -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <!-- Mode Switcher -->
+                      <div class="flex space-x-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg self-end">
+                          <button type="button" (click)="setCalculationMode('fixed_price')"
+                                  class="flex-1 py-2 text-sm font-bold rounded-md transition-all"
+                                  [class.bg-white]="calcForm.get('calculationMode')?.value === 'fixed_price'"
+                                  [class.text-amber-600]="calcForm.get('calculationMode')?.value === 'fixed_price'"
+                                  [class.shadow-sm]="calcForm.get('calculationMode')?.value === 'fixed_price'"
+                                  [class.text-slate-500]="calcForm.get('calculationMode')?.value !== 'fixed_price'">
+                              定價算重 (Fixed Price)
+                          </button>
+                          <button type="button" (click)="setCalculationMode('fixed_weight')"
+                                  class="flex-1 py-2 text-sm font-bold rounded-md transition-all"
+                                  [class.bg-white]="calcForm.get('calculationMode')?.value === 'fixed_weight'"
+                                  [class.text-amber-600]="calcForm.get('calculationMode')?.value === 'fixed_weight'"
+                                  [class.shadow-sm]="calcForm.get('calculationMode')?.value === 'fixed_weight'"
+                                  [class.text-slate-500]="calcForm.get('calculationMode')?.value !== 'fixed_weight'">
+                              定重算價 (Fixed Weight)
+                          </button>
+                      </div>
+                      
+                      <!-- Spec Name (Dropdown Select) - Yellow removed -->
+                      <div>
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 px-1">規格名稱 (選擇後自動套用價格)</label>
+                          <select formControlName="specName" (change)="onSpecNameChange($event)" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm font-bold text-slate-800 cursor-pointer bg-white">
+                              <option value="">自訂 / 請選擇...</option>
+                              @for (spec of specDefinitions(); track spec.id) {
+                                  <option [value]="spec.specName">{{ spec.specName }} (售價: ${{spec.actualPrice}})</option>
+                              }
+                          </select>
+                      </div>
+                  </div>
+
+                  <!-- Row B: Costs & Strategy (3 Columns) -->
+                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <!-- Costs (Packaging) -->
+                      <div class="space-y-4">
+                          <h4 class="text-xs font-bold text-slate-500 uppercase border-b pb-1 dark:border-slate-600">包裝成本 (Packaging)</h4>
+                          <div class="grid grid-cols-2 gap-3">
+                              <div><label class="block text-[10px] text-slate-500 mb-1">人力成本</label><input type="number" formControlName="packingLaborCost" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                              <div><label class="block text-[10px] text-slate-500 mb-1">內袋成本</label><input type="number" formControlName="packingMaterialCost" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                              <div><label class="block text-[10px] text-slate-500 mb-1">外箱攤提</label><input type="number" formControlName="boxCost" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                          </div>
+                      </div>
+                      
+                      <!-- Channel/Fees -->
+                      <div class="space-y-4">
+                          <h4 class="text-xs font-bold text-slate-500 uppercase border-b pb-1 dark:border-slate-600">通路行銷成本 (Channel & Marketing)</h4>
+                          <div class="grid grid-cols-2 gap-3">
+                              <div><label class="block text-[10px] text-slate-500 mb-1">稅率 (%)</label><input type="number" formControlName="taxRate" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                              <div><label class="block text-[10px] text-slate-500 mb-1">抽成 (%)</label><input type="number" formControlName="platformCommissionRate" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                              <div><label class="block text-[10px] text-slate-500 mb-1">行銷 (%)</label><input type="number" formControlName="marketingAdRate" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                          </div>
+                      </div>
+
+                      <!-- Strategy -->
+                      <div class="space-y-4">
+                          <h4 class="text-xs font-bold text-slate-500 uppercase border-b pb-1 dark:border-slate-600">定價策略</h4>
+                          <div class="grid grid-cols-2 gap-3">
+                              <div><label class="block text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mb-1">目標毛利 (%)</label><input type="number" formControlName="targetMarginRateA" class="w-full p-2 text-sm border border-indigo-200 rounded dark:bg-slate-700 dark:border-indigo-800 dark:text-white font-bold"></div>
+                              <div><label class="block text-[10px] text-slate-500 mb-1">市場參考價</label><input type="number" formControlName="marketPrice" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"></div>
+                          </div>
+                          
+                          <!-- Dynamic Input based on Mode -->
+                          <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                              @if (calcForm.get('calculationMode')?.value === 'fixed_price') {
+                                  <div class="flex items-end gap-4">
+                                      <div class="flex-1">
+                                          <label class="block text-[10px] text-indigo-700 dark:text-indigo-300 font-bold mb-1">設定目標售價</label>
+                                          <div class="relative">
+                                              <span class="absolute left-0 top-1/2 -translate-y-1/2 text-indigo-400 font-bold">$</span>
+                                              <input type="number" formControlName="decidedPrice" class="w-full pl-4 pr-1 py-1 text-2xl font-black border-b-2 border-indigo-300 bg-transparent dark:text-white focus:outline-none focus:border-indigo-500 text-right">
+                                          </div>
+                                      </div>
+                                      <!-- Arrow Icon -->
+                                      <div class="pb-3 text-indigo-300">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                      </div>
+                                      <div class="flex-1">
+                                          <label class="block text-[10px] text-indigo-700 dark:text-indigo-300 font-bold mb-1 text-right">系統建議重量</label>
+                                          <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 text-right border-b-2 border-transparent">
+                                              {{ results().suggestedWeight | number:'1.0-0' }}<span class="text-sm font-normal ml-1">g</span>
+                                          </div>
+                                      </div>
+                                  </div>
+                              } @else {
+                                  <div class="flex items-end gap-4">
+                                      <div class="flex-1">
+                                          <label class="block text-[10px] text-indigo-700 dark:text-indigo-300 font-bold mb-1">設定目標重量</label>
+                                          <div class="relative">
+                                               <input type="number" formControlName="adjustedWeight" class="w-full pr-6 py-1 text-2xl font-black border-b-2 border-indigo-300 bg-transparent dark:text-white focus:outline-none focus:border-indigo-500 text-right">
+                                               <span class="absolute right-0 top-1/2 -translate-y-1/2 text-indigo-400 font-bold text-sm">g</span>
+                                          </div>
+                                      </div>
+                                      <!-- Arrow Icon -->
+                                      <div class="pb-3 text-indigo-300">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                      </div>
+                                      <div class="flex-1">
+                                          <label class="block text-[10px] text-indigo-700 dark:text-indigo-300 font-bold mb-1 text-right">系統建議售價</label>
+                                          <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 text-right border-b-2 border-transparent">
+                                              <span class="text-sm font-normal mr-1">$</span>{{ results().suggestedPrice | number }}
+                                          </div>
+                                      </div>
+                                  </div>
+                              }
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Row C: Final Decision (Big Inputs) -->
+                  <div class="bg-amber-50 dark:bg-amber-900/10 p-5 rounded-xl border border-amber-200 dark:border-amber-800 mt-4">
+                      <h4 class="text-sm font-bold text-amber-800 dark:text-amber-400 uppercase mb-4 text-center">最終決策 (Final Decision)</h4>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div>
+                              <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">最終重量 (Weight g)</label>
+                              <input type="number" formControlName="adjustedWeight" class="w-full p-3 text-2xl font-black text-center border-2 border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-4 focus:ring-amber-300 focus:border-amber-500 transition-all">
+                          </div>
+                          <div>
+                              <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">實際售價 (Price $)</label>
+                              <input type="number" formControlName="actualPrice" class="w-full p-3 text-2xl font-black text-center border-2 border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-4 focus:ring-amber-300 focus:border-amber-500 transition-all">
+                          </div>
+                          <div class="flex flex-col justify-end">
+                              <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 text-center md:text-left">CP 值 (g/元)</label>
+                               <div class="bg-white dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-3 text-center h-[60px] flex flex-col justify-center shadow-sm">
+                                   <div class="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">
+                                       {{ results().cpValue | number:'1.2-2' }}
+                                   </div>
+                               </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Save -->
+                  <button type="button" (click)="saveCalculation()" class="w-full py-4 bg-slate-800 hover:bg-slate-700 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-slate-900 rounded-lg font-bold shadow-lg transition-all active:scale-95 text-lg">
+                      儲存所有設定 (Save)
+                  </button>
+              </div>
+
+          </form>
+      </div>
+
+      <!-- Right Panel: Results & History -->
+      <div class="w-full lg:w-80 flex flex-col space-y-6">
+          
+          <!-- Result Card -->
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+              <h3 class="font-bold text-lg text-slate-700 dark:text-slate-200 mb-4 border-b pb-2 dark:border-slate-600">利潤分析</h3>
+              
+              <div class="text-center mb-6">
+                  <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">實際毛利率</div>
+                  <div class="text-4xl font-black" [class.text-green-500]="results().isProfitable" [class.text-red-500]="!results().isProfitable">
+                      {{ results().resultMarginRateB | number:'1.1-1' }}%
+                  </div>
+              </div>
+
+              <div class="space-y-3 text-sm">
+                  <div class="flex justify-between">
+                      <span class="text-slate-500">單包毛利額</span>
+                      <span class="font-bold dark:text-white">${{ results().resultMarginAmountB | number:'1.1-1' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                      <span class="text-slate-500">CP值 (g/元)</span>
+                      <span class="font-mono text-blue-600 font-bold">{{ results().cpValue | number:'1.2-2' }}</span>
+                  </div>
+              </div>
+
+              <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3 text-xs">
+                  <h4 class="font-bold text-slate-400 uppercase mb-2">成本結構分析</h4>
+                  
+                  <!-- 1. Raw Material -->
+                  <div>
+                      <div class="flex justify-between font-bold text-slate-600 dark:text-slate-300">
+                          <span>1. 原料成本</span>
+                          <span>${{ results().rawMaterialCost | number:'1.1-1' }}</span>
+                      </div>
+                  </div>
+
+                  <!-- 2. Packaging -->
+                  <div>
+                      <div class="flex justify-between font-bold text-slate-600 dark:text-slate-300 mb-1">
+                          <span>2. 包裝成本</span>
+                          <span>${{ results().packingTotalCost | number }}</span>
+                      </div>
+                      <div class="pl-2 border-l-2 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-[10px] space-y-0.5">
+                           <div class="flex justify-between"><span>人力</span><span>${{ calcForm.get('packingLaborCost')?.value }}</span></div>
+                           <div class="flex justify-between"><span>內袋</span><span>${{ calcForm.get('packingMaterialCost')?.value }}</span></div>
+                           <div class="flex justify-between"><span>外箱</span><span>${{ calcForm.get('boxCost')?.value }}</span></div>
+                      </div>
+                  </div>
+
+                  <!-- 3. Channel Marketing -->
+                  <div>
+                      <div class="flex justify-between font-bold text-slate-600 dark:text-slate-300 mb-1">
+                          <span>3. 通路行銷成本</span>
+                          <span>${{ (results().commissionCost + results().marketingAdCost) | number:'1.1-1' }}</span>
+                      </div>
+                      <div class="pl-2 border-l-2 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-[10px] space-y-0.5">
+                           <div class="flex justify-between"><span>平台抽成</span><span>${{ results().commissionCost | number:'1.1-1' }}</span></div>
+                           <div class="flex justify-between"><span>行銷廣告</span><span>${{ results().marketingAdCost | number:'1.1-1' }}</span></div>
+                      </div>
+                  </div>
+                  
+                  <!-- Tax -->
+                   <div>
+                      <div class="flex justify-between font-bold text-slate-600 dark:text-slate-300">
+                          <span>4. 稅務成本</span>
+                          <span>${{ results().taxCost | number:'1.1-1' }}</span>
+                      </div>
+                  </div>
+                  
+                  <div class="border-t border-slate-100 dark:border-slate-700 pt-2 flex justify-between font-black text-sm text-slate-800 dark:text-white">
+                      <span>總成本</span>
+                      <span>${{ (results().rawMaterialCost + results().packingTotalCost + results().commissionCost + results().marketingAdCost + results().taxCost) | number:'1.1-1' }}</span>
+                  </div>
+              </div>
+          </div>
+
+          <!-- History List -->
+          <div class="flex-1 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+              <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-3 text-sm uppercase">已儲存專案</h3>
+              <div class="flex-1 overflow-y-auto space-y-2">
+                  @for (calc of savedList(); track calc.id) {
+                      <div (click)="loadCalculation(calc)" class="p-3 border border-slate-100 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer group relative">
+                          <div class="font-bold text-sm text-slate-800 dark:text-white truncate">{{ calc.productName }}</div>
+                          <div class="text-xs text-slate-400 flex justify-between mt-1">
+                              <span>{{ calc.updatedAt | date:'MM/dd' }}</span>
+                              <span>{{ calc.scenarios?.length || 1 }} 情境</span>
+                          </div>
+                          <button (click)="deleteCalculation(calc.id, $event)" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                      </div>
+                  } @empty {
+                      <div class="text-center text-xs text-slate-400 py-4">尚無紀錄</div>
+                  }
+              </div>
+          </div>
+
+      </div>
+  </div>
+</div>

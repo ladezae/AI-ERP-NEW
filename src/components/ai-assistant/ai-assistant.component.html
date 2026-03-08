@@ -1,0 +1,346 @@
+
+<!-- Floating Action Button -->
+<button 
+  (click)="toggleChat()"
+  class="fixed bottom-8 right-8 bg-gradient-to-r from-sky-500 to-blue-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 z-50 group">
+  <div class="relative">
+      <svg class="h-8 w-8 transition-transform duration-300 group-hover:rotate-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+      </svg>
+      @if (!isOpen()) {
+        <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+        </span>
+      }
+  </div>
+</button>
+
+<!-- Chat Window -->
+@if (isOpen()) {
+  <div class="fixed bottom-24 right-4 md:right-8 w-[95vw] md:w-[450px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col h-[70vh] md:h-[650px] max-h-[80vh] z-50 chat-window-anim overflow-hidden font-sans transition-colors duration-300"
+       [class.bg-slate-900]="isVoiceMode()" [class.border-slate-800]="isVoiceMode()">
+    
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 bg-gradient-to-r text-white shadow-md z-10 transition-all duration-300"
+            [class.from-sky-500]="aiService.currentRole() === 'internal' && !isVoiceMode()" 
+            [class.to-blue-600]="aiService.currentRole() === 'internal' && !isVoiceMode()"
+            [class.from-orange-400]="aiService.currentRole() === 'external' && !isVoiceMode()" 
+            [class.to-pink-500]="aiService.currentRole() === 'external' && !isVoiceMode()"
+            [class.from-slate-800]="isVoiceMode()" [class.to-slate-900]="isVoiceMode()">
+      
+      <div class="flex items-center space-x-2">
+        <div class="h-9 w-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+             <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+             </svg>
+        </div>
+        <div class="leading-tight">
+          <h2 class="font-bold text-base tracking-wide">
+              @if (isVoiceMode()) {
+                 語音助理
+              } @else if (aiService.currentRole() === 'internal') {
+                 Gemini ERP 特助
+              } @else {
+                 線上客服專員
+              }
+          </h2>
+          <div class="text-[10px] text-white/80 flex items-center">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 mr-1"></span>
+            {{ aiService.currentRole() === 'internal' ? 'Internal Access' : 'Public Access' }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-1">
+         
+         <!-- Clear History Button -->
+         <button (click)="clearHistory()" class="p-1.5 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors" title="清除紀錄">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+             </svg>
+         </button>
+
+         <!-- Role Toggles (Simulation) -->
+         @if (!isVoiceMode()) {
+           <div class="flex bg-black/20 rounded-lg p-0.5 mr-1">
+              <button (click)="toggleRole('internal')" 
+                      class="px-2 py-1 text-xs rounded transition-colors"
+                      [class.bg-white]="aiService.currentRole() === 'internal'"
+                      [class.text-blue-600]="aiService.currentRole() === 'internal'"
+                      [class.text-white]="aiService.currentRole() !== 'internal'">
+                 內部
+              </button>
+              <button (click)="toggleRole('external')" 
+                      class="px-2 py-1 text-xs rounded transition-colors"
+                      [class.bg-white]="aiService.currentRole() === 'external'"
+                      [class.text-orange-500]="aiService.currentRole() === 'external'"
+                      [class.text-white]="aiService.currentRole() !== 'external'">
+                 客服
+              </button>
+           </div>
+         }
+
+         <!-- Voice Mode Toggle -->
+         @if(hasSpeechRecognition()) {
+           <button (click)="toggleVoiceMode()" 
+                   class="p-1.5 rounded-full transition-colors"
+                   [class.bg-white]="isVoiceMode()"
+                   [class.text-slate-900]="isVoiceMode()"
+                   [class.bg-white/10]="!isVoiceMode()"
+                   [class.text-white]="!isVoiceMode()"
+                   [title]="isVoiceMode() ? '切換至文字模式' : '切換至語音模式'">
+              @if(isVoiceMode()) {
+                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+              } @else {
+                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+              }
+           </button>
+         }
+
+        <button (click)="toggleChat()" class="text-white/80 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1">
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </header>
+
+    @if (isVoiceMode()) {
+      <!-- Voice Mode Interface -->
+      <div class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900 text-white relative overflow-hidden">
+        
+        <!-- Status Text -->
+        <div class="z-10 text-center mb-10 h-24 flex flex-col justify-center">
+            @if (isListening()) {
+                <h3 class="text-2xl font-bold text-sky-400 animate-pulse">正在聆聽...</h3>
+                <p class="text-slate-400 mt-2">{{ userInput() || '請說出您的指令' }}</p>
+            } @else if (isLoading()) {
+                <h3 class="text-2xl font-bold text-purple-400 animate-pulse">思考中...</h3>
+                <p class="text-slate-400 mt-2">正在分析數據</p>
+            } @else if (isSpeaking()) {
+                 <h3 class="text-2xl font-bold text-green-400">正在回答</h3>
+                 <!-- Simple visualizer simulation -->
+                 <div class="flex justify-center space-x-1 mt-4 h-6 items-center">
+                    <div class="w-1 bg-green-400 animate-[bounce_0.5s_infinite]"></div>
+                    <div class="w-1 bg-green-400 h-4 animate-[bounce_0.6s_infinite]"></div>
+                    <div class="w-1 bg-green-400 h-6 animate-[bounce_0.7s_infinite]"></div>
+                    <div class="w-1 bg-green-400 h-4 animate-[bounce_0.6s_infinite]"></div>
+                    <div class="w-1 bg-green-400 animate-[bounce_0.5s_infinite]"></div>
+                 </div>
+            } @else {
+                <h3 class="text-2xl font-bold text-white">
+                    {{ aiService.currentRole() === 'internal' ? '特助隨時待命' : '很高興為您服務' }}
+                </h3>
+                <p class="text-slate-400 mt-2">點擊麥克風開始對話</p>
+            }
+        </div>
+
+        <!-- Big Microphone Button -->
+        <div class="relative z-10">
+            <!-- Ripple Effects -->
+            @if (isListening()) {
+                <div class="absolute inset-0 rounded-full bg-sky-500/30 voice-wave"></div>
+                <div class="absolute inset-0 rounded-full bg-sky-500/20 voice-wave [animation-delay:0.5s]"></div>
+            }
+            @if (isSpeaking()) {
+                 <div class="absolute inset-0 rounded-full bg-green-500/30 voice-wave"></div>
+            }
+
+            <button (click)="toggleListening()"
+                    class="relative h-24 w-24 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 transform active:scale-95"
+                    [class.bg-red-500]="isListening()"
+                    [class.bg-green-600]="isSpeaking()"
+                    [class.bg-sky-600]="!isListening() && !isSpeaking() && aiService.currentRole() === 'internal'"
+                    [class.bg-orange-500]="!isListening() && !isSpeaking() && aiService.currentRole() === 'external'"
+                    [class.hover:scale-105]="!isListening() && !isSpeaking()">
+                
+                @if (isSpeaking()) {
+                    <!-- Stop Icon -->
+                    <svg class="h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                } @else {
+                    <!-- Mic Icon -->
+                    <svg class="h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                }
+            </button>
+        </div>
+
+        <!-- Tips -->
+        <div class="absolute bottom-8 text-center w-full px-8 opacity-60">
+            <p class="text-xs text-slate-400">
+                @if (aiService.currentRole() === 'internal') {
+                    試著說：「查詢庫存不足的商品」或「今天有多少新訂單？」
+                } @else {
+                     試著說：「請問有賣芒果乾嗎？」或「我想查詢訂單狀況」
+                }
+            </p>
+        </div>
+
+      </div>
+
+    } @else {
+      <!-- Standard Chat Interface -->
+      
+      <!-- Message Area -->
+      <div #messageContainer class="flex-1 p-4 overflow-y-auto space-y-6 bg-slate-50 scroll-smooth">
+        
+        <!-- Intro / Empty State -->
+        @if (messages().length === 0) {
+          <div class="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
+             <div class="mb-4 p-4 rounded-full bg-slate-100">
+                 @if (aiService.currentRole() === 'internal') {
+                    <svg class="h-12 w-12 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                 } @else {
+                    <svg class="h-12 w-12 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                 }
+             </div>
+             <p class="text-slate-500 font-medium text-lg">
+                 {{ aiService.currentRole() === 'internal' ? '內部特助模式' : '外部客服模式' }}
+             </p>
+             <p class="text-slate-400 text-sm mt-2 max-w-xs">
+                 {{ aiService.currentRole() === 'internal' ? '我可以協助您查詢成本、供應商資料與內部庫存。' : '我是您的線上客服，可以為您介紹商品與查詢訂單進度。' }}
+             </p>
+          </div>
+        }
+
+        @for (message of messages(); track $index) {
+          <div class="flex flex-col space-y-1" [class.items-end]="message.sender === 'user'" [class.items-start]="message.sender === 'ai'">
+            
+            <div class="flex items-end max-w-[85%] space-x-2" [class.flex-row-reverse]="message.sender === 'user'" [class.space-x-reverse]="message.sender === 'user'">
+              
+              <!-- Avatar -->
+              <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border"
+                   [class.bg-sky-100]="message.sender === 'ai' && aiService.currentRole() === 'internal'" 
+                   [class.text-sky-600]="message.sender === 'ai' && aiService.currentRole() === 'internal'" 
+                   [class.border-sky-200]="message.sender === 'ai' && aiService.currentRole() === 'internal'"
+                   [class.bg-orange-100]="message.sender === 'ai' && aiService.currentRole() === 'external'" 
+                   [class.text-orange-600]="message.sender === 'ai' && aiService.currentRole() === 'external'" 
+                   [class.border-orange-200]="message.sender === 'ai' && aiService.currentRole() === 'external'"
+                   [class.bg-slate-200]="message.sender === 'user'" 
+                   [class.text-slate-600]="message.sender === 'user'" 
+                   [class.border-slate-300]="message.sender === 'user'">
+                   {{ message.sender === 'ai' ? 'AI' : 'Me' }}
+              </div>
+
+              <!-- Bubble -->
+              <div class="p-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap break-words"
+                   [class.bg-gradient-to-br]="message.sender === 'user'" 
+                   [class.from-sky-500]="message.sender === 'user'" 
+                   [class.to-blue-600]="message.sender === 'user'"
+                   [class.text-white]="message.sender === 'user'"
+                   [class.rounded-br-none]="message.sender === 'user'"
+                   [class.bg-white]="message.sender === 'ai'"
+                   [class.text-slate-800]="message.sender === 'ai'"
+                   [class.border]="message.sender === 'ai'"
+                   [class.border-slate-200]="message.sender === 'ai'"
+                   [class.rounded-bl-none]="message.sender === 'ai'">
+                
+                @if (message.image) {
+                  <img [src]="message.image" class="max-w-full rounded-lg mb-2 max-h-48 object-cover border border-white/20" alt="Uploaded Image">
+                }
+                <div [innerHTML]="message.text | safeHtml"></div>
+                
+                <!-- Play button for AI messages -->
+                @if (message.sender === 'ai') {
+                   <button (click)="speakResponse(message.text)" class="mt-2 text-slate-400 hover:text-sky-600 flex items-center text-xs font-medium bg-slate-50 px-2 py-1 rounded w-fit transition-colors">
+                      <svg class="h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd" />
+                      </svg>
+                      朗讀
+                   </button>
+                }
+              </div>
+            </div>
+            
+            <!-- Timestamp/Status (Optional) -->
+            <span class="text-[10px] text-slate-400 px-1">
+               {{ message.sender === 'ai' ? (aiService.currentRole() === 'internal' ? 'Gemini Pro' : 'CS Agent') : '' }}
+            </span>
+
+          </div>
+        }
+
+        <!-- Loading Indicator -->
+        @if (isLoading()) {
+           <div class="flex items-start space-x-2">
+               <div class="flex-shrink-0 h-8 w-8 rounded-full border flex items-center justify-center text-xs font-bold"
+                    [class.bg-sky-100]="aiService.currentRole() === 'internal'"
+                    [class.text-sky-600]="aiService.currentRole() === 'internal'"
+                    [class.border-sky-200]="aiService.currentRole() === 'internal'"
+                    [class.bg-orange-100]="aiService.currentRole() === 'external'"
+                    [class.text-orange-600]="aiService.currentRole() === 'external'"
+                    [class.border-orange-200]="aiService.currentRole() === 'external'">AI</div>
+               <div class="p-4 rounded-2xl rounded-bl-none bg-white border border-slate-200 shadow-sm">
+                   <div class="flex items-center space-x-1.5">
+                      <span class="h-2 w-2 rounded-full animate-bounce [animation-delay:-0.3s]" [class.bg-sky-400]="aiService.currentRole() === 'internal'" [class.bg-orange-400]="aiService.currentRole() === 'external'"></span>
+                      <span class="h-2 w-2 rounded-full animate-bounce [animation-delay:-0.15s]" [class.bg-sky-400]="aiService.currentRole() === 'internal'" [class.bg-orange-400]="aiService.currentRole() === 'external'"></span>
+                      <span class="h-2 w-2 rounded-full animate-bounce" [class.bg-sky-400]="aiService.currentRole() === 'internal'" [class.bg-orange-400]="aiService.currentRole() === 'external'"></span>
+                   </div>
+              </div>
+           </div>
+        }
+      </div>
+
+      <!-- Input Area -->
+      <footer class="p-4 bg-white border-t border-slate-200">
+        
+        <!-- Image Preview -->
+        @if (selectedImage()) {
+          <div class="mb-3 flex items-center p-2 bg-slate-50 rounded-lg border border-slate-200">
+            <img [src]="selectedImage()" class="h-16 w-16 object-cover rounded-md shadow-sm">
+            <div class="ml-3 flex-1">
+              <p class="text-xs text-slate-500 font-medium">即將發送的圖片</p>
+            </div>
+            <button (click)="removeImage()" class="p-1 hover:bg-slate-200 rounded-full text-slate-500">
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </button>
+          </div>
+        }
+
+        <form (submit)="sendMessage()" class="relative">
+          <div class="flex items-end space-x-2 bg-slate-100 rounded-3xl p-2 border border-slate-200 focus-within:ring-2 focus-within:bg-white transition-all"
+               [class.focus-within:ring-sky-500]="aiService.currentRole() === 'internal'"
+               [class.focus-within:ring-orange-400]="aiService.currentRole() === 'external'">
+            
+            <!-- Image Upload Button -->
+            <button type="button" (click)="triggerImageUpload()" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-full transition-colors flex-shrink-0" title="上傳圖片">
+              <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <input type="file" #fileInput class="hidden" accept="image/*" (change)="onFileSelected($event)">
+
+            <!-- Text Input -->
+            <input 
+              type="text" 
+              placeholder="輸入訊息..."
+              class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-3 px-2 max-h-32 text-slate-800 placeholder:text-slate-400"
+              [ngModel]="userInput()"
+              (ngModelChange)="userInput.set($event)"
+              name="userInput"
+              [disabled]="isLoading()"
+              autocomplete="off">
+              
+            <!-- Send Button -->
+            <button 
+              type="submit" 
+              class="p-2 rounded-full text-white disabled:bg-slate-300 disabled:cursor-not-allowed shadow-md transition-transform active:scale-95 flex-shrink-0"
+              [class.bg-sky-500]="aiService.currentRole() === 'internal'"
+              [class.hover:bg-sky-600]="aiService.currentRole() === 'internal'"
+              [class.bg-orange-500]="aiService.currentRole() === 'external'"
+              [class.hover:bg-orange-600]="aiService.currentRole() === 'external'"
+              [disabled]="(!userInput().trim() && !selectedImage()) || isLoading()">
+              <svg class="h-5 w-5 transform rotate-90 translate-x-[1px]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+            </button>
+          </div>
+        </form>
+      </footer>
+    }
+  </div>
+}

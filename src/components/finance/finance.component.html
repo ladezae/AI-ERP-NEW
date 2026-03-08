@@ -1,0 +1,1251 @@
+
+<div class="p-8 h-full flex flex-col overflow-hidden">
+  <header class="mb-6 flex-shrink-0 flex justify-between items-start">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800 dark:text-white flex items-center">
+          <span class="mr-3 p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg text-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </span>
+          財務管理 (進銷項發票)
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-2 ml-14">逐筆登錄發票，自動計算 401 申報稅額。</p>
+    </div>
+  </header>
+
+  <!-- 1. Company Selector Tabs -->
+  <div class="mb-4 flex space-x-2 overflow-x-auto pb-1 flex-shrink-0">
+      @for (comp of companies(); track comp.id) {
+          <button (click)="setSelectedCompany(comp.id)" 
+                  class="px-4 py-2 rounded-lg font-medium text-sm transition-all border whitespace-nowrap flex items-center shadow-sm"
+                  [class.bg-sky-600]="selectedCompanyId() === comp.id"
+                  [class.text-white]="selectedCompanyId() === comp.id"
+                  [class.border-sky-600]="selectedCompanyId() === comp.id"
+                  [class.bg-white]="selectedCompanyId() !== comp.id"
+                  [class.dark:bg-slate-800]="selectedCompanyId() !== comp.id"
+                  [class.text-slate-600]="selectedCompanyId() !== comp.id"
+                  [class.dark:text-slate-300]="selectedCompanyId() !== comp.id"
+                  [class.border-slate-200]="selectedCompanyId() !== comp.id"
+                  [class.dark:border-slate-600]="selectedCompanyId() !== comp.id">
+              @if (selectedCompanyId() === comp.id) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+              }
+              <span>{{ comp.name }}</span>
+              <span class="ml-1 font-mono opacity-90 text-xs">({{ comp.taxId }})</span>
+          </button>
+      }
+      @if (companies().length === 0) {
+          <div class="text-sm text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded">
+              ⚠️ 請先至「公司資料」新增公司主體
+          </div>
+      }
+  </div>
+
+  <!-- 2. Tax Period Selector -->
+  <div class="mb-6 flex flex-col md:flex-row gap-4 items-center bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner flex-shrink-0">
+      
+      <!-- Year Selector -->
+      <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-600 shadow-sm">
+          <button (click)="setYear(-1)" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span class="font-bold text-slate-800 dark:text-white px-2">{{ selectedYear() }} 年</span>
+          <button (click)="setYear(1)" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+      </div>
+
+      <!-- Periods (1-6) -->
+      <div class="flex space-x-1 flex-1 overflow-x-auto w-full md:w-auto">
+          @for (p of periods; track p.id) {
+              <button (click)="setPeriod(p.id)"
+                      class="flex-1 md:flex-none flex flex-col items-center justify-center px-4 py-1.5 rounded-lg border transition-all text-xs md:text-sm min-w-[80px]"
+                      [class.bg-emerald-600]="selectedPeriod() === p.id"
+                      [class.text-white]="selectedPeriod() === p.id"
+                      [class.border-emerald-600]="selectedPeriod() === p.id"
+                      [class.shadow-md]="selectedPeriod() === p.id"
+                      [class.bg-white]="selectedPeriod() !== p.id"
+                      [class.dark:bg-slate-800]="selectedPeriod() !== p.id"
+                      [class.text-slate-600]="selectedPeriod() !== p.id"
+                      [class.dark:text-slate-300]="selectedPeriod() !== p.id"
+                      [class.border-slate-200]="selectedPeriod() !== p.id"
+                      [class.dark:border-slate-600]="selectedPeriod() !== p.id"
+                      [class.hover:bg-slate-50]="selectedPeriod() !== p.id">
+                  <span class="font-bold">{{ p.label }}</span>
+                  <span class="text-[10px] opacity-80">{{ p.sub }}</span>
+              </button>
+          }
+      </div>
+
+      <!-- Prev/Next Period Navigation -->
+      <div class="flex space-x-2">
+          <button (click)="prevPeriod()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 shadow-sm transition-colors flex items-center justify-center min-w-[48px]" title="上一期">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button (click)="nextPeriod()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 shadow-sm transition-colors flex items-center justify-center min-w-[48px]" title="下一期">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+      </div>
+  </div>
+
+  <!-- 3. 401 Report Estimate Cards (Responsive Grid) -->
+  <div class="mb-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 flex-shrink-0">
+      <!-- 1. Output Card -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+          <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">本期銷項 (OUTPUT)</h3>
+          <div class="flex flex-col">
+              <span class="text-2xl font-bold text-sky-600 dark:text-sky-400 truncate">{{ totalSalesAmount() | number }}</span>
+              <div class="flex items-center text-xs text-slate-400 mt-1">
+                  稅額: <span class="text-slate-600 dark:text-slate-300 font-medium ml-1">{{ totalOutputTax() | number }}</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- 2. Input Card -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+          <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">本期進項 (INPUT)</h3>
+          <div class="flex flex-col">
+              <span class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ totalPurchaseAmount() | number }}</span>
+              <div class="flex items-center text-xs text-slate-400 mt-1">
+                  稅額: <span class="text-slate-600 dark:text-slate-300 font-medium ml-1">{{ totalInputTax() | number }}</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- 3. Cross Period Offset Card (OFFSET) -->
+      <div class="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl shadow-sm border border-cyan-200 dark:border-cyan-800 p-4 relative overflow-hidden">
+          <h3 class="text-xs font-bold text-cyan-600 dark:text-cyan-300 uppercase mb-2">跨期抵報 (OFFSET)</h3>
+          <div class="flex flex-col relative z-10">
+              <span class="text-2xl font-bold text-cyan-700 dark:text-cyan-300 truncate">
+                  {{ totalCrossPeriodOffsetAmount() | number }}
+              </span>
+              <div class="flex items-center text-xs text-cyan-500 dark:text-cyan-400 mt-1">
+                  稅額: <span class="font-medium ml-1">{{ totalCrossPeriodOffsetTax() | number }}</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- 4. Input + Offset Card -->
+      <div class="bg-teal-50 dark:bg-teal-900/20 rounded-xl shadow-sm border border-teal-200 dark:border-teal-800 p-4">
+          <h3 class="text-xs font-bold text-teal-600 dark:text-teal-300 uppercase mb-2">進項總計 (INPUT+)</h3>
+          <div class="flex flex-col">
+              <span class="text-2xl font-bold text-teal-700 dark:text-teal-300 truncate">{{ totalInputPlusOffsetAmount() | number }}</span>
+              <div class="flex items-center text-xs text-teal-500 dark:text-teal-400 mt-1">
+                  稅額: <span class="font-medium ml-1">{{ totalInputPlusOffsetTax() | number }}</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- 5. Gap Card -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 relative overflow-hidden">
+          <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">進銷差額 (GAP)</h3>
+          <div class="flex flex-col relative z-10">
+              <span class="text-2xl font-bold truncate" 
+                    [class.text-indigo-600]="salesGap() >= 0" 
+                    [class.text-rose-500]="salesGap() < 0" 
+                    [class.dark:text-indigo-400]="salesGap() >= 0" 
+                    [class.dark:text-rose-400]="salesGap() < 0">
+                  {{ salesGap() | number }}
+              </span>
+              <div class="text-xs text-slate-400 mt-1">銷項 - 進項總計</div>
+          </div>
+      </div>
+
+      <!-- 6. Retention Card (Current Period) -->
+      <div class="bg-purple-50 dark:bg-purple-900/20 rounded-xl shadow-sm border border-purple-200 dark:border-purple-800 p-4 relative overflow-hidden">
+          <h3 class="text-xs font-bold text-purple-600 dark:text-purple-300 uppercase mb-2">本期留抵 (RETAINED)</h3>
+          <div class="flex flex-col relative z-10">
+              <span class="text-2xl font-bold text-purple-700 dark:text-purple-300 truncate">
+                  {{ totalRetainedAmount() | number }}
+              </span>
+              <div class="flex items-center text-xs text-purple-500 dark:text-purple-400 mt-1">
+                  稅額: <span class="font-medium ml-1">{{ totalRetainedTax() | number }}</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- 7. Last Period Retention Card -->
+      <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl shadow-sm border border-indigo-200 dark:border-indigo-800 p-4 relative overflow-hidden">
+          <h3 class="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase mb-2">上期留抵 (LAST)</h3>
+          <div class="flex flex-col relative z-10">
+              <span class="text-2xl font-bold text-indigo-700 dark:text-indigo-300 truncate">
+                  {{ totalLastPeriodRetainedAmount() | number }}
+              </span>
+              <div class="flex items-center text-xs text-indigo-500 dark:text-indigo-400 mt-1">
+                  稅額: <span class="font-medium ml-1">{{ totalLastPeriodRetainedTax() | number }}</span>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- 4. Action Buttons for Reports & Audits -->
+  <div class="mb-6 flex space-x-3 flex-shrink-0">
+      <button (click)="openReportPreview()" 
+              class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-all shadow-md flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <span>401 申報預覽</span>
+      </button>
+      
+      <button (click)="openTaxAudit()" 
+              class="px-4 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 transition-all shadow-md flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>稅額異常稽核</span>
+          @if (taxAuditResults().length > 0) {
+              <span class="bg-white text-amber-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px]">{{ taxAuditResults().length }}</span>
+          }
+      </button>
+
+      <button (click)="generateAiInsights()" 
+              class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          <span>AI 財務分析</span>
+      </button>
+  </div>
+
+  <!-- Main Content Area (Resizable) -->
+  <div class="bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden transition-all duration-300"
+       [class.fixed]="isFullScreen()"
+       [class.inset-0]="isFullScreen()"
+       [class.z-[100]]="isFullScreen()"
+       [class.w-full]="isFullScreen()"
+       [class.h-full]="isFullScreen()"
+       [class.rounded-none]="isFullScreen()"
+       [class.flex-1]="!isFullScreen()"
+       [class.rounded-xl]="!isFullScreen()">
+      
+      <!-- Tabs & Toggle -->
+      <div class="flex border-b border-slate-200 dark:border-slate-700">
+          <button (click)="setActiveTab('Input')" 
+                  class="flex-1 py-4 text-center font-bold text-lg transition-colors border-b-4 flex items-center justify-center space-x-2"
+                  [class.border-emerald-500]="activeTab() === 'Input'"
+                  [class.text-emerald-600]="activeTab() === 'Input'"
+                  [class.bg-emerald-50]="activeTab() === 'Input'"
+                  [class.dark:bg-emerald-900/20]="activeTab() === 'Input'"
+                  [class.dark:text-emerald-400]="activeTab() === 'Input'"
+                  [class.border-transparent]="activeTab() !== 'Input'"
+                  [class.text-slate-500]="activeTab() !== 'Input'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+              <span>進項發票 (Input)</span>
+          </button>
+          <button (click)="setActiveTab('Output')" 
+                  class="flex-1 py-4 text-center font-bold text-lg transition-colors border-b-4 flex items-center justify-center space-x-2"
+                  [class.border-sky-500]="activeTab() === 'Output'"
+                  [class.text-sky-600]="activeTab() === 'Output'"
+                  [class.bg-sky-50]="activeTab() === 'Output'"
+                  [class.dark:bg-sky-900/20]="activeTab() === 'Output'"
+                  [class.dark:text-sky-400]="activeTab() === 'Output'"
+                  [class.border-transparent]="activeTab() !== 'Output'"
+                  [class.text-slate-500]="activeTab() !== 'Output'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+              <span>銷項發票 (Output)</span>
+          </button>
+          
+          <!-- Fullscreen Toggle Button -->
+          <button (click)="toggleFullScreen()" 
+                  class="w-12 border-l border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                  [title]="isFullScreen() ? '復原視窗' : '最大化視窗'">
+              @if (isFullScreen()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9L4 4m0 0l5 0m-5 0l0 5M15 15l5 5m0 0l-5 0m5 0l0-5M9 15L4 20m0 0l0-5m0 5l5 0M15 9l5-5m0 0l0 5m0-5l-5 0" />
+                  </svg>
+              } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+              }
+          </button>
+      </div>
+
+      <!-- Quick Entry Form (Top) -->
+      @if (selectedCompanyId()) {
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/30 border-b border-slate-200 dark:border-slate-700 flex-shrink-0" [formGroup]="invoiceForm">
+              <!-- Filter Bar -->
+              <div class="flex gap-2 mb-4 pb-4 border-b border-slate-200 dark:border-slate-600 overflow-x-auto items-center">
+                  <!-- Search and Status Filters -->
+                  <div class="relative w-48 min-w-[200px]">
+                      <input 
+                        type="text" 
+                        placeholder="搜尋發票號碼、廠商/客戶名稱、統編..." 
+                        class="w-full pl-8 pr-2 py-1.5 text-xs border rounded dark:bg-slate-800 dark:text-white dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        [value]="searchTerm()"
+                        (input)="onSearchTermChange($event)"
+                      />
+                      <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                      </div>
+                  </div>
+                  
+                  <select (change)="onStatusFilterChange($event)" class="text-xs border rounded p-1.5 dark:bg-slate-800 dark:text-white dark:border-slate-600">
+                      <option value="all">發票狀態: 全部</option>
+                      <option value="成立">成立</option>
+                      <option value="作廢">作廢</option>
+                  </select>
+
+                  <div class="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+                  <!-- Conditionally show detailed tax filters only for Input Invoices -->
+                  @if (activeTab() === 'Input') {
+                      <select (change)="onRetentionFilterChange($event)" class="text-xs border rounded p-1.5 dark:bg-slate-800 dark:text-white dark:border-slate-600">
+                          <option value="all">留抵狀態: 全部</option>
+                          <option value="true">留抵未報</option>
+                          <option value="false">本期申報</option>
+                      </select>
+                      <select (change)="onCopyReportedFilterChange($event)" class="text-xs border rounded p-1.5 dark:bg-slate-800 dark:text-white dark:border-slate-600">
+                          <option value="all">副本狀態: 全部</option>
+                          <option value="true">副本已報</option>
+                          <option value="false">正本</option>
+                      </select>
+                      <select (change)="onCrossPeriodFilterChange($event)" class="text-xs border rounded p-1.5 dark:bg-slate-800 dark:text-white dark:border-slate-600">
+                          <option value="all">跨期狀態: 全部</option>
+                          <option value="true">跨期抵報</option>
+                          <option value="false">一般</option>
+                      </select>
+                  }
+
+                  <select (change)="onCostCategoryFilterChange($event)" class="text-xs border rounded p-1.5 dark:bg-slate-800 dark:text-white dark:border-slate-600">
+                      <option value="">費用類別: 全部</option>
+                      @for (cat of costCategories; track cat) {
+                          <option [value]="cat">{{ cat }}</option>
+                      }
+                  </select>
+
+                  <select (change)="onFormatFilterChange($event)" class="text-xs border rounded p-1.5 dark:bg-slate-800 dark:text-white dark:border-slate-600">
+                      <option value="all">格式: 全部</option>
+                      @for (fmt of formatMap | keyvalue; track fmt.key) {
+                          <option [value]="fmt.key">{{ fmt.value }}</option>
+                      }
+                  </select>
+                  
+                  <!-- Spacer -->
+                  <div class="flex-1"></div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center space-x-2">
+                      @if (visibleSelectedCount() > 0) {
+                          <button (click)="deleteSelectedInvoices()" class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              刪除所選 ({{ visibleSelectedCount() }})
+                          </button>
+                      }
+
+                      <button (click)="removeDuplicates()" class="px-3 py-1.5 bg-amber-100 border border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800 text-xs rounded hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          移除重複
+                      </button>
+
+                      <button (click)="checkGlobalDuplicates()" class="px-3 py-1.5 bg-indigo-100 border border-indigo-300 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800 text-xs rounded hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                          全域重複檢查
+                      </button>
+
+                      <button (click)="openGlobalSearch('invoiceNumber')" class="px-3 py-1.5 bg-blue-100 border border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-xs rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        全域搜發票
+                      </button>
+
+                      <button (click)="openGlobalSearch('totalAmount')" class="px-3 py-1.5 bg-sky-100 border border-sky-300 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800 text-xs rounded hover:bg-sky-200 dark:hover:bg-sky-900/50 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        全域搜金額
+                      </button>
+                      
+                      <button (click)="openBatchDownload()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+                        批次下載 (ZIP)
+                      </button>
+
+                      <button (click)="exportCurrentView()" class="px-3 py-1.5 bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-xs text-slate-700 dark:text-slate-200 rounded hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors flex items-center shadow-sm whitespace-nowrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          匯出 Excel (Save)
+                      </button>
+
+                      <button (click)="downloadTemplate()" class="px-3 py-1.5 bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-xs text-slate-700 dark:text-slate-200 rounded hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+                          下載範本
+                      </button>
+                      <button (click)="fileInput.click()" [disabled]="isImporting()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 transition-colors flex items-center disabled:opacity-50">
+                          @if (isImporting()) {
+                              <svg class="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                              匯入中
+                          } @else {
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                              匯入 Excel
+                          }
+                      </button>
+                      <input #fileInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)">
+                  </div>
+              </div>
+
+              <!-- Form Inputs -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+                  <!-- Date (1) -->
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">日期</label>
+                      <input type="date" formControlName="date" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                  </div>
+                  
+                  <!-- Invoice No (2) -->
+                  <div class="md:col-span-2 relative">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">發票號碼</label>
+                      <input type="text" formControlName="invoiceNumber" placeholder="AB-12345678" class="w-full p-2 text-sm border rounded font-mono uppercase dark:bg-slate-800 dark:border-slate-600 dark:text-white" maxlength="11">
+                  </div>
+
+                  <!-- Format Code (1) -->
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">格式</label>
+                      <select formControlName="formatCode" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                          @if (activeTab() === 'Input') {
+                              <option value="21">21 三聯</option>
+                              <option value="22">22 二聯</option>
+                              <option value="25">25</option>
+                              <option value="35">35</option>
+                              <option value="電子">電子</option>
+                          } @else {
+                              <option value="31">31 三聯</option>
+                              <option value="32">32 二聯</option>
+                              <option value="35">35</option>
+                              <option value="電子">電子</option>
+                          }
+                      </select>
+                  </div>
+
+                  <!-- Invoice Status (1) -->
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">狀態</label>
+                      <select formControlName="status" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                          <option value="成立">成立</option>
+                          <option value="作廢">作廢</option>
+                      </select>
+                  </div>
+
+                  <!-- Company Name (2) [MOVED UP] -->
+                  <div class="md:col-span-2">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">
+                          {{ activeTab() === 'Input' ? '廠商名稱' : '客戶全名' }}
+                      </label>
+                      <input type="text" 
+                             formControlName="companyName" 
+                             class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-colors"
+                             [class.bg-slate-100]="!!invoiceForm.get('linkedOrderId')?.value"
+                             [class.dark:bg-slate-700]="!!invoiceForm.get('linkedOrderId')?.value"
+                             [class.cursor-not-allowed]="!!invoiceForm.get('linkedOrderId')?.value"
+                             [readonly]="!!invoiceForm.get('linkedOrderId')?.value"
+                             title="{{ !!invoiceForm.get('linkedOrderId')?.value ? '已關聯對象，如需修改名稱請先取消關聯' : '請輸入公司名稱' }}">
+                  </div>
+
+                  <!-- Tax ID (1) -->
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">統編</label>
+                      <input type="text" formControlName="taxId" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                  </div>
+
+                  <!-- Cost Category (1) -->
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">費用類別</label>
+                      <select formControlName="costCategory" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                          <option value="">請選擇</option>
+                          @for (cat of costCategories; track cat) {
+                              <option [value]="cat">{{ cat }}</option>
+                          }
+                      </select>
+                  </div>
+
+                  <!-- Amounts (2) -->
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">銷售額(未稅)</label>
+                      <input type="number" formControlName="salesAmount" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white font-bold text-right">
+                  </div>
+                  
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">稅額(5%)</label>
+                      <input type="number" formControlName="taxAmount" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white text-right">
+                  </div>
+
+                  <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-slate-500 mb-1">含稅總計</label>
+                      <input type="number" formControlName="totalAmount" class="w-full p-2 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white font-bold text-right bg-amber-50 dark:bg-amber-900/10">
+                  </div>
+
+                  <!-- Buttons (1) -->
+                  <div class="md:col-span-1 flex space-x-1">
+                      @if (editingInvoiceId()) {
+                          <button (click)="submitInvoice()" [disabled]="invoiceForm.invalid" class="flex-1 p-2 bg-amber-500 hover:bg-amber-600 text-white rounded text-sm font-bold shadow-md transition-colors disabled:bg-slate-400">
+                              更新
+                          </button>
+                          <button (click)="cancelEdit()" class="p-2 bg-slate-300 hover:bg-slate-400 text-slate-700 rounded text-sm font-bold shadow-md transition-colors">
+                              X
+                          </button>
+                      } @else {
+                          <button (click)="submitInvoice()" [disabled]="invoiceForm.invalid" class="w-full p-2 bg-sky-600 hover:bg-sky-700 text-white rounded text-sm font-bold shadow-md transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed">
+                              新增
+                          </button>
+                      }
+                  </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-2 items-center">
+                  <!-- Linked Order (2) [MOVED DOWN] -->
+                  <div class="md:col-span-2">
+                      <select formControlName="linkedOrderId" class="w-full p-1.5 text-xs border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white text-slate-500">
+                          <option value="">{{ activeTab() === 'Input' ? '關聯供應商 (選填)' : '關聯訂單 (選填)' }}</option>
+                          @if (activeTab() === 'Input') {
+                              @for (sup of taxableSuppliers(); track sup.code) {
+                                  <option [value]="sup.code">{{ sup.code }} - {{ sup.shortName }}</option>
+                              }
+                          } @else {
+                              @for (ord of activeOrders(); track ord.orderId) {
+                                  <option [value]="ord.orderId">{{ ord.orderId }} ({{ ord.customerName }})</option>
+                              }
+                          }
+                      </select>
+                  </div>
+                  
+                  <!-- Conditional Flags -->
+                  @if (activeTab() === 'Input') {
+                      <div class="md:col-span-4 flex space-x-3 items-center">
+                          <label class="flex items-center space-x-1 cursor-pointer select-none">
+                              <input type="checkbox" formControlName="isRetention" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                              <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">留抵未報</span>
+                          </label>
+                          <label class="flex items-center space-x-1 cursor-pointer select-none">
+                              <input type="checkbox" formControlName="isCopyReported" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
+                              <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">副本已報</span>
+                          </label>
+                          <label class="flex items-center space-x-1 cursor-pointer select-none">
+                              <input type="checkbox" formControlName="isCrossPeriod" class="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded">
+                              <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">跨期抵報</span>
+                          </label>
+                      </div>
+                      
+                      <div class="md:col-span-6">
+                          <input type="text" formControlName="note" placeholder="備註事項..." class="w-full p-1.5 text-xs border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white text-slate-500">
+                      </div>
+                  } @else {
+                      <div class="md:col-span-10">
+                          <input type="text" formControlName="note" placeholder="備註事項..." class="w-full p-1.5 text-xs border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white text-slate-500">
+                      </div>
+                  }
+              </div>
+          </div>
+      } @else {
+          <div class="p-8 text-center text-slate-400">
+              請先選擇上方公司主體以開始記帳。
+          </div>
+      }
+
+      <!-- Invoice List (Table) -->
+      <div class="flex-1 overflow-auto p-0 relative">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+              <thead class="bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">
+                  <tr>
+                      <th class="px-4 py-3 text-center w-10 bg-slate-100 dark:bg-slate-900 sticky top-0 z-10">
+                          <input type="checkbox" 
+                                 [checked]="isAllSelected()" 
+                                 (change)="toggleSelectAll()"
+                                 class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded cursor-pointer">
+                      </th>
+                      <th appResizable tableId="finance" colId="idx" class="px-4 py-3 text-left w-12 bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">#</th>
+                      <th appResizable tableId="finance" colId="date" (click)="toggleSort('date')" class="px-4 py-3 text-left bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors select-none">
+                          日期
+                          <span class="text-xs ml-1">{{ getSortIcon('date') }}</span>
+                      </th>
+                      <th appResizable tableId="finance" colId="invoiceNo" (click)="toggleSort('invoiceNumber')" class="px-4 py-3 text-left bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors select-none">
+                          發票號碼
+                          <span class="text-xs ml-1">{{ getSortIcon('invoiceNumber') }}</span>
+                      </th>
+                      <th appResizable tableId="finance" colId="invStatus" class="px-4 py-3 text-center bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">狀態</th>
+                      <th appResizable tableId="finance" colId="format" class="px-4 py-3 text-center bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">格式</th>
+                      @if (activeTab() === 'Input') {
+                          <th appResizable tableId="finance" colId="status" class="px-4 py-3 text-center bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">申報狀態</th>
+                      }
+                      
+                      <!-- Company Name Header (Sorted) -->
+                      <th appResizable tableId="finance" colId="company" (click)="toggleSort('companyName')" class="px-4 py-3 text-left bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors select-none">
+                          {{ activeTab() === 'Input' ? '廠商名稱' : '客戶全名' }}
+                          <span class="text-xs ml-1">{{ getSortIcon('companyName') }}</span>
+                      </th>
+                      
+                      <th appResizable tableId="finance" colId="taxId" class="px-4 py-3 text-left bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">統編</th>
+                      
+                      <!-- Cost Category Header (Sorted) -->
+                      <th appResizable tableId="finance" colId="costCat" (click)="toggleSort('costCategory')" class="px-4 py-3 text-left bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors select-none">
+                          費用類別
+                          <span class="text-xs ml-1">{{ getSortIcon('costCategory') }}</span>
+                      </th>
+                      
+                      <th appResizable tableId="finance" colId="salesAmt" class="px-4 py-3 text-right bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">銷售額</th>
+                      <th appResizable tableId="finance" colId="taxAmt" class="px-4 py-3 text-right bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">稅額</th>
+                      <th appResizable tableId="finance" colId="totalAmt" class="px-4 py-3 text-right bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">總計</th>
+                      <th appResizable tableId="finance" colId="note" class="px-4 py-3 text-left bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">備註</th>
+                      <th appResizable tableId="finance" colId="actions" class="relative px-4 py-3 text-center bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 font-bold text-slate-600 dark:text-slate-300">操作</th>
+                  </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-800">
+                  @for (inv of filteredInvoices(); track inv.id; let i = $index) {
+                      <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
+                          [class.bg-amber-50]="editingInvoiceId() === inv.id"
+                          [class.dark:bg-amber-900/20]="editingInvoiceId() === inv.id"
+                          [class.bg-sky-50/50]="selectedInvoiceIds().has(inv.id)"
+                          [class.dark:bg-sky-900/10]="selectedInvoiceIds().has(inv.id)"
+                          [class.opacity-60]="inv.status === '作廢'">
+                          <td class="px-4 py-2 text-center">
+                              <input type="checkbox" 
+                                     [checked]="selectedInvoiceIds().has(inv.id)" 
+                                     (change)="toggleSelect(inv.id)"
+                                     class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded cursor-pointer">
+                          </td>
+                          <td class="px-4 py-2 text-slate-400">{{ i + 1 }}</td>
+                          <td class="px-4 py-2 whitespace-nowrap">{{ inv.date }}</td>
+                          <td class="px-4 py-2 font-mono font-bold" [class.text-emerald-600]="inv.type === 'Input'" [class.text-sky-600]="inv.type === 'Output'">
+                              {{ inv.invoiceNumber }}
+                          </td>
+                          <td class="px-4 py-2 text-center">
+                              @if (inv.status === '作廢') {
+                                  <span class="px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-bold border border-red-200 dark:border-red-800">作廢</span>
+                              } @else {
+                                  <span class="px-2 py-0.5 rounded bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs border border-green-200 dark:border-green-800">成立</span>
+                              }
+                          </td>
+                          <td class="px-4 py-2 text-center text-xs text-slate-600 dark:text-slate-400">
+                              {{ formatMap[inv.formatCode] || inv.formatCode }}
+                          </td>
+                          
+                          @if (activeTab() === 'Input') {
+                              <td class="px-4 py-2 text-center">
+                                  <div class="flex flex-row flex-nowrap gap-1 justify-center">
+                                      @if (inv.isRetention) {
+                                          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800 whitespace-nowrap">
+                                              留抵
+                                          </span>
+                                      }
+                                      @if (inv.isCopyReported) {
+                                          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 whitespace-nowrap">
+                                              副本
+                                          </span>
+                                      }
+                                      @if (inv.isCrossPeriod) {
+                                          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 whitespace-nowrap">
+                                              跨期
+                                          </span>
+                                      }
+                                      @if (!inv.isRetention && !inv.isCopyReported && !inv.isCrossPeriod) {
+                                          <span class="text-slate-300 dark:text-slate-600">-</span>
+                                      }
+                                  </div>
+                              </td>
+                          }
+
+                          <td class="px-4 py-2 truncate max-w-[150px]" [title]="inv.companyName">{{ inv.companyName }}</td>
+                          <td class="px-4 py-2 font-mono">{{ inv.taxId }}</td>
+                          <td class="px-4 py-2 text-slate-500">{{ inv.costCategory || '-' }}</td> 
+                          <td class="px-4 py-2 text-right font-mono">{{ inv.salesAmount | number }}</td>
+                          <td class="px-4 py-2 text-right font-mono text-slate-500">{{ inv.taxAmount | number }}</td>
+                          <td class="px-4 py-2 text-right font-mono font-bold">{{ inv.totalAmount | number }}</td>
+                          <td class="px-4 py-2 truncate max-w-[150px] text-xs text-slate-500">
+                              {{ inv.note }}
+                          </td>
+                          <td class="px-4 py-2 text-center">
+                              <div class="flex justify-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity" [class.opacity-100]="editingInvoiceId() === inv.id">
+                                  <button (click)="editInvoice(inv)" class="text-slate-400 hover:text-sky-500" title="編輯">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                  </button>
+                                  <button (click)="openDeleteConfirm(inv)" class="text-slate-400 hover:text-red-500" title="刪除">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  </button>
+                              </div>
+                          </td>
+                      </tr>
+                  } @empty {
+                      <tr>
+                          <td colspan="16" class="py-12 text-center text-slate-400 border-2 border-dashed border-slate-100 dark:border-slate-700/50 m-4 rounded-lg">
+                              @if (selectedCompanyId()) {
+                                  本期 ({{selectedYear()}}年 第{{selectedPeriod()}}期) 尚無資料。
+                              } @else {
+                                  請選擇公司。
+                              }
+                          </td>
+                      </tr>
+                  }
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+@if (showImportModal()) {
+  <div class="fixed inset-0 z-[110] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeImportModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+         <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Excel 匯入欄位對照</h3>
+             <div class="space-y-4 max-h-[60vh] overflow-y-auto">
+                 <div class="grid grid-cols-1 gap-4">
+                     @for (field of systemImportFields; track field.key) {
+                        <div class="flex items-center space-x-4 p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <div class="w-1/3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {{ field.label }} @if (field.required) { <span class="text-red-500">*</span> }
+                            </div>
+                            <div class="w-2/3">
+                                <select [value]="columnMappings()[field.key] || ''" (change)="updateMapping(field.key, $any($event.target).value)" class="w-full p-2 border rounded dark:bg-slate-700 dark:text-white dark:border-slate-600 text-sm">
+                                    <option value="">(忽略)</option>
+                                    @for (header of importFileHeaders(); track header) { <option [value]="header">{{ header }}</option> }
+                                </select>
+                            </div>
+                        </div>
+                     }
+                 </div>
+             </div>
+         </div>
+         <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-slate-600">
+             <button (click)="executeImport()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 sm:ml-3 sm:w-auto sm:text-sm">確認匯入</button>
+             <button (click)="closeImportModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-500 dark:hover:bg-slate-700">取消</button>
+         </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (invoiceToDelete()) {
+  <div class="fixed inset-0 z-[120] overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      
+      <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" (click)="cancelDelete()"></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border-2 border-red-500 dark:border-red-600 animate-[fadeIn_0.2s]">
+        <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+              <svg class="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
+                刪除確認
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500 dark:text-slate-400">
+                  您確定要永久刪除此筆發票紀錄嗎？此動作無法復原。
+                </p>
+                <div class="mt-4 bg-red-50 dark:bg-red-900/10 p-3 rounded-md border border-red-100 dark:border-red-900/30 text-left">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">發票號碼:</span>
+                        <span class="text-sm font-mono font-bold text-slate-800 dark:text-white">{{ invoiceToDelete()?.invoiceNumber }}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">開立日期:</span>
+                        <span class="text-sm font-medium text-slate-800 dark:text-white">{{ invoiceToDelete()?.date }}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">交易對象:</span>
+                        <span class="text-sm font-medium text-slate-800 dark:text-white truncate max-w-[150px]">{{ invoiceToDelete()?.companyName }}</span>
+                    </div>
+                    <div class="border-t border-red-200 dark:border-red-800/30 my-2"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">總金額:</span>
+                        <span class="text-lg font-bold text-red-600 dark:text-red-400">${{ invoiceToDelete()?.totalAmount | number }}</span>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-slate-700/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" (click)="performDelete()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+            確認刪除
+          </button>
+          <button type="button" (click)="cancelDelete()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Global Duplicate Modal -->
+@if (showGlobalDuplicateModal()) {
+  <div class="fixed inset-0 z-[120] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeGlobalDuplicateModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 sm:mx-0 sm:h-10 sm:w-10">
+              <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white" id="modal-title">
+                全域發票重複檢查結果
+              </h3>
+              <div class="mt-4">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                  以下是在所有公司、所有期別中發現的重複發票號碼。
+                </p>
+
+                @if (globalDuplicateResults().length === 0) {
+                  <div class="py-10 text-center border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-lg">
+                    <p class="text-slate-400">未發現任何重複發票。</p>
+                  </div>
+                } @else {
+                  <div class="max-h-[60vh] overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+                    @for (group of globalDuplicateResults(); track group.invoiceNumber) {
+                      <div class="border-b border-slate-200 dark:border-slate-700 last:border-0">
+                        <div class="bg-slate-50 dark:bg-slate-900/50 px-4 py-2 font-mono font-bold text-indigo-600 dark:text-indigo-400 flex justify-between items-center">
+                          <span>發票號碼: {{ group.invoiceNumber }}</span>
+                          <span class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200 px-2 py-0.5 rounded-full">
+                            {{ group.invoices.length }} 筆重複
+                          </span>
+                        </div>
+                        <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                          @for (inv of group.invoices; track inv.id) {
+                            <div class="px-4 py-3 grid grid-cols-5 gap-4 text-xs">
+                              <div class="col-span-1">
+                                <div class="text-slate-400 uppercase text-[10px] mb-1">所屬公司</div>
+                                <div class="font-medium text-slate-700 dark:text-slate-300">{{ getCompanyNameById(inv.ownerCompanyId) }}</div>
+                              </div>
+                              <div class="col-span-1">
+                                <div class="text-slate-400 uppercase text-[10px] mb-1">日期</div>
+                                <div class="text-slate-700 dark:text-slate-300">{{ inv.date }}</div>
+                              </div>
+                              <div class="col-span-1">
+                                <div class="text-slate-400 uppercase text-[10px] mb-1">類型</div>
+                                <div class="inline-flex px-1.5 py-0.5 rounded-full text-[10px]" 
+                                     [class.bg-emerald-100]="inv.type === 'Input'" [class.text-emerald-800]="inv.type === 'Input'"
+                                     [class.bg-sky-100]="inv.type === 'Output'" [class.text-sky-800]="inv.type === 'Output'">
+                                  {{ inv.type === 'Input' ? '進項' : '銷項' }}
+                                </div>
+                              </div>
+                              <div class="col-span-1">
+                                <div class="text-slate-400 uppercase text-[10px] mb-1">金額 (含稅)</div>
+                                <div class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ inv.totalAmount | number }}</div>
+                              </div>
+                              <div class="col-span-1 text-right flex items-center justify-end space-x-2">
+                                <button (click)="goToInvoice(inv)" class="text-indigo-500 hover:text-indigo-700 p-1" title="前往此發票位置">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </button>
+                                <button (click)="openDeleteConfirm(inv); closeGlobalDuplicateModal()" class="text-red-500 hover:text-red-700 p-1" title="刪除此筆">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-900/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" (click)="closeGlobalDuplicateModal()" class="w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Global Search Modal -->
+@if (showGlobalSearchModal()) {
+  <div class="fixed inset-0 z-[110] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeGlobalSearchModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-bold text-slate-900 dark:text-white" id="modal-title">
+                全域搜尋: {{ globalSearchType() === 'invoiceNumber' ? '發票號碼' : '總金額' }}
+              </h3>
+              <div class="mt-4">
+                <div class="flex space-x-2 mb-6">
+                  <input 
+                    type="text" 
+                    [placeholder]="globalSearchType() === 'invoiceNumber' ? '輸入發票號碼 (如: AB-12345678)' : '輸入精確總金額 (含稅)'"
+                    class="flex-1 px-4 py-2 border rounded-lg dark:bg-slate-900 dark:text-white dark:border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                    [ngModel]="globalSearchQuery()"
+                    (ngModelChange)="globalSearchQuery.set($event)"
+                    (keyup.enter)="performGlobalSearch()"
+                  />
+                  <button (click)="performGlobalSearch()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold">
+                    搜尋
+                  </button>
+                </div>
+
+                @if (globalSearchResults().length === 0 && globalSearchQuery()) {
+                  <div class="py-10 text-center border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-lg">
+                    <p class="text-slate-400">未找到符合條件的發票。</p>
+                  </div>
+                } @else if (globalSearchResults().length > 0) {
+                  <div class="max-h-[50vh] overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <table class="w-full text-sm text-left">
+                      <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold sticky top-0">
+                        <tr>
+                          <th class="px-4 py-2">發票號碼</th>
+                          <th class="px-4 py-2">所屬公司</th>
+                          <th class="px-4 py-2">日期</th>
+                          <th class="px-4 py-2">類型</th>
+                          <th class="px-4 py-2 text-right">總金額</th>
+                          <th class="px-4 py-2 text-right">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @for (inv of globalSearchResults(); track inv.id) {
+                          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td class="px-4 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{{ inv.invoiceNumber }}</td>
+                            <td class="px-4 py-3">{{ getCompanyNameById(inv.ownerCompanyId) }}</td>
+                            <td class="px-4 py-3">{{ inv.date }}</td>
+                            <td class="px-4 py-3">
+                              <span class="px-2 py-0.5 rounded-full text-[10px]"
+                                    [class.bg-emerald-100]="inv.type === 'Input'" [class.text-emerald-800]="inv.type === 'Input'"
+                                    [class.bg-sky-100]="inv.type === 'Output'" [class.text-sky-800]="inv.type === 'Output'">
+                                {{ inv.type === 'Input' ? '進項' : '銷項' }}
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-mono font-bold">{{ inv.totalAmount | number }}</td>
+                            <td class="px-4 py-3 text-right">
+                              <button (click)="goToInvoice(inv)" class="text-blue-500 hover:text-blue-700 p-1" title="前往發票位置">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-900/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" (click)="closeGlobalSearchModal()" class="w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Batch Download Modal -->
+@if (showBatchDownloadModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeBatchDownloadModal()"></div>
+    <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center">
+          <span class="mr-2">📦</span> 批次報表下載 (ZIP 打包)
+        </h3>
+        <button (click)="closeBatchDownloadModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-8">
+        <!-- Year Selection -->
+        <div>
+          <label class="block text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">1. 選擇年份</label>
+          <div class="flex items-center space-x-4">
+            <button (click)="setBatchYear(-1)" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <span class="text-2xl font-bold text-sky-600 dark:text-sky-400">{{ batchSelectedYear() }} 年</span>
+            <button (click)="setBatchYear(1)" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Company Selection -->
+        <div>
+          <label class="block text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">2. 選擇公司 (可多選)</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @for (company of companies(); track company.id) {
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-all"
+                     [class.border-sky-500]="batchSelectedCompanyIds().has(company.id)"
+                     [class.bg-sky-50]="batchSelectedCompanyIds().has(company.id)"
+                     [class.dark:bg-sky-900/20]="batchSelectedCompanyIds().has(company.id)"
+                     [class.border-slate-200]="!batchSelectedCompanyIds().has(company.id)"
+                     [class.dark:border-slate-700]="!batchSelectedCompanyIds().has(company.id)">
+                <input type="checkbox" class="hidden" [checked]="batchSelectedCompanyIds().has(company.id)" (change)="toggleBatchCompany(company.id)">
+                <div class="w-5 h-5 border-2 rounded mr-3 flex items-center justify-center transition-colors"
+                     [class.bg-sky-500]="batchSelectedCompanyIds().has(company.id)"
+                     [class.border-sky-500]="batchSelectedCompanyIds().has(company.id)"
+                     [class.border-slate-300]="!batchSelectedCompanyIds().has(company.id)">
+                  @if (batchSelectedCompanyIds().has(company.id)) {
+                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                  }
+                </div>
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ company.name }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- Period Selection -->
+        <div>
+          <label class="block text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">3. 選擇期別 (可多選)</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            @for (period of periods; track period.id) {
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-all"
+                     [class.border-sky-500]="batchSelectedPeriods().has(period.id)"
+                     [class.bg-sky-50]="batchSelectedPeriods().has(period.id)"
+                     [class.dark:bg-sky-900/20]="batchSelectedPeriods().has(period.id)"
+                     [class.border-slate-200]="!batchSelectedPeriods().has(period.id)"
+                     [class.dark:border-slate-700]="!batchSelectedPeriods().has(period.id)">
+                <input type="checkbox" class="hidden" [checked]="batchSelectedPeriods().has(period.id)" (change)="toggleBatchPeriod(period.id)">
+                <div class="w-5 h-5 border-2 rounded mr-3 flex items-center justify-center transition-colors"
+                     [class.bg-sky-500]="batchSelectedPeriods().has(period.id)"
+                     [class.border-sky-500]="batchSelectedPeriods().has(period.id)"
+                     [class.border-slate-300]="!batchSelectedPeriods().has(period.id)">
+                  @if (batchSelectedPeriods().has(period.id)) {
+                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                  }
+                </div>
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ period.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end space-x-3">
+        <button (click)="closeBatchDownloadModal()" class="px-6 py-2 text-slate-600 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+          取消
+        </button>
+        <button (click)="performBatchDownload()" 
+                [disabled]="batchSelectedCompanyIds().size === 0 || batchSelectedPeriods().size === 0"
+                class="px-8 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+          <span>開始打包下載 (ZIP)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 401 Report Preview Modal -->
+@if (showReportPreviewModal()) {
+  <div class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+            <svg class="w-6 h-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            401 營業稅申報預覽 (估算)
+          </h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">{{ report401Data().company?.name }} | {{ selectedYear() }} 年 {{ selectedPeriod() }} 期</p>
+        </div>
+        <button (click)="closeReportPreview()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
+          <svg class="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18" /></svg>
+        </button>
+      </div>
+
+      <div class="p-8 overflow-y-auto bg-slate-50 dark:bg-slate-900/20">
+        <!-- Taiwan 401 Form Style Layout -->
+        <div class="bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 p-8 shadow-sm max-w-3xl mx-auto font-serif">
+          <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold border-b-2 border-slate-800 dark:border-slate-200 inline-block pb-1 mb-2">營業稅宣導申報書 (401) 預覽</h1>
+            <p class="text-sm">僅供內部對帳參考，非正式申報文件</p>
+          </div>
+
+          <div class="grid grid-cols-12 border-t-2 border-l-2 border-slate-800 dark:border-slate-200">
+            <!-- Headers -->
+            <div class="col-span-6 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 bg-slate-100 dark:bg-slate-700 font-bold text-center">項目</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 bg-slate-100 dark:bg-slate-700 font-bold text-center">銷售額 / 進項金額</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 bg-slate-100 dark:bg-slate-700 font-bold text-center">稅額</div>
+
+            <!-- Sales Section -->
+            <div class="col-span-12 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 bg-slate-50 dark:bg-slate-800/50 font-bold italic">一、銷項 (Sales)</div>
+            
+            <div class="col-span-6 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4">應稅銷售額 (01)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">{{ report401Data().taxableSales | number }}</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">{{ report401Data().outputTax | number }}</div>
+
+            <div class="col-span-6 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4">零稅率銷售額 (03)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">0</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">0</div>
+
+            <div class="col-span-6 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4">免稅銷售額 (05)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">0</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">0</div>
+
+            <!-- Purchase Section -->
+            <div class="col-span-12 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 bg-slate-50 dark:bg-slate-800/50 font-bold italic">二、進項 (Purchases)</div>
+
+            <div class="col-span-6 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4">應稅進項額 (21)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">{{ report401Data().taxablePurchases | number }}</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">{{ report401Data().inputTax | number }}</div>
+
+            <div class="col-span-6 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4">上期留抵稅額 (23)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">-</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono">{{ report401Data().lastRetention | number }}</div>
+
+            <!-- Summary Section -->
+            <div class="col-span-12 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 bg-slate-50 dark:bg-slate-800/50 font-bold italic">三、計算 (Calculation)</div>
+
+            <div class="col-span-9 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4 font-bold">本期應納稅額 (VAT Payable)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono font-bold text-rose-600">{{ report401Data().vatPayable | number }}</div>
+
+            <div class="col-span-9 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 pl-4 font-bold">本期留抵稅額 (Current Retention)</div>
+            <div class="col-span-3 border-r-2 border-b-2 border-slate-800 dark:border-slate-200 p-2 text-right font-mono font-bold text-emerald-600">{{ report401Data().currentRetention | number }}</div>
+          </div>
+
+          <div class="mt-8 text-xs text-slate-400 italic">
+            * 註：此報表僅包含已登錄之進銷項發票，不包含未稅支出或非發票憑證。
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+        <button (click)="closeReportPreview()" class="px-8 py-2 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition-all shadow-lg">
+          關閉預覽
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Tax Audit Modal -->
+@if (showTaxAuditModal()) {
+  <div class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-amber-50 dark:bg-amber-900/20">
+        <div>
+          <h2 class="text-xl font-bold text-amber-800 dark:text-amber-400 flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            稅額異常稽核 (Tax Discrepancy Audit)
+          </h2>
+          <p class="text-sm text-amber-700 dark:text-amber-500">自動檢查稅額是否符合 5% 營業稅率</p>
+        </div>
+        <button (click)="closeTaxAudit()" class="p-2 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-full transition-colors">
+          <svg class="w-6 h-6 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18" /></svg>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto">
+        @if (taxAuditResults().length === 0) {
+          <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+            <svg class="w-16 h-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <p class="text-lg font-medium">未發現稅額異常</p>
+            <p class="text-sm">所有發票稅額均符合 5% 誤差範圍內。</p>
+          </div>
+        } @else {
+          <div class="space-y-4">
+            <div class="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 mb-6">
+              <p class="text-sm text-amber-800 dark:text-amber-400">
+                系統偵測到 <strong>{{ taxAuditResults().length }}</strong> 筆發票稅額與銷售額 (5%) 不符。請檢查是否為手誤或特殊課稅別。
+              </p>
+            </div>
+
+            <div class="overflow-hidden border border-slate-200 dark:border-slate-700 rounded-xl">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th class="px-4 py-3">發票號碼</th>
+                    <th class="px-4 py-3">對象</th>
+                    <th class="px-4 py-3 text-right">銷售額</th>
+                    <th class="px-4 py-3 text-right">實收稅額</th>
+                    <th class="px-4 py-3 text-right">應收稅額</th>
+                    <th class="px-4 py-3 text-right">差異</th>
+                    <th class="px-4 py-3 text-center">操作</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                  @for (res of taxAuditResults(); track res.invoice.id) {
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td class="px-4 py-3 font-mono font-bold">{{ res.invoice.invoiceNumber }}</td>
+                      <td class="px-4 py-3 truncate max-w-[120px]">{{ res.invoice.companyName }}</td>
+                      <td class="px-4 py-3 text-right font-mono">{{ res.invoice.salesAmount | number }}</td>
+                      <td class="px-4 py-3 text-right font-mono text-rose-500">{{ res.invoice.taxAmount | number }}</td>
+                      <td class="px-4 py-3 text-right font-mono text-emerald-500">{{ res.expectedTax | number }}</td>
+                      <td class="px-4 py-3 text-right font-mono font-bold text-amber-600">{{ res.diff | number }}</td>
+                      <td class="px-4 py-3 text-center">
+                        <button (click)="goToInvoice(res.invoice); closeTaxAudit()" class="p-1.5 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg hover:bg-sky-200 transition-colors">
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+        <button (click)="closeTaxAudit()" class="px-8 py-2 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition-all shadow-lg">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- AI Financial Insight Modal -->
+@if (showAiInsightModal()) {
+  <div class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-gradient-to-r from-purple-500 to-indigo-600">
+        <h2 class="text-xl font-bold text-white flex items-center">
+          <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          AI 財務分析建議
+        </h2>
+        <button (click)="closeAiInsightModal()" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18" /></svg>
+        </button>
+      </div>
+
+      <div class="p-8 overflow-y-auto bg-slate-50 dark:bg-slate-900/20">
+        @if (isAnalyzing()) {
+          <div class="flex flex-col items-center justify-center py-12">
+            <div class="relative w-16 h-16 mb-6">
+              <div class="absolute inset-0 border-4 border-purple-200 dark:border-purple-900 rounded-full"></div>
+              <div class="absolute inset-0 border-4 border-purple-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 font-medium animate-pulse">正在分析財務數據，請稍候...</p>
+          </div>
+        } @else {
+          <div class="prose dark:prose-invert max-w-none">
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300">
+              {{ aiInsightContent() }}
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+        <button (click)="closeAiInsightModal()" class="px-8 py-2 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition-all shadow-lg">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+}

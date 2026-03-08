@@ -1,0 +1,456 @@
+
+
+
+
+
+
+
+
+@if (!isStandalone()) {
+    <div class="p-8 h-full flex flex-col overflow-hidden">
+      <header class="mb-6 flex-shrink-0 flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 dark:text-white flex items-center">
+                <span class="mr-3 p-2 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg text-white shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                </span>
+                行動版面配置 (Mobile Layout)
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-2 ml-14">自訂手機端專屬的操作介面，隱藏不必要的資訊，專注核心作業。</p>
+        </div>
+        
+        <div class="flex space-x-3">
+             <!-- NEW: Launch Standalone Button -->
+             @if (!isBuilderMode()) {
+                 <button (click)="requestLaunchStandalone()" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg shadow-md font-bold transition-colors flex items-center border border-slate-700">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                     啟動 App 模式
+                 </button>
+                 
+                 <button (click)="createNewPage()" class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-md font-bold transition-colors flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    建立新版面
+                </button>
+            }
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-hidden bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col">
+          
+          <!-- List View -->
+          @if (!isBuilderMode()) {
+              <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto">
+                  @for (page of mobilePages(); track page.id) {
+                      <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:shadow-md transition-shadow relative group bg-slate-50 dark:bg-slate-700/30">
+                          <div class="flex items-center mb-3">
+                              <div class="p-2 bg-white dark:bg-slate-800 rounded-lg text-sky-600 dark:text-sky-400 mr-3 shadow-sm">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <!-- Dynamic Icon based on module -->
+                                      @if(page.sourceModule === 'purchase') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> }
+                                      @else if(page.sourceModule === 'order') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /> }
+                                      @else { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /> }
+                                  </svg>
+                              </div>
+                              <div>
+                                  <h3 class="font-bold text-lg text-slate-800 dark:text-white">{{ page.name }}</h3>
+                                  <span class="text-xs px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300">{{ page.sourceModule }}</span>
+                              </div>
+                          </div>
+                          <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 h-10 line-clamp-2">{{ page.description }}</p>
+                          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-600">
+                              <span class="text-xs text-slate-400">{{ page.fields.length }} 個欄位</span>
+                              <div class="flex space-x-2">
+                                  <button (click)="editPage(page)" class="text-sm text-sky-600 hover:underline font-bold">編輯設計</button>
+                                  <button (click)="deletePage(page.id)" class="text-sm text-red-500 hover:underline">刪除</button>
+                              </div>
+                          </div>
+                      </div>
+                  } @empty {
+                      <div class="col-span-full py-20 text-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                          <div class="text-4xl mb-4">📱</div>
+                          <p>尚無自訂手機版面，請點擊右上方按鈕建立。</p>
+                      </div>
+                  }
+              </div>
+          }
+
+          <!-- Builder View -->
+          @if (isBuilderMode() && currentPageConfig()) {
+              <div class="flex flex-1 overflow-hidden h-full">
+                  
+                  <!-- Left: Config & Toolbox -->
+                  @if (!isRunMode()) {
+                    <div class="w-80 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">版面名稱</label>
+                            <input type="text" [(ngModel)]="currentPageConfig()!.name" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm font-bold mb-3">
+                            
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">資料來源模組</label>
+                            <select [(ngModel)]="currentPageConfig()!.sourceModule" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                                @for (mod of modules; track mod.id) {
+                                    <option [value]="mod.id">{{ mod.name }}</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-4">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">可用欄位 (點擊加入)</h3>
+                            <div class="space-y-2">
+                                @for (field of availableSourceFields(); track field.key) {
+                                    <button (click)="addField(field)" class="w-full text-left p-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-500 dark:hover:border-sky-400 hover:shadow-sm transition-all flex justify-between items-center group">
+                                        <div>
+                                            <div class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ field.label }}</div>
+                                            <div class="text-xs text-slate-400 font-mono">{{ field.key }}</div>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-300 group-hover:text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                  }
+
+                  <!-- Center: Phone Canvas -->
+                  <div class="flex-1 bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-8 overflow-y-auto relative">
+                      
+                      @if (isRunMode()) {
+                          <button (click)="exitRunMode()" class="absolute top-4 right-4 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded shadow text-sm z-50">
+                              離開預覽 (Exit)
+                          </button>
+                      }
+
+                      <!-- Phone Frame -->
+                      <div class="relative w-[375px] h-[700px] bg-slate-800 rounded-[3rem] border-8 border-slate-800 shadow-2xl overflow-hidden flex flex-col group">
+                          <!-- Status Bar Mock -->
+                          <div class="h-8 bg-slate-800 w-full flex justify-between items-center px-6">
+                              <span class="text-[10px] text-white font-bold">9:41</span>
+                              <div class="flex space-x-1">
+                                  <div class="w-4 h-2 bg-white rounded-sm"></div>
+                                  <div class="w-3 h-2 bg-white rounded-sm"></div>
+                              </div>
+                          </div>
+                          
+                          <!-- App Header -->
+                          <div class="h-14 bg-sky-600 text-white flex items-center px-4 shadow-md flex-shrink-0 justify-between">
+                              <div class="flex items-center">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                 <span class="font-bold text-lg">{{ currentPageConfig()!.name || '預覽畫面' }}</span>
+                              </div>
+                          </div>
+
+                          <!-- App Body (The Canvas) -->
+                          <div class="flex-1 bg-gray-50 dark:bg-slate-900 overflow-y-auto p-4 space-y-4 relative">
+                              
+                              <!-- Reuse The Content Logic (Extracted below) -->
+                              <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+
+                          </div>
+
+                          <!-- App Footer -->
+                          <div class="h-16 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 flex justify-around items-center px-4 flex-shrink-0">
+                              <div class="w-8 h-8 rounded bg-gray-200 dark:bg-slate-700"></div>
+                              <div class="w-8 h-8 rounded bg-sky-500"></div>
+                              <div class="w-8 h-8 rounded bg-gray-200 dark:bg-slate-700"></div>
+                          </div>
+                          
+                          <!-- Home Indicator -->
+                          <div class="h-1 w-32 bg-white rounded-full mx-auto mb-2 absolute bottom-1 left-1/2 -translate-x-1/2 opacity-50"></div>
+                      </div>
+
+                  </div>
+
+                  <!-- Right: Properties -->
+                  @if (!isRunMode()) {
+                    <div class="w-72 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 overflow-y-auto">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">欄位屬性設定</h3>
+                        <div class="space-y-6">
+                            @for (field of currentPageConfig()!.fields; track field.key; let idx = $index) {
+                                <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700/30 transition-all hover:shadow-sm">
+                                    <div class="font-bold text-sm text-slate-800 dark:text-white mb-2 flex items-center justify-between">
+                                        <span class="truncate mr-2" [title]="field.key">{{ field.key }}</span>
+                                        
+                                        <div class="flex items-center space-x-1 flex-shrink-0">
+                                            <!-- Show icon if this field will be hidden in carousel -->
+                                            @if (currentPageConfig()!.sourceModule === 'purchase' && (field.key === 'status')) {
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="此欄位將移至審核頁顯示"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            }
+                                            <!-- Delete Button -->
+                                            <button (click)="removeField(idx)" class="p-1 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors" title="移除欄位">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <div>
+                                            <label class="block text-xs text-slate-500 mb-1">顯示名稱</label>
+                                            <input type="text" [ngModel]="field.label" (ngModelChange)="updateFieldProperty(idx, 'label', $event)" class="w-full p-1.5 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-1 focus:ring-sky-500">
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <input type="checkbox" [checked]="field.isEditable" (change)="updateFieldProperty(idx, 'isEditable', $any($event.target).checked)" class="rounded text-sky-600 focus:ring-sky-500 border-gray-300 dark:border-slate-600 dark:bg-slate-800">
+                                            <span class="text-xs text-slate-600 dark:text-slate-300">允許編輯 (Editable)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            @if (currentPageConfig()!.fields.length === 0) {
+                                <div class="text-center py-10 text-slate-400 text-xs border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                                    尚未加入任何欄位<br>請從左側點擊加入
+                                </div>
+                            }
+                        </div>
+                    </div>
+                  }
+
+              </div>
+
+              <!-- Bottom Actions -->
+              @if (!isRunMode()) {
+                <div class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 flex justify-end space-x-3">
+                    <button (click)="cancelEdit()" class="px-6 py-2 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">取消</button>
+                    <button (click)="savePage()" class="px-6 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 font-bold">儲存設計</button>
+                </div>
+              }
+          }
+      </div>
+    </div>
+} @else {
+    <!-- STANDALONE MODE: Fullscreen App View -->
+    <div class="fixed inset-0 w-full h-full bg-slate-900 overflow-hidden flex flex-col z-[100]">
+        
+        <!-- Minimal App Header -->
+        <div class="h-14 bg-sky-600 text-white flex items-center justify-between px-4 shadow-md flex-shrink-0 safe-top">
+            <div class="flex items-center">
+                 <button (click)="exitStandalone.emit()" class="mr-3">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                 </button>
+                 <span class="font-bold text-lg">{{ currentPageConfig()?.name || 'App Mode' }}</span>
+            </div>
+        </div>
+
+        <!-- Fullscreen Canvas -->
+        <div class="flex-1 bg-gray-50 dark:bg-slate-900 overflow-y-auto p-4 space-y-4">
+            <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+        </div>
+    </div>
+}
+
+<!-- Reusable Logic Template for Content -->
+<ng-template #contentTemplate>
+    
+    @if (isResultPage()) {
+        <!-- Result Page Overlay -->
+        <div class="absolute inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6 animate-[fadeIn_0.3s]">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">執行成功</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-center mb-8">{{ resultMessage() }}</p>
+            <button (click)="finishPreview()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700">
+                返回列表
+            </button>
+        </div>
+    } 
+
+    <!-- Logic for Purchase Flow -->
+    @if (currentPageConfig()?.sourceModule === 'purchase' && !isReviewStarted()) {
+           <!-- Dashboard Summary Page -->
+           <div class="flex flex-col h-full items-center justify-center animate-[fadeIn_0.3s]">
+               <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-md w-full max-w-[320px] text-center border border-gray-100 dark:border-slate-700">
+                   <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                   </div>
+                   <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-1">{{ pendingPurchaseGroups().length }}</h2>
+                   <p class="text-slate-500 dark:text-slate-400 font-medium mb-6">張採購單應審核</p>
+                   
+                   <button (click)="startReview()" 
+                           [disabled]="pendingPurchaseGroups().length === 0"
+                           class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold shadow-lg disabled:bg-slate-300 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                       開始審核
+                   </button>
+                   
+                   @if (pendingPurchaseGroups().length === 0) {
+                        <!-- Allow forcing preview for builder convenience -->
+                        <button (click)="startReview()" class="mt-4 text-xs text-slate-400 hover:underline">
+                            預覽版面 (無資料)
+                        </button>
+                   }
+               </div>
+           </div>
+    } @else {
+          <!-- Existing Carousel/Detail Logic -->
+          @if (sampleDataList().length > 0) {
+              <!-- Check if Summary Page -->
+              @if (isSummaryPage()) {
+                  <!-- Summary View -->
+                  <div class="flex flex-col h-full animate-[fadeIn_0.3s]">
+                      <div class="flex items-center mt-2 px-2">
+                          <button (click)="prevSlide()" class="mr-2 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                              </svg>
+                          </button>
+                      </div>
+                      
+                      <div class="text-center mb-6">
+                          <div class="h-16 w-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                          </div>
+                          <h3 class="text-xl font-bold text-gray-800 dark:text-white">所有項目已確認</h3>
+                          <p class="text-sm text-gray-500 dark:text-slate-400">共 {{ sampleDataList().length }} 筆資料</p>
+                      </div>
+                      
+                      <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden flex-1 mb-4">
+                          <div class="overflow-y-auto max-h-[300px]">
+                              @for (item of sampleDataList(); track $index) {
+                                  <div class="p-3 border-b border-gray-100 dark:border-slate-700 last:border-0 flex justify-between items-center text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                      <div class="flex flex-col w-2/3">
+                                         <span class="text-gray-700 dark:text-slate-200 font-medium truncate">{{ item.productName || item.orderId }}</span>
+                                      </div>
+                                      <span class="text-gray-500 dark:text-slate-400 font-mono">{{ item.quantity || 1 }}</span>
+                                  </div>
+                              }
+                          </div>
+                      </div>
+                      
+                      @if (currentPageConfig()?.sourceModule === 'purchase') {
+                          <button (click)="nextSlide()" class="w-full py-3 bg-sky-600 text-white rounded-lg font-bold shadow-md hover:bg-sky-700 active:scale-95 transition-all">
+                              下一步: 審核
+                          </button>
+                      } @else {
+                          <button class="w-full py-3 bg-sky-600 text-white rounded-lg font-bold shadow-md">
+                              確認送出
+                          </button>
+                      }
+                  </div>
+              } @else if (isActionPage()) {
+                  <!-- Action / Reply Page (Purchase Only) -->
+                  <div class="flex flex-col h-full animate-[slide-up_0.2s] pt-4">
+                      <div class="flex items-center mb-4 px-2">
+                          <button (click)="prevSlide()" class="mr-2 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                              </svg>
+                          </button>
+                          <h3 class="text-xl font-bold text-slate-800 dark:text-white">審核與回覆</h3>
+                      </div>
+                      
+                      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">當前狀態</label>
+                          <div class="flex items-center space-x-2 mb-4">
+                              <span class="w-3 h-3 rounded-full" 
+                                    [class.bg-amber-500]="sampleDataList()[0].status.includes('確認')" 
+                                    [class.bg-green-500]="sampleDataList()[0].status.includes('下單')"
+                                    [class.bg-gray-400]="!sampleDataList()[0].status.includes('下單') && !sampleDataList()[0].status.includes('確認')"></span>
+                              <span class="font-bold text-lg text-slate-800 dark:text-white">{{ sampleDataList()[0].status }}</span>
+                          </div>
+
+                          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">備註 / 要求</label>
+                          <textarea [(ngModel)]="actionNote" rows="4" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-slate-50 dark:bg-slate-900 text-black dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-sky-500 outline-none resize-none" placeholder="輸入備註..."></textarea>
+                      </div>
+                      
+                      <div class="mt-auto space-y-3 pb-4">
+                          <button (click)="submitAction('approve')" class="w-full py-4 bg-green-600 text-white rounded-xl font-bold shadow-lg hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center text-lg">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                              審核通過 (Approve)
+                          </button>
+                          
+                          <button (click)="submitAction('reply')" class="w-full py-3 bg-white dark:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-slate-600 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 transition-all">
+                              僅送出備註 (Submit Note)
+                          </button>
+                      </div>
+                  </div>
+
+              } @else {
+                  <!-- Item Detail View (Carousel) -->
+                  @let data = currentItemData();
+                  
+                  <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 animate-[slide-up_0.2s]">
+                      
+                      <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-slate-700 pb-2">
+                          <span class="font-bold text-gray-700 dark:text-white truncate w-3/4 text-lg">
+                              {{ data ? (data.productName || data.id || data.poNumber) : '預覽資料' }}
+                          </span>
+                          <span class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 px-2 py-1 rounded-full font-mono">
+                              {{ currentSlideIndex() + 1 }} / {{ sampleDataList().length }}
+                          </span>
+                      </div>
+
+                      <!-- Grid Layout for Fields -->
+                      <div class="grid grid-cols-2 gap-3 content-start">
+                          @for (field of currentPageConfig()?.fields; track field.key; let idx = $index) {
+                              <!-- HIDE Logic for Purchase Module: Hide status ONLY. Show purchaseNote with special style. -->
+                              @if (currentPageConfig()?.sourceModule !== 'purchase' || field.key !== 'status') {
+                                  
+                                  @let sampleVal = data ? data[field.key] : null;
+
+                                  <!-- Special Styling for Purchase Note: Full Width, High Contrast -->
+                                  @if (field.key === 'purchaseNote') {
+                                      <div class="col-span-2 relative group border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 transition-colors min-h-[60px] flex flex-col justify-center">
+                                          <label class="block text-[10px] font-bold text-amber-600/70 dark:text-amber-400/70 mb-1 flex items-center justify-between">
+                                              <span class="truncate pr-1">{{ field.label }}</span>
+                                              @if(field.isEditable) { 
+                                                  <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                              }
+                                          </label>
+                                          <div class="text-sm font-bold text-slate-900 dark:text-white whitespace-pre-wrap leading-relaxed">
+                                              {{ sampleVal || '無' }}
+                                          </div>
+                                      </div>
+                                  } @else {
+                                      <!-- Standard Field -->
+                                      <div class="relative group border border-gray-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 hover:border-sky-300 dark:hover:border-sky-600 rounded-lg p-2 transition-colors col-span-1 min-h-[60px] flex flex-col justify-center">
+                                          
+                                          <label class="block text-[10px] font-bold text-gray-400 mb-1 flex items-center justify-between">
+                                              <span class="truncate pr-1">{{ field.label }}</span>
+                                              @if(field.isEditable) { 
+                                                  <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                              }
+                                          </label>
+                                          
+                                          @if (field.type === 'text' || field.type === 'number') {
+                                              <div class="text-sm font-bold text-slate-800 dark:text-white truncate">
+                                                  {{ sampleVal !== null && sampleVal !== undefined ? sampleVal : '-' }}
+                                              </div>
+                                          }
+                                          @if (field.type === 'date') {
+                                              <div class="text-sm font-bold text-slate-800 dark:text-white truncate">
+                                                  {{ sampleVal ? (sampleVal | date:'yyyy/MM/dd') : '-' }}
+                                              </div>
+                                          }
+                                      </div>
+                                  }
+                              }
+                          } @empty {
+                              <div class="col-span-2 text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg">
+                                  無欄位
+                              </div>
+                          }
+                      </div>
+                      
+                      <!-- Inline Navigation Buttons -->
+                      <div class="flex justify-between items-center mt-5 pt-3 border-t border-slate-100 dark:border-slate-700">
+                         <button (click)="prevSlide()" 
+                                 [disabled]="currentSlideIndex() === 0"
+                                 class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                             上一筆
+                         </button>
+                         
+                         <button (click)="nextSlide()" 
+                                 class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 transition-colors shadow-sm flex items-center">
+                             {{ currentSlideIndex() === sampleDataList().length - 1 ? '完成' : '下一筆' }}
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                         </button>
+                      </div>
+                  </div>
+              }
+          } @else {
+             <div class="flex items-center justify-center h-full text-gray-400 text-sm">
+                 無預覽資料
+             </div>
+          }
+    }
+
+</ng-template>

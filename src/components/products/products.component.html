@@ -1,0 +1,869 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="p-4 md:p-8 h-full overflow-y-auto">
+  <header class="mb-6 flex justify-between items-end">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">商品管理</h1>
+      <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">搜尋、檢視並管理您的商品庫存。</p>
+    </div>
+    
+    <!-- Desktop Buttons -->
+    <div class="hidden md:flex space-x-3">
+        <!-- Import Button (New) -->
+        <button 
+          (click)="triggerImport()"
+          [disabled]="isImporting()"
+          class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (isImporting()) {
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            }
+          <span>{{ isImporting() ? '匯入中...' : '匯入 Excel' }}</span>
+        </button>
+        <input type="file" id="productImportInput" class="hidden" accept=".xlsx,.xls,.csv" (change)="onImportFileSelected($event)">
+
+        <button 
+          (click)="downloadTemplate()"
+          class="px-4 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors flex items-center justify-center space-x-2 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+          <span>下載匯入範本</span>
+        </button>
+
+        <button 
+          (click)="openAddModal()"
+          class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center justify-center space-x-2 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          <span>新增商品</span>
+        </button>
+    </div>
+  </header>
+
+  <!-- Mobile Floating Action Button (FAB) for Add -->
+  @if (screenService.isMobile()) {
+    <button 
+      (click)="openAddModal()"
+      class="fixed bottom-20 right-6 w-14 h-14 bg-sky-500 hover:bg-sky-600 text-white rounded-full shadow-lg flex items-center justify-center z-30 transition-transform active:scale-95">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+    </button>
+  }
+
+  <div class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 transition-colors">
+    
+    <!-- Filter Grid (Optimized for 12 columns) -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 items-end">
+        
+        <!-- Search & Sort (5 cols) -->
+        <div class="md:col-span-5 flex items-end gap-2">
+            <div class="flex-1">
+                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">關鍵字搜尋</label>
+                <div class="relative">
+                    <input 
+                      type="text" 
+                      placeholder="搜尋..." 
+                      class="w-full pl-8 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+                      [value]="searchTerm()"
+                      (input)="onSearchTermChange($event)"
+                      />
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                      <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                </div>
+            </div>
+            <!-- Clear Button -->
+            <button (click)="clearAllFilters()" 
+                    class="mb-[1px] p-2.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" 
+                    title="清除所有搜尋條件">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z" />
+                </svg>
+            </button>
+
+            <!-- Sort Order (Integrated) -->
+            <div class="w-48">
+                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">排序方式</label>
+                <div class="flex space-x-1">
+                    <select (change)="onSortColumnChange($event)" [value]="sortColumn()" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm">
+                        <option value="">預設排序</option>
+                        <option value="name">商品名稱</option>
+                        <option value="id">商品編號 (ID)</option>
+                        <option value="stock">庫存數量</option>
+                        <option value="safetyStock">安全庫存</option>
+                        <option value="demand">訂單總需</option>
+                        <option value="totalPickingQuantity">總備貨量</option>
+                        <option value="transit">在途數量</option>
+                        <option value="keyProduct">重點分級</option>
+                        <option value="priceBeforeTax">未稅售價</option>
+                        <option value="expiryNote">效期</option>
+                        <option value="highlightNote">備註</option>
+                    </select>
+                    <button (click)="toggleSortDirection()" class="p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                        @if (sortDirection() === 'asc') {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
+                        } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-1l-4 4m0 0l-4-4m4 4V10" /></svg>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supplier Filter (2 cols) -->
+        <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商</label>
+            <select (change)="onSupplierFilterChange($event)" [value]="selectedSupplier()" class="w-full border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="">全部供應商</option>
+                @for (sup of suppliers(); track sup.code) {
+                    <option [value]="sup.code">{{ sup.code }} - {{ sup.shortName }}</option>
+                }
+            </select>
+        </div>
+
+        <!-- Category Filter (2 cols) -->
+        <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">商品分類</label>
+            <select (change)="onCategoryChange($event)" [value]="selectedCategory()" class="w-full border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="">全部分類</option>
+                @for (cat of categories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                }
+            </select>
+        </div>
+
+        <!-- Stock Status (1 col) -->
+        <div class="hidden md:block md:col-span-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">庫存狀態</label>
+            <select (change)="onStockStatusChange($event)" [value]="selectedStockStatus()" class="w-full border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="all">全部</option>
+                <option value="low">低庫存</option>
+            </select>
+        </div>
+
+        <!-- Control (1 col) -->
+        <div class="hidden md:block md:col-span-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">控管</label>
+            <select (change)="onControlStatusChange($event)" [value]="selectedControlStatus()" class="w-full border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="">全部</option>
+                <option value="false">正常</option>
+                <option value="true">控貨</option>
+            </select>
+        </div>
+
+        <!-- Availability (1 col) -->
+        <div class="hidden md:block md:col-span-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">銷售狀態</label>
+            <select (change)="onAvailabilityChange($event)" [value]="selectedAvailability()" class="w-full border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <option value="active">銷售中 (Active)</option>
+                <option value="discontinued">已停售 (Discontinued)</option>
+                <option value="all">全部顯示</option>
+            </select>
+        </div>
+
+    </div>
+
+    <!-- LOGIC SPLIT START: Desktop vs Mobile View -->
+    @if (screenService.isMobile()) {
+      <!-- Mobile View: Cards List -->
+      <div class="space-y-4 pb-20"> <!-- Added padding bottom for FAB -->
+        @for (product of paginatedProducts(); track product.id) {
+          <div class="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-sm flex items-start space-x-3" (click)="openEditModal(product)">
+             
+             <!-- Content -->
+             <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start">
+                   <div class="flex items-center min-w-0 pr-2">
+                       @if (product.keyProduct) {
+                           <span class="flex-shrink-0 mr-1.5 px-1.5 py-0.5 text-[10px] font-bold text-white rounded"
+                                [class.bg-red-500]="product.keyProduct === 'A'"
+                                [class.bg-orange-500]="product.keyProduct === 'B'"
+                                [class.bg-sky-500]="product.keyProduct === 'C'">
+                               {{ product.keyProduct }}
+                           </span>
+                       }
+                       <div class="flex flex-col min-w-0">
+                           <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ product.name }}</h3>
+                           <div class="text-[10px] text-slate-500 dark:text-slate-400">未稅售價: ${{ product.priceBeforeTax }}</div>
+                       </div>
+                   </div>
+                   <span class="text-xs font-mono text-slate-400 flex-shrink-0">{{ product.id }}</span>
+                </div>
+                
+                <div class="mt-1 flex justify-between items-center">
+                   <div class="text-xs text-slate-500 dark:text-slate-400">
+                       {{ product.category }}
+                   </div>
+                   <div class="font-bold text-sky-600 dark:text-sky-400 text-sm">${{ product.priceAfterTax }}</div>
+                </div>
+
+                <div class="mt-2 flex items-center justify-between">
+                   <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                      <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
+                        庫存: {{ product.stock }}
+                      </span>
+                      
+                      <!-- Transit Qty (Dynamic) -->
+                      <div class="flex items-center space-x-1" (mouseenter)="showTransitTooltip($event, product.id)" (mouseleave)="hideTransitTooltip()">
+                        <span class="text-xs text-purple-600 dark:text-purple-400">在途:</span>
+                        <span class="text-xs font-bold text-purple-700 dark:text-purple-300 px-1 py-0.5">
+                          {{ transitQuantityMap().get(product.id) || 0 }}
+                        </span>
+                      </div>
+                      
+                      @if (product.stock < product.safetyStock) {
+                        <span class="text-[10px] text-red-500 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">缺貨</span>
+                      }
+                      @if (product.controlStatus) {
+                        <span class="text-[10px] text-orange-500 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded">控貨</span>
+                      }
+                   </div>
+                   <!-- Actions (Mobile) -->
+                   <div class="flex items-center space-x-3">
+                       <button (click)="copyProduct(product, $event)" class="text-indigo-500 dark:text-indigo-400 p-1" title="複製">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                       </button>
+                       <button (click)="deleteProduct(product, $event)" class="text-red-500 dark:text-red-400 p-1" title="刪除">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                       </button>
+                       <button class="p-1 text-slate-400">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                       </button>
+                   </div>
+                </div>
+             </div>
+          </div>
+        } @empty {
+           <div class="text-center py-10 text-slate-500 dark:text-slate-400">
+              找不到商品。
+           </div>
+        }
+      </div>
+
+    } @else {
+      <!-- Desktop View: Table Grid -->
+      <div class="overflow-x-auto border rounded-t-lg border-slate-200 dark:border-slate-700 h-[65vh]">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10 shadow-sm">
+            <tr>
+              <th appResizable tableId="products" colId="grade" scope="col" (click)="toggleSort('keyProduct')" class="px-3 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider w-16 bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  重點
+                  @if (sortColumn() === 'keyProduct') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              <th appResizable tableId="products" colId="info" scope="col" class="px-6 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider w-64 bg-slate-50 dark:bg-slate-700 transition-colors select-none">
+                  <div class="flex items-center space-x-1">
+                      <span (click)="toggleSort('name')" class="cursor-pointer hover:text-sky-500" [class.text-sky-600]="sortColumn() === 'name'">名稱</span>
+                      <span class="text-slate-300">/</span>
+                      <span (click)="toggleSort('id')" class="cursor-pointer hover:text-sky-500" [class.text-sky-600]="sortColumn() === 'id'">ID</span>
+                      @if (sortColumn() === 'name' || sortColumn() === 'id') {
+                          <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                      }
+                  </div>
+              </th>
+              
+              <!-- 
+                 Hidden columns as requested:
+                 1. Supplier / Purchasing
+                 2. Price (Before Tax)
+                 3. Recommended Price (Removed per request)
+              -->
+              
+              <!-- Added Safety Stock Column -->
+              <th appResizable tableId="products" colId="safety" scope="col" (click)="toggleSort('safetyStock')" class="px-2 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 w-[8ch] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  安全庫存
+                  @if (sortColumn() === 'safetyStock') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+
+              <th appResizable tableId="products" colId="stock" scope="col" (click)="toggleSort('stock')" class="px-2 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 w-[8ch] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  庫存
+                  @if (sortColumn() === 'stock') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              
+              <th appResizable tableId="products" colId="demand" scope="col" (click)="toggleSort('demand')" class="px-6 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  訂單總需
+                  @if (sortColumn() === 'demand') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              <th appResizable tableId="products" colId="picking" scope="col" (click)="toggleSort('totalPickingQuantity')" class="px-6 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  總備貨
+                  @if (sortColumn() === 'totalPickingQuantity') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              <th appResizable tableId="products" colId="transit" scope="col" (click)="toggleSort('transit')" class="px-2 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  在途
+                  @if (sortColumn() === 'transit') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              
+              <!-- Updated Expiry Column Header with Sorting -->
+              <th appResizable tableId="products" colId="expiry" scope="col" (click)="toggleSort('expiryNote')" class="px-6 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  效期
+                  @if (sortColumn() === 'expiryNote') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              
+              <th appResizable tableId="products" colId="note" scope="col" (click)="toggleSort('highlightNote')" class="px-6 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                  重點備註
+                  @if (sortColumn() === 'highlightNote') {
+                      <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+              </th>
+              <th appResizable tableId="products" colId="actions" scope="col" class="relative px-6 py-2 bg-slate-50 dark:bg-slate-700">
+                <span class="sr-only">操作</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+            @for (product of paginatedProducts(); track product.id) {
+              <tr [class.bg-yellow-50]="product.highlightNote" 
+                  [class.dark:bg-yellow-900/20]="product.highlightNote" 
+                  [class.opacity-60]="product.isDiscontinued"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                
+                <!-- 0. Key Product Grade (Read-only) -->
+                <td class="px-3 py-1.5 text-center">
+                    <span class="text-xs font-bold"
+                          [class.text-red-600]="product.keyProduct === 'A'"
+                          [class.text-orange-500]="product.keyProduct === 'B'"
+                          [class.text-sky-500]="product.keyProduct === 'C'"
+                          [class.text-slate-300]="!product.keyProduct">
+                        {{ product.keyProduct || '-' }}
+                    </span>
+                </td>
+
+                <!-- 1. Product Info -->
+                <td class="px-6 py-1.5">
+                  <div class="flex items-center">
+                      <div class="flex flex-col relative group flex-1">
+                          <div class="flex items-start justify-between">
+                              <div class="text-sm font-medium mr-2 transition-all duration-200" 
+                                   [class.text-slate-900]="!(product.stock < product.safetyStock)"
+                                   [class.dark:text-white]="!(product.stock < product.safetyStock)"
+                                   [class.text-red-600]="product.stock < product.safetyStock"
+                                   [class.dark:text-red-400]="product.stock < product.safetyStock"
+                                   [title]="product.name">
+                                   {{ product.name }}
+                              </div>
+                          </div>
+                          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">未稅售價: ${{ product.priceBeforeTax }}</div>
+                          <div class="flex items-center mt-0.5 space-x-1">
+                              @if (product.isDiscontinued) {
+                                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-red-100 text-red-700 font-bold">停售</span>
+                              }
+                              @if (!product.isCalculable) {
+                                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 font-bold dark:bg-gray-700 dark:text-gray-300">不計算</span>
+                              }
+                              @if (product.controlStatus) {
+                                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-orange-100 text-orange-700 font-bold dark:bg-orange-900/30 dark:text-orange-300">控貨</span>
+                              }
+                          </div>
+                      </div>
+                  </div>
+                </td>
+
+                <!-- Hidden Columns: Supplier and Price were here -->
+
+                <!-- New: Safety Stock (Editable) -->
+                <td class="px-2 py-1.5 whitespace-nowrap">
+                    <div class="relative flex items-center">
+                        <input 
+                          type="number" 
+                          [value]="product.safetyStock" 
+                          (change)="onSafetyStockUpdate(product, $event)"
+                          class="pl-1 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-sky-500 focus:ring-0 text-sm text-slate-600 dark:text-slate-300 px-1 py-0.5 transition-colors w-[8ch]"
+                          min="0" step="0.001">
+                    </div>
+                </td>
+
+                <!-- 4. Stock (Editable - No Min Constraint) -->
+                <td class="px-2 py-1.5 whitespace-nowrap">
+                    <div class="relative flex items-center">
+                        <input 
+                          type="number" 
+                          [value]="product.stock" 
+                          (change)="onStockUpdate(product, $event)"
+                          class="pl-1 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-sky-500 focus:ring-0 text-sm font-semibold text-slate-900 dark:text-white px-1 py-0.5 transition-colors w-[8ch]"
+                          step="0.001">
+                    </div>
+                    @if (product.stock < product.safetyStock) {
+                      <span class="mt-0.5 px-2 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200">
+                        庫存不足
+                      </span>
+                    }
+                </td>
+
+                <!-- Quality Confirmed Column Removed -->
+
+                <!-- New: Demand (Order Total) -->
+                <td class="px-6 py-1.5 whitespace-nowrap text-center">
+                    <span class="font-bold text-sky-600 dark:text-sky-400 text-sm" title="未出貨之總需求 (Outstanding Demand)">
+                        {{ outstandingDemandMap().get(product.id) || 0 }}
+                    </span>
+                </td>
+
+                <!-- New: Picking (Total Allocated) -->
+                <td class="px-6 py-1.5 whitespace-nowrap text-center">
+                    <span class="font-bold text-amber-600 dark:text-amber-400 text-sm" title="已備貨/鎖定庫存 (Allocated)">
+                        {{ totalPickingQuantityMap().get(product.id) || 0 }}
+                    </span>
+                </td>
+
+                <!-- 5. Transit Quantity (Dynamic from POs) -->
+                <td class="px-2 py-1.5 whitespace-nowrap text-center">
+                    <div class="relative group block" (mouseenter)="showTransitTooltip($event, product.id)" (mouseleave)="hideTransitTooltip()">
+                        <span class="text-sm font-bold text-purple-700 dark:text-purple-300 px-1 py-0.5">
+                            {{ transitQuantityMap().get(product.id) || 0 }}
+                        </span>
+                    </div>
+                </td>
+                
+                <!-- Recommended Price removed per request -->
+
+                <!-- 7. Expiry (2 Rows) -->
+                <td class="px-6 py-1.5 min-w-[150px]">
+                    <textarea 
+                      rows="2"
+                      [value]="product.expiryNote || ''" 
+                      (change)="onInlineUpdate(product, 'expiryNote', $event)"
+                      class="w-full bg-transparent border border-transparent hover:border-slate-300 focus:border-sky-500 focus:ring-0 text-sm text-slate-700 dark:text-slate-300 px-1 py-0.5 transition-colors resize-none rounded leading-tight"
+                      placeholder="輸入效期..."></textarea>
+                </td>
+
+                <!-- 8. Note (2 Rows) -->
+                <td class="px-6 py-1.5 min-w-[200px]">
+                    <textarea 
+                      rows="2"
+                      [value]="product.highlightNote || ''" 
+                      (change)="onInlineUpdate(product, 'highlightNote', $event)"
+                      class="w-full bg-transparent border border-transparent hover:border-slate-300 focus:border-sky-500 focus:ring-0 text-sm text-slate-700 dark:text-slate-300 px-1 py-0.5 transition-colors resize-none rounded leading-tight"
+                      placeholder="輸入備註..."></textarea>
+                </td>
+
+                <!-- 9. Actions -->
+                <td class="px-6 py-1.5 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex items-center justify-end space-x-3">
+                      <button (click)="copyProduct(product, $event)" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 flex items-center" title="複製商品">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          複製
+                      </button>
+                      <button (click)="openEditModal(product)" class="text-sky-600 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-300 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          編輯
+                      </button>
+                      <button (click)="deleteProduct(product, $event)" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 flex items-center" title="刪除商品">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          刪除
+                      </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+               <tr>
+                  <td colspan="12" class="text-center py-10 text-slate-500 dark:text-slate-400">
+                      找不到符合搜尋條件的商品。
+                  </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <!-- LOGIC SPLIT END -->
+
+    <!-- Pagination Footer -->
+    <div class="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-lg sm:px-6">
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-slate-700 dark:text-slate-300">
+            顯示 <span class="font-medium">{{ itemStart() }}</span> 到 <span class="font-medium">{{ itemEnd() }}</span> 筆，共 <span class="font-medium">{{ totalItems() }}</span> 筆
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <button (click)="prevPage()" [disabled]="currentPage() === 1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="sr-only">Previous</span>
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            
+            <span class="relative inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200">
+               第 {{ currentPage() }} 頁 / 共 {{ totalPages() }} 頁
+            </span>
+
+            <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="sr-only">Next</span>
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+      <!-- Mobile Pagination -->
+      <div class="flex items-center justify-between sm:hidden w-full">
+         <button (click)="prevPage()" [disabled]="currentPage() === 1" class="relative inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50">
+           上一頁
+         </button>
+         <span class="text-sm text-slate-700 dark:text-slate-300">{{ currentPage() }} / {{ totalPages() }}</span>
+         <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="relative inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50">
+           下一頁
+         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal (Standard for both Desktop/Mobile, responsive via CSS) -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+    
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500/75 transition-opacity" (click)="closeModal()"></div>
+
+    <!-- Modal Panel -->
+    <div class="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                {{ isEditMode() ? '編輯商品' : '新增商品' }}
+            </h3>
+            <button (click)="closeModal()" class="text-slate-400 hover:text-slate-500 focus:outline-none">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="p-6 overflow-y-auto">
+            <form [formGroup]="productForm" class="space-y-6">
+                <!-- 1. Core Info -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品編號 (ID)</label>
+                        <input type="text" formControlName="id" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500" placeholder="請手動輸入編號">
+                        
+                        @if (productForm.get('id')?.hasError('duplicate') && productForm.get('id')?.touched) {
+                            <div class="text-red-500 text-xs mt-1 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                此商品編號已存在，請使用其他編號。
+                            </div>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品名稱</label>
+                        <input type="text" formControlName="name" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">分類</label>
+                        <select formControlName="category" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            @for (cat of categories; track cat) {
+                                <option [value]="cat">{{ cat }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">單位</label>
+                        <select formControlName="unit" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            @for (unit of units; track unit) {
+                                <option [value]="unit">{{ unit }}</option>
+                            }
+                        </select>
+                    </div>
+                    <!-- New Key Product Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">重點商品分級 (Key Product)</label>
+                        <select formControlName="keyProduct" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            <option value="">一般商品</option>
+                            <option value="A">A 級 (最重要)</option>
+                            <option value="B">B 級 (次要)</option>
+                            <option value="C">C 級 (普通)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">服務狀態 (Service Status)</label>
+                        <select formControlName="serviceStatus" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            <option value="">無</option>
+                            @for (opt of serviceStatusOptions; track opt) {
+                                <option [value]="opt">{{ opt }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- NEW: Image Upload Section -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品圖片 URL / 上傳</label>
+                    <div class="flex space-x-2">
+                        <input type="text" formControlName="imageUrl" class="flex-1 rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="https://...">
+                        <button type="button" (click)="fileInput.click()" [disabled]="isUploading()" class="px-3 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors disabled:opacity-50 text-sm whitespace-nowrap">
+                            {{ isUploading() ? '處理中...' : '上傳圖片' }}
+                        </button>
+                        <input #fileInput type="file" hidden accept="image/*" (change)="onImageUpload($event)">
+                    </div>
+                    @if (productForm.get('imageUrl')?.value) {
+                        <div class="mt-2 w-24 h-24 border border-slate-200 dark:border-slate-600 rounded bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden cursor-zoom-in group"
+                             (mouseenter)="showHoverImage(productForm.get('imageUrl')?.value)"
+                             (mouseleave)="hideHoverImage()">
+                            <img [src]="productForm.get('imageUrl')?.value" alt="Preview" class="max-w-full max-h-full object-contain">
+                        </div>
+                    }
+                </div>
+
+                <!-- ADDED: Nutrition Label Upload Section (With Paste Support) -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">營養標示 (Nutrition Label)</label>
+                    <div class="flex space-x-2">
+                        <input 
+                            type="text" 
+                            formControlName="nutritionLabelUrl" 
+                            (paste)="onNutritionLabelPaste($event)"
+                            class="flex-1 rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" 
+                            placeholder="貼上圖片 (Ctrl+V) 或輸入 URL...">
+                        <button type="button" (click)="nutritionInput.click()" [disabled]="isUploading()" class="px-3 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors disabled:opacity-50 text-sm whitespace-nowrap">
+                            {{ isUploading() ? '處理中...' : '上傳標示' }}
+                        </button>
+                        <input #nutritionInput type="file" hidden accept="image/*" (change)="onNutritionLabelUpload($event)">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">提示：可直接截圖後在此欄位按 Ctrl+V 貼上圖片。</p>
+                    @if (productForm.get('nutritionLabelUrl')?.value) {
+                        <div class="mt-2 w-24 h-24 border border-slate-200 dark:border-slate-600 rounded bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden cursor-zoom-in group"
+                             (mouseenter)="showHoverImage(productForm.get('nutritionLabelUrl')?.value)"
+                             (mouseleave)="hideHoverImage()">
+                            <img [src]="productForm.get('nutritionLabelUrl')?.value" alt="Nutrition Label Preview" class="max-w-full max-h-full object-contain">
+                        </div>
+                    }
+                </div>
+
+                <!-- 2. Price & Cost -->
+                <div class="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase mb-3 border-b border-slate-200 dark:border-slate-600 pb-1">價格設定</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">未稅售價</label>
+                            <input type="number" formControlName="priceBeforeTax" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.01">
+                        </div>
+                        
+                        <!-- Moved Package Type Here -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">包裝入數</label>
+                            <select formControlName="packageType" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                @for (cnt of packageCounts; track cnt) {
+                                    <option [value]="cnt">{{ cnt }}</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">含稅售價</label>
+                            <input type="number" formControlName="priceAfterTax" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">未稅成本</label>
+                            <input type="number" formControlName="costBeforeTax" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">含稅成本</label>
+                            <input type="number" formControlName="costAfterTax" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1">建議售價 (cost/0.9)</label>
+                            <input type="number" formControlName="recommendedPrice" class="w-full rounded-md border-indigo-200 dark:border-indigo-800 shadow-sm p-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 font-bold" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Stock & Supplier -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">現有庫存</label>
+                        <input type="number" formControlName="stock" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">已挑揀數量</label>
+                        <input type="number" formControlName="qualityConfirmed" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" min="0" step="0.001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">外庫數量</label>
+                        <input type="number" formControlName="externalStock" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">安全庫存</label>
+                        <input type="number" formControlName="safetyStock" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" step="0.001">
+                    </div>
+                    <!-- New Picking Qty Display -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">訂單備貨 (已鎖定)</label>
+                        <input type="number" formControlName="totalPickingQuantity" class="w-full rounded-md border border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">在途數量 (系統計算)</label>
+                        <input type="number" [value]="transitQuantityMap().get(productForm.get('id')?.value) || 0" readonly class="w-full rounded-md border border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed" title="此數值由採購單自動計算">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">供應商代碼</label>
+                        <select formControlName="supplierCode" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            <option value="">請選擇</option>
+                            @for (sup of suppliers(); track sup.code) {
+                                <option [value]="sup.code">{{ sup.code }} - {{ sup.shortName }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">供應商名稱</label>
+                        <input type="text" formControlName="supplierName" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed">
+                    </div>
+                </div>
+
+                <!-- 4. Details -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">產地</label>
+                        <select formControlName="origin" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            @for (org of origins; track org) {
+                                <option [value]="org">{{ org }}</option>
+                            }
+                        </select>
+                    </div>
+                    <!-- Package Type moved to Price Section -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">最小訂購量 (MOQ)</label>
+                        <select formControlName="moq" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            @for (m of moqOptions; track m) {
+                                <option [value]="m">{{ m }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">保存期限</label>
+                        <input type="text" formControlName="shelfLife" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <!-- 5. Features & Notes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品特色</label>
+                        <textarea formControlName="productFeatures" rows="3" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="輸入商品特色描述..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">詳細備註</label>
+                        <textarea formControlName="notes" rows="3" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 6. Status Toggles (Checkboxes) -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 bg-slate-50 dark:bg-slate-700/30 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <div class="flex items-center">
+                        <input type="checkbox" formControlName="isDiscontinued" id="isDiscontinued" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 dark:border-slate-600 rounded cursor-pointer">
+                        <label for="isDiscontinued" class="ml-2 block text-sm text-slate-700 dark:text-slate-300 cursor-pointer">已停售</label>
+                    </div>
+                    <!-- Control Status with Highlight -->
+                    <div class="flex items-center p-1 rounded transition-all duration-200"
+                         [class.bg-orange-100]="productForm.get('controlStatus')?.value"
+                         [class.dark:bg-orange-900/40]="productForm.get('controlStatus')?.value"
+                         [class.ring-2]="productForm.get('controlStatus')?.value"
+                         [class.ring-orange-500]="productForm.get('controlStatus')?.value">
+                        <input type="checkbox" formControlName="controlStatus" id="isControl" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 dark:border-slate-600 rounded cursor-pointer">
+                        <label for="isControl" class="ml-2 block text-sm cursor-pointer select-none"
+                               [class.text-orange-800]="productForm.get('controlStatus')?.value"
+                               [class.dark:text-orange-200]="productForm.get('controlStatus')?.value"
+                               [class.font-bold]="productForm.get('controlStatus')?.value"
+                               [class.text-slate-700]="!productForm.get('controlStatus')?.value"
+                               [class.dark:text-slate-300]="!productForm.get('controlStatus')?.value">
+                            {{ productForm.get('controlStatus')?.value ? '⚠️ 控貨中' : '控貨中' }}
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" formControlName="purchasingStatus" id="isPurchasing" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-slate-600 rounded cursor-pointer">
+                        <label for="isPurchasing" class="ml-2 block text-sm text-slate-700 dark:text-slate-300 cursor-pointer">正常採購</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" formControlName="sugar" id="hasSugar" class="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 dark:border-slate-600 rounded cursor-pointer">
+                        <label for="hasSugar" class="ml-2 block text-sm text-slate-700 dark:text-slate-300 cursor-pointer">有糖</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" formControlName="isCalculable" id="isCalculable" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-slate-600 rounded cursor-pointer">
+                        <label for="isCalculable" class="ml-2 block text-sm text-slate-700 dark:text-slate-300 cursor-pointer">應計算商品</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-end space-x-3">
+            <button type="button" (click)="closeModal()" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                取消
+            </button>
+            <button type="button" (click)="onSubmit()" [disabled]="productForm.invalid" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                儲存
+            </button>
+        </div>
+    </div>
+  </div>
+}
+
+<!-- Fixed Tooltip for Transit Breakdown -->
+@if (transitTooltip()) {
+    <div class="fixed z-[100] w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-xl p-3 text-left transform -translate-x-1/2 -translate-y-full pointer-events-none"
+         [style.top.px]="transitTooltip()?.y"
+         [style.left.px]="transitTooltip()?.x">
+        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 border-b dark:border-slate-700 pb-1">在途明細 (Breakdown)</div>
+        <div class="max-h-32 overflow-y-auto space-y-2">
+            @for (item of transitTooltip()?.items; track item.id) {
+                <div class="flex justify-between items-center text-xs">
+                    <div class="flex flex-col">
+                        <span class="font-mono text-slate-800 dark:text-white font-medium">{{ item.id }}</span>
+                        <span class="text-[10px] mt-0.5" 
+                              [class.text-amber-500]="item.status === '審核通過(要下單)'"
+                              [class.text-sky-500]="item.status === '已下訂'"
+                              [class.text-purple-500]="item.status === '部份到貨'">
+                            {{ item.status }}
+                        </span>
+                    </div>
+                    <span class="font-bold text-slate-700 dark:text-slate-300">x{{ item.qty }}</span>
+                </div>
+            }
+        </div>
+        <!-- Arrow -->
+        <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-white dark:border-t-slate-800"></div>
+    </div>
+}
+
+<!-- Hover Zoom Overlay -->
+@if (hoveredImage()) {
+    <div class="fixed inset-0 z-[150] pointer-events-none flex items-center justify-center bg-black/5 backdrop-blur-[1px]">
+        <div class="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-2xl border-2 border-slate-200 dark:border-slate-600 max-w-[90vw] max-h-[90vh] flex items-center justify-center animate-[zoomIn_0.2s]">
+             <img [src]="hoveredImage()" class="max-w-full max-h-full object-contain">
+        </div>
+    </div>
+}

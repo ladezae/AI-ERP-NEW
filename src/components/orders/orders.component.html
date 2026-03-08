@@ -1,0 +1,1420 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="p-8 h-full flex flex-col">
+  
+  <!-- View 0: List (History) -->
+  @if (currentStep() === 'list') {
+    <header class="mb-6 flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white">訂單管理</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">管理客戶訂單、出貨進度與帳款狀態。</p>
+      </div>
+      <div class="flex space-x-3">
+          <!-- Toggle Visual Mode Button -->
+          <button 
+            (click)="toggleVisualMode()"
+            class="px-4 py-2 rounded-md transition-colors flex items-center space-x-2 shadow-sm border font-medium"
+            [class.bg-white]="!isVisualMode()"
+            [class.text-slate-700]="!isVisualMode()"
+            [class.border-slate-300]="!isVisualMode()"
+            [class.bg-indigo-600]="isVisualMode()"
+            [class.text-white]="isVisualMode()"
+            [class.border-transparent]="isVisualMode()">
+             @if (isVisualMode()) {
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                   <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                 </svg>
+                 <span class="hidden md:inline">列表模式</span>
+             } @else {
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                 </svg>
+                 <span class="hidden md:inline">視覺關聯圖</span>
+             }
+          </button>
+
+          <button 
+            (click)="refreshData()"
+            [disabled]="isRefreshing()"
+            class="px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center space-x-2 shadow-sm border border-slate-300 dark:border-slate-600 disabled:opacity-50">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [class.animate-spin]="isRefreshing()" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+             <span class="hidden md:inline">{{ isRefreshing() ? '重新讀取中...' : '重新讀取' }}</span>
+          </button>
+
+          <!-- Mobile App Mode Button -->
+          <button 
+            (click)="openMobileApp()"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md transition-colors flex items-center space-x-2 shadow-sm border border-slate-700">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+            <span class="hidden md:inline">行動版下單 (App)</span>
+            <span class="md:hidden">App</span>
+          </button>
+
+          <button 
+            (click)="navigateToImport()"
+            class="px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center space-x-2 shadow-sm border border-slate-300 dark:border-slate-600">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+             <span class="hidden md:inline">智慧匯入</span>
+          </button>
+
+          <button 
+            (click)="startCreateOrder()"
+            class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 shadow-sm">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <span class="hidden md:inline">新增訂單</span>
+            <span class="md:hidden">新增</span>
+          </button>
+      </div>
+    </header>
+
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 transition-colors flex-1 overflow-hidden flex flex-col relative">
+      <!-- Search & Filters -->
+      <div class="flex flex-col md:flex-row gap-4 mb-4 items-center flex-wrap z-10 relative">
+        <div class="relative w-full md:w-64">
+          <input 
+            type="text" 
+            placeholder="依單號、客戶、LINE、商品..." 
+            class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+            [(ngModel)]="searchTerm"
+            />
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+        </div>
+
+        <!-- Order Type Filter (New) -->
+        <select [(ngModel)]="selectedOrderTypeFilter" class="w-full md:w-36 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="all">全部訂單</option>
+            <option value="general">一般訂單</option>
+            <option value="manufacturing">代工訂單</option>
+        </select>
+        
+        <!-- Payment Status Filter (NEW) -->
+        <select [(ngModel)]="selectedPaymentStatusFilter" class="w-full md:w-36 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="all">全部付款</option>
+            <option value="paid">已付款</option>
+            <option value="unpaid">未付款</option>
+        </select>
+
+        <!-- Action Required Toggle Button -->
+        <button 
+            (click)="toggleActionRequiredFilter()"
+            class="px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm flex items-center justify-center space-x-1 border"
+            [class.bg-amber-500]="selectedStatusFilter() === 'ACTION_REQUIRED'"
+            [class.text-white]="selectedStatusFilter() === 'ACTION_REQUIRED'"
+            [class.border-amber-500]="selectedStatusFilter() === 'ACTION_REQUIRED'"
+            [class.bg-white]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:bg-slate-700]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.text-slate-600]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:text-slate-200]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.border-slate-300]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:border-slate-600]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.hover:bg-slate-50]="selectedStatusFilter() !== 'ACTION_REQUIRED'"
+            [class.dark:hover:bg-slate-600]="selectedStatusFilter() !== 'ACTION_REQUIRED'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>應處理</span>
+        </button>
+
+        <select 
+            [value]="selectedStatusFilter() === 'ACTION_REQUIRED' ? '' : selectedStatusFilter()"
+            (change)="onStatusFilterChange($event)"
+            class="w-full md:w-36 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="">{{ selectedStatusFilter() === 'ACTION_REQUIRED' ? '待處理 (預設)' : '全部狀態' }}</option>
+            @for (status of statusOptions; track status) {
+               <option [value]="status">{{ status }}</option>
+            }
+        </select>
+        <select [(ngModel)]="selectedCompanyFilter" class="w-full md:w-48 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="">全部公司</option>
+            @for (comp of companies(); track comp.id) {
+               <option [value]="comp.name">{{ comp.name }}</option>
+            }
+        </select>
+
+        <!-- New Action Required Counter Badge (Right Aligned) -->
+        <div class="ml-auto bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/50 rounded-lg px-4 py-1.5 shadow-sm flex items-center space-x-3">
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">應處理 (Pending)</span>
+                <span class="text-xl font-black text-amber-600 dark:text-amber-500 leading-none">{{ actionRequiredCount() }}</span>
+            </div>
+            <div class="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+            </div>
+        </div>
+      </div>
+      
+      <!-- Graph Canvas Container (Visible Only in Visual Mode) -->
+      @if (isVisualMode()) {
+          <div class="absolute inset-0 top-20 z-0 bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden border-t dark:border-slate-700">
+               <div #graphContainer class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+               
+               <!-- Legend Overlay -->
+               <div class="absolute bottom-4 right-4 bg-white/90 dark:bg-slate-800/90 p-3 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 backdrop-blur-sm text-xs space-y-2 pointer-events-none">
+                   <div class="font-bold text-slate-500 mb-1 border-b dark:border-slate-600 pb-1">圖例說明</div>
+                   <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>訂單 (Order)</div>
+                   <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>客戶 (Customer)</div>
+                   <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-orange-500 mr-2"></span>商品 (Product)</div>
+               </div>
+          </div>
+      } 
+      @else {
+          <!-- Data Table (Standard List Mode) -->
+          <div class="overflow-x-auto flex-1 z-10 bg-white dark:bg-slate-800">
+            <table class="min-w-full table-fixed divide-y divide-slate-200 dark:divide-slate-700">
+              <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10 shadow-sm">
+                <tr>
+                  <th appResizable tableId="orders_v3" colId="brand" (click)="toggleSort('brand')" class="w-32 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                    品牌 / 公司
+                    @if (sortColumn() === 'brand') {
+                        <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th appResizable tableId="orders_v3" colId="id" (click)="toggleSort('orderId')" class="w-40 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                    訂單
+                    @if (sortColumn() === 'orderId') {
+                        <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th appResizable tableId="orders_v3" colId="customer" [minWidth]="64" (click)="toggleSort('customer')" class="w-20 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                    客戶
+                    @if (sortColumn() === 'customer') {
+                        <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th appResizable tableId="orders_v3" colId="product" class="w-64 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">商品</th>
+                  <th appResizable tableId="orders_v3" colId="quantity" (click)="toggleSort('quantity')" class="w-40 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                    數量 (未出 / 已出)
+                    @if (sortColumn() === 'quantity') {
+                        <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th appResizable tableId="orders_v3" colId="amount" (click)="toggleSort('amount')" class="w-32 px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                    金額
+                    @if (sortColumn() === 'amount') {
+                        <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th appResizable tableId="orders_v3" colId="payment" class="w-28 px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">付款</th>
+                  <th appResizable tableId="orders_v3" colId="status" (click)="toggleSort('status')" class="w-32 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none">
+                    訂單狀態
+                    @if (sortColumn() === 'status') {
+                        <span class="ml-1 text-sky-600 dark:text-sky-400">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                    }
+                  </th>
+                  <th appResizable tableId="orders_v3" colId="note" [minWidth]="64" class="w-32 px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">備註</th>
+                  <th class="w-full px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider min-w-[12rem]">操作</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                @for (group of groupedOrders(); track group.baseOrderId) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <td class="px-3 py-4 truncate max-w-0 align-top overflow-hidden" [title]="group.brandShortName + ' / ' + group.sellerShortName">
+                        <div class="text-sm font-medium text-slate-900 dark:text-white mb-0.5 truncate">
+                            {{ group.brandShortName || '-' }}
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {{ group.sellerShortName }}
+                        </div>
+                    </td>
+                    <td class="px-3 py-4 truncate max-w-0 align-top overflow-hidden" [title]="group.baseOrderId">
+                      <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center truncate">
+                          @if (group.items[0].manufacturingPriority) {
+                              <span class="mr-2 inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white shadow-sm ring-1 ring-red-500 dark:ring-red-400 animate-pulse flex-shrink-0">
+                                  急
+                              </span>
+                          }
+                          <span class="truncate">{{ group.baseOrderId }}</span>
+                          @if (group.items[0].isManufacturingOrder) {
+                              <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex-shrink-0">代工</span>
+                          }
+                      </div>
+                      <div class="text-xs text-slate-500 truncate">{{ group.orderDate | taiwanDate }}</div>
+                      <div class="mt-1.5">
+                        <div class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold"
+                             [class.bg-slate-100]="group.daysSinceOrder <= 3"
+                             [class.text-slate-600]="group.daysSinceOrder <= 3"
+                             [class.bg-amber-100]="group.daysSinceOrder > 3 && group.daysSinceOrder <= 5"
+                             [class.text-amber-800]="group.daysSinceOrder > 3 && group.daysSinceOrder <= 5"
+                             [class.bg-red-100]="group.daysSinceOrder > 5"
+                             [class.text-red-800]="group.daysSinceOrder > 5">
+                            {{ group.daysSinceOrder }} 天
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-4 truncate max-w-0 align-top overflow-hidden" [title]="group.customerName + (group.customerLineId ? ' (' + group.customerLineId + ')' : '')">
+                      <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ group.customerName }}</div>
+                      @if (group.customerLineId) {
+                          <div class="text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 flex items-center truncate">
+                              {{ group.customerLineId }}
+                          </div>
+                      }
+                      <div class="text-xs text-slate-400 mt-0.5 truncate">{{ group.salesperson }}</div>
+                    </td>
+                    <td class="px-3 py-4 truncate max-w-0 align-top overflow-hidden">
+                      <div class="flex flex-col space-y-1">
+                        @for (item of group.displayItems; track item.orderId) {
+                          <div class="text-sm truncate" [title]="item.productName">
+                            {{ item.productName }}
+                          </div>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-3 py-4 align-top overflow-hidden">
+                      <div class="flex flex-col space-y-1">
+                        @for (item of group.displayItems; track item.orderId) {
+                          <div class="text-sm font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap truncate">
+                            {{ item.quantity }} ({{ (item.quantity || 0) - (item.shippedQuantity || 0) }} / {{ item.shippedQuantity || 0 }})
+                          </div>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-3 py-4 whitespace-nowrap align-top text-right overflow-hidden">
+                      <div class="text-sm font-bold truncate" [title]="'$' + (group.totalAmount | number)">${{ group.totalAmount | number }}</div>
+                    </td>
+                    <td class="px-3 py-4 whitespace-nowrap align-top text-center overflow-hidden">
+                      <div class="flex flex-col items-center justify-center truncate">
+                          <label class="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" 
+                                    [checked]="group.paymentStatus" 
+                                    (change)="updatePaymentStatus(group.baseOrderId, $event)" 
+                                    class="sr-only peer">
+                              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+                          </label>
+                          <span class="text-xs font-medium mt-1" [class.text-green-600]="group.paymentStatus" [class.text-red-500]="!group.paymentStatus">
+                              {{ group.paymentStatus ? '已付款' : '未付款' }}
+                          </span>
+                          
+                          <div class="mt-1.5">
+                              @if (group.clientPaymentTerms === '貨到付款') {
+                                  <span class="text-[10px] font-bold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 rounded border border-orange-200 dark:border-orange-800 whitespace-nowrap">
+                                      貨到付款
+                                  </span>
+                              } @else if (group.clientPaymentTerms === '帳期後付') {
+                                  <span class="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800 whitespace-nowrap">
+                                      帳期後付
+                                  </span>
+                              } @else {
+                                  <span class="text-[10px] text-slate-400 dark:text-slate-500">
+                                      {{ group.clientPaymentTerms }}
+                                  </span>
+                              }
+                          </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-4 whitespace-nowrap align-top overflow-hidden">
+                        <select
+                        [value]="group.status"
+                        (change)="updateOrderStatus(group.baseOrderId, $event)"
+                        (click)="$event.stopPropagation()"
+                        class="block w-full pl-3 pr-8 py-1.5 text-xs font-bold rounded-full border-0 focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 cursor-pointer appearance-none transition-colors duration-200"
+                        [class.bg-blue-100]="group.status === '處理中'"
+                        [class.text-blue-800]="group.status === '處理中'"
+                        [class.dark:bg-blue-900]="group.status === '處理中'"
+                        [class.dark:text-blue-100]="group.status === '處理中'"
+
+                        [class.bg-green-100]="group.status === '已出貨'"
+                        [class.text-green-800]="group.status === '已出貨'"
+                        [class.dark:bg-green-900]="group.status === '已出貨'"
+                        [class.dark:text-green-100]="group.status === '已出貨'"
+
+                        [class.bg-purple-100]="group.status === '部份出貨'"
+                        [class.text-purple-800]="group.status === '部份出貨'"
+                        [class.dark:bg-purple-900]="group.status === '部份出貨'"
+                        [class.dark:text-purple-100]="group.status === '部份出貨'"
+
+                        [class.bg-gray-100]="group.status === '已結案'"
+                        [class.text-gray-800]="group.status === '已結案'"
+                        [class.dark:bg-gray-700]="group.status === '已結案'"
+                        [class.dark:text-gray-300]="group.status === '已結案'"
+
+                        [class.bg-rose-100]="group.status === '取消'"
+                        [class.text-rose-800]="group.status === '取消'"
+                        [class.dark:bg-rose-900]="group.status === '取消'"
+                        [class.dark:text-rose-100]="group.status === '取消'">
+                        
+                        @for(opt of statusOptions; track opt) {
+                            <option [value]="opt" [selected]="opt === group.status">{{ opt }}</option>
+                        }
+                        </select>
+                    </td>
+                    <td class="px-3 py-4 truncate max-w-0 align-top text-xs overflow-hidden" [title]="group.specialRequests || ''">
+                        @if (group.specialRequests) {
+                            <div class="truncate text-slate-600 dark:text-slate-300">
+                                {{ group.specialRequests }}
+                            </div>
+                        } @else {
+                            <span class="text-slate-300 dark:text-slate-600">-</span>
+                        }
+                    </td>
+                    <td class="px-3 py-4 whitespace-nowrap text-sm font-medium align-top text-right overflow-hidden">
+                      <div class="flex items-center justify-end space-x-2 truncate">
+                          <button (click)="openFullView(group)" class="text-teal-600 hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-200" title="全覽編輯">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                          </button>
+                          <button (click)="printOrder(group)" class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white" title="列印/預覽">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                          </button>
+                          <button (click)="copyOrderGroup(group)" class="text-indigo-600 hover:text-indigo-900" title="複製">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          </button>
+                          <button (click)="editOrderGroup(group)" class="text-sky-600 hover:text-sky-900">編輯</button>
+                          <button (click)="deleteOrderGroup(group)" class="text-red-600 hover:text-red-900">刪除</button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="11" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">目前無訂單資料</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-xs mx-auto">
+                                您可以手動新增訂單，或是匯入歷史資料。若您是第一次使用，可以載入展示資料進行測試。
+                            </p>
+                            <div class="flex space-x-3">
+                                <button (click)="startCreateOrder()" class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors text-sm font-bold shadow-sm">
+                                    新增第一筆訂單
+                                </button>
+                                <button (click)="loadDemoData()" class="px-4 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors text-sm font-bold shadow-sm">
+                                    載入展示資料
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+      }
+    </div>
+  }
+
+  <!-- View 1: 8-Step Mobile-First Wizard -->
+  @if (currentStep() !== 'list') {
+      <div class="fixed inset-0 z-50 bg-slate-100 dark:bg-slate-900 flex flex-col h-full animate-[slide-up_0.3s_ease-out]">
+           <!-- Wizard Header -->
+          <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 shadow-sm flex items-center justify-between flex-shrink-0">
+              <div class="flex items-center space-x-3">
+                  <button (click)="goBack()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="返回">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <h2 class="text-lg font-bold text-slate-800 dark:text-white">
+                      @switch (currentStep()) {
+                          @case ('select-brand') { 步驟 1: 選擇品牌 }
+                          @case ('select-company') { 步驟 2: 選擇公司 }
+                          @case ('select-customer') { 步驟 3: 選擇客戶 }
+                          @case ('select-products') { 步驟 4: 選擇商品 }
+                          @case ('select-manufacturing') { 步驟 5: 是否代工 }
+                          @case ('select-extras') { 步驟 6: 運費與折讓 }
+                          @case ('fill-info') { 步驟 8: 填寫資料 }
+                          @case ('review-summary') { 步驟 9: 確認訂單 }
+                          @case ('communication') { 完成訂單 }
+                          @case ('cart-adjust') { 步驟 7: 調整數量 & 備註 }
+                      }
+                  </h2>
+              </div>
+              <button (click)="cancelWizard()" class="text-slate-500 font-medium text-sm">取消</button>
+          </div>
+
+          <!-- Wizard Body -->
+           <div class="flex-1 overflow-y-auto p-4 relative pb-28">
+               <!-- Step 1: Select Brand -->
+              @if (currentStep() === 'select-brand') {
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto px-2 sm:px-4">
+                      @for (brand of brands(); track brand.id) {
+                          <button (click)="selectBrand(brand)" class="p-6 bg-white dark:bg-slate-800 rounded-xl border-2 dark:border-slate-700 transition-all flex flex-col items-center justify-center h-48 space-y-4"
+                                  [class.border-sky-500]="selectedBrand()?.id === brand.id"
+                                  [class.ring-2]="selectedBrand()?.id === brand.id"
+                                  [class.ring-sky-500]="selectedBrand()?.id === brand.id"
+                                  [class.border-slate-200]="selectedBrand()?.id !== brand.id">
+                              @if (brand.logoUrl) {
+                                  <img [src]="brand.logoUrl" class="h-16 object-contain">
+                              } @else {
+                                  <div class="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center text-2xl font-bold text-slate-400">
+                                      {{ brand.nameTw.charAt(0) }}
+                                  </div>
+                              }
+                              <div class="text-center">
+                                  <div class="font-bold text-lg text-slate-800 dark:text-white">{{ brand.nameTw }}</div>
+                                  <div class="text-sm text-slate-500">{{ brand.nameEn }}</div>
+                              </div>
+                          </button>
+                      }
+                  </div>
+              }
+
+              <!-- Step 2: Select Company (Was missing) -->
+              @if (currentStep() === 'select-company') {
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto px-2 sm:px-4">
+                      @for (comp of companies(); track comp.id) {
+                          <button (click)="selectCompany(comp)" class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:ring-2 hover:ring-sky-500 transition-all text-left shadow-sm flex items-center justify-between group">
+                              <div>
+                                  <div class="font-bold text-lg text-slate-800 dark:text-white">{{ comp.name }}</div>
+                                  <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ comp.taxId }}</div>
+                              </div>
+                              <div class="text-sky-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                              </div>
+                          </button>
+                      }
+                  </div>
+              }
+
+              <!-- Step 3: Select Customer (Was missing) -->
+              @if (currentStep() === 'select-customer') {
+                  <div class="max-w-3xl mx-auto space-y-4 px-2 sm:px-4">
+                      <!-- Search -->
+                      <div class="relative">
+                          <input type="text" [value]="wizardSearchTerm()" (input)="onWizardSearchChange($event)" placeholder="搜尋客戶名稱、統編、電話..." class="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-800 text-lg shadow-sm text-slate-900 dark:text-white" autoFocus>
+                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <svg class="h-6 w-6 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          @for (cust of wizardFilteredCustomers(); track cust.id) {
+                              <button (click)="selectCustomer(cust)" class="text-left p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-sky-500 hover:ring-1 hover:ring-sky-500 transition-all shadow-sm">
+                                  <div class="flex justify-between items-start">
+                                      <div>
+                                          <div class="font-bold text-slate-800 dark:text-white">{{ cust.shortName }}</div>
+                                          <div class="text-sm text-slate-500 dark:text-slate-400">{{ cust.fullName }}</div>
+                                      </div>
+                                      @if (cust.level === 'VIP') {
+                                          <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-bold">VIP</span>
+                                      }
+                                  </div>
+                                  <div class="mt-2 text-xs text-slate-400 flex items-center gap-3">
+                                      <span>{{ cust.phone }}</span>
+                                      <span>{{ cust.taxId }}</span>
+                                  </div>
+                              </button>
+                          } @empty {
+                              <div class="col-span-full text-center py-8 text-slate-500">找不到相關客戶</div>
+                          }
+                      </div>
+                  </div>
+              }
+
+              <!-- Step 4: Select Products (Mobile-Optimized) -->
+              @if (currentStep() === 'select-products') {
+                  <div class="max-w-3xl mx-auto flex flex-col h-full px-2 sm:px-4">
+                      <!-- Filters (Two-row wrapped layout) -->
+                      <div class="flex flex-wrap gap-2 mb-4 sticky top-0 bg-slate-100 dark:bg-slate-900 z-10 pt-1">
+                           <button (click)="selectedCategory.set('')" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors shadow-sm"
+                                   [class]="!selectedCategory() ? 'bg-sky-600 text-white ring-2 ring-sky-200 dark:ring-sky-900' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'">全部</button>
+                           @for (cat of categories; track cat) {
+                               <button (click)="selectedCategory.set(cat)" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors shadow-sm"
+                                       [class]="selectedCategory() === cat ? 'bg-sky-600 text-white ring-2 ring-sky-200 dark:ring-sky-900' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'">{{ cat }}</button>
+                           }
+                      </div>
+                      
+                      <!-- Search & Supplier Row -->
+                      <div class="flex flex-col md:flex-row gap-3 mb-4">
+                          <!-- Search -->
+                          <div class="relative flex-1">
+                              <input 
+                               type="text" 
+                               [value]="wizardSearchTerm()" 
+                               (input)="onWizardSearchChange($event)" 
+                               placeholder="搜尋商品名稱、商品編號(ID)..." 
+                               class="w-full pl-10 pr-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sky-500 shadow-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                              />
+                               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                  <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                              </div>
+                          </div>
+
+                          <!-- Supplier Select -->
+                          <select 
+                              [value]="selectedSupplierFilter()" 
+                              (change)="onSupplierFilterChange($event)" 
+                              class="w-full md:w-64 p-3 border border-slate-300 dark:border-slate-600 rounded-xl dark:bg-slate-800 dark:text-white shadow-sm focus:ring-2 focus:ring-sky-500 outline-none text-base">
+                              <option value="">全部廠商 (All)</option>
+                              @for(s of suppliers(); track s.code) {
+                                  <option [value]="s.code">{{ s.code }} - {{ s.shortName }}</option>
+                              }
+                          </select>
+                      </div>
+
+                      <!-- 1. Customer Favorites Section (New - Optimized 2-Col) -->
+                      @if (customerHistoryItems().length > 0) {
+                          <div class="mb-6">
+                            <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-3 px-1 flex items-center text-sm">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363 1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                               {{ selectedCustomer()?.shortName }} 的常購商品
+                            </h3>
+                            <!-- 1 or 2-Column Grid for Favorites (gap-2) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                               @for (item of customerHistoryItems(); track item.product.id) {
+                                   <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 relative flex flex-col justify-between h-full">
+                                       <!-- Product Info -->
+                                       <div class="mb-2">
+                                           <div class="font-bold text-slate-800 dark:text-white text-sm leading-snug h-10 overflow-hidden line-clamp-2 mb-1" [title]="item.product.name">{{ item.product.name }}</div>
+                                           <div class="flex justify-between items-center text-xs text-slate-500">
+                                               <span class="opacity-70">購 {{ item.count }} 次</span>
+                                           </div>
+                                       </div>
+
+                                       <!-- Bottom Row: Price & Actions -->
+                                       <div class="flex items-center justify-between mt-auto">
+                                            <!-- Editable Price for Favorites -->
+                                            <div class="flex items-baseline">
+                                                <span class="text-sm text-slate-400 mr-0.5">$</span>
+                                                @if (getCartItem(item.product.id)) {
+                                                    <input type="number"
+                                                           [value]="getCartItem(item.product.id)!.price"
+                                                           (input)="onPriceInput(item.product.id, $event)"
+                                                           (click)="$event.stopPropagation()"
+                                                           class="w-28 text-xl font-bold text-sky-600 dark:text-sky-400 bg-transparent border-b border-sky-300 focus:border-sky-600 focus:ring-0 p-0 outline-none transition-colors"
+                                                           placeholder="0">
+                                                } @else {
+                                                    <span class="text-xl font-bold text-sky-600 dark:text-sky-400">{{ item.product.priceBeforeTax }}</span>
+                                                }
+                                            </div>
+
+                                            <div class="flex-shrink-0 ml-2">
+                                                @if (getCartItem(item.product.id)) {
+                                                    <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg overflow-hidden border border-amber-300 dark:border-amber-700 h-10 shadow-sm">
+                                                        <button (click)="updateCartQty(item.product.id, -1)" class="w-11 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors font-bold text-sm">-</button>
+                                                        <input type="number" 
+                                                               [value]="getCartItem(item.product.id)!.quantity" 
+                                                               (input)="onQtyInput(item.product.id, $event)"
+                                                               class="w-14 text-center bg-transparent border-none text-sm font-bold text-slate-800 dark:text-white focus:ring-0 p-0 appearance-none h-full">
+                                                        <button (click)="updateCartQty(item.product.id, 1)" class="w-11 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-sky-200 dark:hover:bg-sky-800 hover:text-sky-700 transition-colors font-bold text-sm">+</button>
+                                                    </div>
+                                                } @else {
+                                                    <button (click)="addToCart(item.product)" class="w-28 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-colors shadow-sm flex items-center justify-center">
+                                                        加入
+                                                    </button>
+                                                }
+                                            </div>
+                                       </div>
+                                   </div>
+                               }
+                            </div>
+                          </div>
+                      }
+                      
+                      <h3 class="font-bold text-slate-600 dark:text-slate-400 mb-3 px-1 text-sm border-b pb-1 dark:border-slate-700">一般商品列表</h3>
+
+                      <!-- General Product Grid (UPDATED to 1-Column with Detailed Card) -->
+                      <div class="flex flex-col gap-4 pb-24">
+                          @for (prod of wizardFilteredProducts(); track prod.id) {
+                              
+                              <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 relative group transition-colors"
+                                   [class.border-sky-500]="getCartItem(prod.id)"
+                                   [class.dark:border-sky-500]="getCartItem(prod.id)">
+                                   
+                                   @let cartItem = getCartItem(prod.id);
+
+                                   @if (cartItem) {
+                                       <!-- IN CART: FULL CONTROLS (Match Step 7) -->
+                                       <!-- Row 1: Name + Delete -->
+                                       <div class="flex justify-between items-start mb-3">
+                                           <div class="flex flex-col mr-2">
+                                               <span class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ cartItem.name }}</span>
+                                               <span class="text-xs text-slate-400 font-mono mt-0.5">{{ prod.id }} | 庫存: {{ prod.stock }}</span>
+                                           </div>
+                                           <button (click)="removeFromCart(prod.id); $event.stopPropagation()" class="text-slate-400 hover:text-red-500 transition-colors p-1 -mt-1 -mr-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                           </button>
+                                       </div>
+
+                                       <!-- Row 2: Grid Inputs -->
+                                       <div class="grid grid-cols-3 gap-3 items-end mb-3">
+                                           <!-- Qty -->
+                                           <div class="flex flex-col">
+                                               <label class="text-[10px] text-slate-400 mb-1 ml-1">數量</label>
+                                               <input type="number" 
+                                                      [value]="cartItem.quantity" 
+                                                      (input)="onQtyInput(prod.id, $event)" 
+                                                      class="w-full text-center py-2.5 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-xl font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
+                                           </div>
+                                           <!-- Price -->
+                                           <div class="flex flex-col">
+                                                <label class="text-[10px] text-slate-400 mb-1 ml-1">單價</label>
+                                                <input type="number" 
+                                                       [value]="cartItem.price" 
+                                                       (input)="onPriceInput(prod.id, $event)" 
+                                                       class="w-full text-center py-2.5 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-lg font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
+                                           </div>
+                                           <!-- Subtotal -->
+                                           <div class="flex flex-col items-end pb-2">
+                                                <label class="text-[10px] text-slate-400 mb-1">小計</label>
+                                                <span class="font-bold text-xl text-sky-600 dark:text-sky-400">${{ cartItem.price * cartItem.quantity | number }}</span>
+                                           </div>
+                                       </div>
+
+                                       <!-- Row 3: Note Toggle -->
+                                       <div class="flex items-center">
+                                           <button (click)="toggleCartNote(prod.id)" class="text-xs flex items-center transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                                                   [class.text-amber-600]="cartItem.note"
+                                                   [class.text-slate-500]="!cartItem.note">
+                                               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                               </svg>
+                                               {{ isCartNoteExpanded(prod.id) ? '收起備註' : (cartItem.note ? '編輯備註 (已填)' : '新增備註') }}
+                                           </button>
+                                       </div>
+
+                                       <!-- Row 4: Textarea -->
+                                       @if (isCartNoteExpanded(prod.id)) {
+                                           <div class="mt-3 animate-[fadeIn_0.2s]">
+                                               <textarea rows="2" 
+                                                         [value]="cartItem.note||''" 
+                                                         (input)="onNoteInput(prod.id, $event)" 
+                                                         placeholder="輸入備註..." 
+                                                         class="w-full p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-amber-500 outline-none resize-none"></textarea>
+                                           </div>
+                                       }
+
+                                   } @else {
+                                       <!-- NOT IN CART: Simple Add View -->
+                                       <div class="flex justify-between items-center">
+                                           <div class="flex flex-col pr-4">
+                                               <div class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ prod.name }}</div>
+                                               <div class="flex items-center space-x-3 mt-1.5">
+                                                   <span class="text-xs bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-300 font-mono">{{ prod.id }}</span>
+                                                   <span class="text-base font-bold text-slate-600 dark:text-slate-300">${{ prod.priceBeforeTax }}</span>
+                                                   @if (prod.stock <= 0) { <span class="text-xs text-red-500 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">缺貨</span> }
+                                                   @else { <span class="text-xs text-slate-400">存: {{ prod.stock }}</span> }
+                                               </div>
+                                           </div>
+                                           <button (click)="addToCart(prod)" class="flex-shrink-0 w-12 h-12 rounded-full bg-sky-100 dark:bg-slate-700 text-sky-600 dark:text-sky-400 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all shadow-sm">
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                              </svg>
+                                           </button>
+                                       </div>
+                                   }
+                              </div>
+                          } @empty {
+                              <div class="col-span-full text-center py-12">
+                                  <div class="text-slate-400 mb-2 text-4xl">📦</div>
+                                  <p class="text-slate-500">找不到相關商品。</p>
+                                  <p class="text-xs text-slate-400 mt-1">請確認該供應商是否有此商品。</p>
+                              </div>
+                          }
+                      </div>
+                  </div>
+              }
+
+              <!-- Step 5: Manufacturing Selection -->
+              @if (currentStep() === 'select-manufacturing') {
+                  <div class="max-w-3xl mx-auto flex flex-col h-full px-2 sm:px-4">
+                      <div class="mb-4 bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-sm flex items-center shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                          請選擇代工項目 (每點擊一次「+」新增一個變體)
+                      </div>
+                      
+                      <!-- 1-Column Grid -->
+                      <div class="grid grid-cols-1 gap-4 pb-24 w-full">
+                           @for (prod of wizardFilteredManufacturingProducts(); track prod.id) {
+                              
+                              @let variants = getCartItemsByBaseId(prod.id);
+                              
+                              <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 relative group transition-colors"
+                                   [class.border-purple-500]="variants.length > 0"
+                                   [class.ring-1]="variants.length > 0"
+                                   [class.ring-purple-500]="variants.length > 0">
+                                   
+                                   <!-- Header: Product Info & Add Button -->
+                                   <div class="flex justify-between items-start mb-2">
+                                       <div class="flex flex-col pr-4">
+                                           <div class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ prod.name }}</div>
+                                           <div class="flex items-center space-x-3 mt-1.5">
+                                               <span class="text-xs bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-300 font-mono">{{ prod.id }}</span>
+                                               <span class="text-base font-bold text-slate-600 dark:text-slate-300">${{ prod.priceBeforeTax }}</span>
+                                           </div>
+                                       </div>
+                                       <button (click)="addToCart(prod)" class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="新增變體 (Add Variant)">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                          </svg>
+                                       </button>
+                                   </div>
+
+                                   <!-- Variants List -->
+                                   @if (variants.length > 0) {
+                                       <div class="mt-4 space-y-3 pl-2 border-l-4 border-purple-200 dark:border-purple-900">
+                                           @for (item of variants; track item.product.id) {
+                                               <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-md border border-slate-100 dark:border-slate-600 relative group/item">
+                                                   <div class="flex justify-between items-start mb-2 pr-6">
+                                                       <div class="text-sm font-bold text-purple-700 dark:text-purple-300">{{ item.name }}</div>
+                                                       <button (click)="removeFromCart(item.product.id)" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors p-1">
+                                                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                       </button>
+                                                   </div>
+                                                   
+                                                   <div class="grid grid-cols-2 gap-3 items-end">
+                                                       <div>
+                                                           <label class="block text-[10px] text-slate-400 mb-0.5">數量</label>
+                                                           <input type="number" 
+                                                                  [value]="item.quantity" 
+                                                                  (input)="onQtyInput(item.product.id, $event)"
+                                                                  class="w-full p-1.5 text-center text-sm font-bold border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-1 focus:ring-purple-500">
+                                                       </div>
+                                                       <div>
+                                                           <label class="block text-[10px] text-slate-400 mb-0.5">單價</label>
+                                                           <input type="number" 
+                                                                  [value]="item.price" 
+                                                                  (input)="onPriceInput(item.product.id, $event)"
+                                                                  class="w-full p-1.5 text-center text-sm font-bold border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-1 focus:ring-purple-500">
+                                                       </div>
+                                                   </div>
+
+                                                   <!-- 商品備註區塊 -->
+                                                   <div class="mt-2">
+                                                       <button (click)="toggleCartNote(item.product.id)" 
+                                                               class="text-[10px] flex items-center gap-1 transition-colors"
+                                                               [class.text-purple-600]="item.note"
+                                                               [class.text-slate-400]="!item.note">
+                                                           <mat-icon class="!text-[14px] h-[14px] w-[14px]">sticky_note_2</mat-icon>
+                                                           {{ item.note ? '編輯備註' : '新增備註' }}
+                                                       </button>
+                                                       
+                                                       @if (expandedCartNotes().has(item.product.id)) {
+                                                           <textarea 
+                                                               [value]="item.note || ''"
+                                                               (input)="onNoteInput(item.product.id, $event)"
+                                                               placeholder="輸入商品備註..."
+                                                               class="mt-1 w-full p-2 text-xs border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-white focus:ring-1 focus:ring-purple-500 outline-none"
+                                                               rows="2">
+                                                           </textarea>
+                                                       }
+                                                   </div>
+                                                   <div class="mt-2 text-right">
+                                                       <span class="text-xs text-slate-500 dark:text-slate-400">小計: </span>
+                                                       <span class="text-sm font-bold text-slate-700 dark:text-white">${{ item.quantity * item.price | number }}</span>
+                                                   </div>
+                                               </div>
+                                           }
+                                       </div>
+                                   }
+                              </div>
+                           }
+                      </div>
+                  </div>
+              }
+
+              <!-- Step 6: Extras (Shipping/Fees) (Was missing) -->
+              @if (currentStep() === 'select-extras') {
+                  <div class="max-w-3xl mx-auto space-y-4 px-2 sm:px-4">
+                      <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-2">運費與折扣</h3>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          @for (item of extrasList(); track item.id) {
+                               <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between h-full relative overflow-hidden group hover:border-sky-300 dark:hover:border-sky-700 transition-colors">
+                                   <!-- Left: Info -->
+                                   <div class="flex-1 min-w-0 pr-3">
+                                       <div class="flex items-center space-x-2 mb-1">
+                                           <h3 class="font-bold text-slate-800 dark:text-white truncate text-base" [title]="item.name">{{ item.name }}</h3>
+                                       </div>
+                                       <div class="flex items-center text-xs text-slate-500 dark:text-slate-400 space-x-3">
+                                            <span class="font-medium" [class.text-red-500]="item.priceBeforeTax < 0" [class.text-slate-700]="item.priceBeforeTax >= 0" [class.dark:text-slate-300]="item.priceBeforeTax >= 0">
+                                                ${{ item.priceBeforeTax }}
+                                            </span>
+                                       </div>
+                                   </div>
+
+                                   <!-- Right: Action (Stepper) -->
+                                   <div class="flex-shrink-0">
+                                       @if (getCartItem(item.id)) {
+                                           <!-- Editable Quantity Stepper -->
+                                           <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg overflow-hidden border border-sky-300 dark:border-sky-600 shadow-sm">
+                                               <button (click)="updateCartQty(item.id, -1)" class="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors">
+                                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+                                               </button>
+                                               <input type="number" 
+                                                      [value]="getCartItem(item.id)!.quantity" 
+                                                      (input)="onQtyInput(item.id, $event)"
+                                                      class="w-20 text-center bg-transparent border-none text-sm font-bold text-slate-800 dark:text-white focus:ring-0 p-0 appearance-none h-8">
+                                               <button (click)="updateCartQty(item.id, 1)" class="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-sky-200 dark:hover:bg-sky-800 hover:text-sky-700 transition-colors">
+                                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                               </button>
+                                           </div>
+                                       } @else {
+                                           <!-- Add Button -->
+                                           <button (click)="addToCart(item)" class="w-9 h-9 rounded-full bg-sky-100 dark:bg-slate-700 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:bg-sky-500 group-hover:text-white transition-colors shadow-sm" title="加入">
+                                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                               </svg>
+                                           </button>
+                                       }
+                                   </div>
+                               </div>
+                          }
+                      </div>
+                      
+                      <!-- Cart Summary Preview -->
+                      <div class="mt-8 border-t border-slate-200 dark:border-slate-700 pt-4">
+                          <h4 class="text-sm font-bold text-slate-500 mb-2">已選項目 ({{ cart().length }})</h4>
+                          <div class="space-y-2">
+                              @for (item of cart(); track item.product.id) {
+                                  <div class="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                                      <span>{{ item.product.name }} x {{ item.quantity }}</span>
+                                      <div class="flex items-center gap-3">
+                                          <span class="font-bold">${{ item.quantity * item.price | number }}</span>
+                                          <button (click)="removeFromCart(item.product.id)" class="text-red-400 hover:text-red-600">
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                          </button>
+                                      </div>
+                                  </div>
+                              }
+                          </div>
+                      </div>
+                  </div>
+              }
+
+              <!-- Step 7: Fill Info (Was missing) -->
+              @if (currentStep() === 'fill-info') {
+                  <div class="max-w-3xl mx-auto space-y-6" [formGroup]="orderForm">
+                       <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                           <h3 class="font-bold text-slate-800 dark:text-white mb-4 border-b pb-2 dark:border-slate-700">基本資訊</h3>
+                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div>
+                                   <label class="block text-sm font-medium text-slate-500 mb-1">訂單日期</label>
+                                   <input type="date" formControlName="orderDate" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                               </div>
+                               <div>
+                                   <label class="block text-sm font-medium text-slate-500 mb-1">負責業務</label>
+                                   <select formControlName="salesperson" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                                       @for (emp of employees(); track emp.id) { <option [value]="emp.name">{{ emp.name }}</option> }
+                                   </select>
+                               </div>
+                           </div>
+                       </div>
+                       
+                       <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                           <h3 class="font-bold text-slate-800 dark:text-white mb-4 border-b pb-2 dark:border-slate-700">付款與物流</h3>
+                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div>
+                                   <label class="block text-sm font-medium text-slate-500 mb-1">付款方式</label>
+                                   <select formControlName="paymentTerms" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                       <option value="先匯款">先匯款</option>
+                                       <option value="貨到付款">貨到付款</option>
+                                       <option value="帳期後付">帳期後付</option>
+                                   </select>
+                               </div>
+                               <div>
+                                   <label class="block text-sm font-medium text-slate-500 mb-1">代收金額 (COD)</label>
+                                   <input type="number" formControlName="codAmount" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white font-bold text-rose-600">
+                               </div>
+                               @if (orderForm.get('paymentTerms')?.value === '帳期後付') {
+                                   <div class="md:col-span-2 animate-[fadeIn_0.3s]">
+                                       <label class="block text-sm font-bold text-blue-600 dark:text-blue-400 mb-1">約定貨款日 (必填)</label>
+                                       <input type="date" formControlName="paymentDueDate" class="w-full p-2 border border-blue-300 rounded-lg dark:bg-slate-700 dark:text-white">
+                                   </div>
+                               }
+                               
+                               <div class="md:col-span-2 mt-2">
+                                   <label class="block text-sm font-medium text-slate-500 mb-1">收件資訊來源</label>
+                                   <div class="flex gap-2">
+                                       <button type="button" (click)="setReceiverSource(1)" class="flex-1 py-2 rounded-lg border text-sm font-medium transition-colors"
+                                               [class.bg-sky-50]="currentReceiverSource()===1" [class.border-sky-500]="currentReceiverSource()===1" [class.text-sky-700]="currentReceiverSource()===1">
+                                           同客戶地址1
+                                       </button>
+                                       <button type="button" (click)="setReceiverSource(2)" class="flex-1 py-2 rounded-lg border text-sm font-medium transition-colors"
+                                               [class.bg-sky-50]="currentReceiverSource()===2" [class.border-sky-500]="currentReceiverSource()===2" [class.text-sky-700]="currentReceiverSource()===2">
+                                           同客戶地址2
+                                       </button>
+                                   </div>
+                               </div>
+                               
+                               <div class="md:col-span-2 space-y-3 mt-2 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg">
+                                   <input type="text" formControlName="receiverName" placeholder="收件人姓名" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                   <input type="text" formControlName="receiverPhone" placeholder="收件人電話" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                   <input type="text" formControlName="receiverAddress" placeholder="收件地址" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                               </div>
+
+                               <div class="md:col-span-2 mt-4">
+                                   <label class="block text-sm font-medium text-slate-500 mb-1">特別要求 / 訂單備註 (Special Requests)</label>
+                                   <textarea formControlName="specialRequests" rows="3" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white resize-none" placeholder="例如：週一至週五配送、需要貨梯..."></textarea>
+                               </div>
+                           </div>
+                       </div>
+                  </div>
+              }
+
+              <!-- Step 8: Cart Adjust (Modified) -->
+              @if (currentStep() === 'cart-adjust') {
+                  <div class="max-w-3xl mx-auto flex flex-col h-full bg-slate-50 dark:bg-slate-900 pb-20 px-2 sm:px-4">
+                      
+                      <!-- Summary Header (Fixed) -->
+                      <div class="flex justify-between items-center px-4 py-3 bg-white dark:bg-slate-800 shadow-sm mb-4 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+                          <h3 class="font-bold text-lg text-slate-800 dark:text-white">明細調整</h3>
+                          <div class="text-right">
+                              <div class="text-xs text-slate-500 dark:text-slate-400">總計 ({{ cart().length }}項)</div>
+                              <div class="text-xl font-black text-sky-600 dark:text-sky-400">${{ cartTotal().total | number }}</div>
+                          </div>
+                      </div>
+
+                      <!-- Mobile Card List -->
+                      <div class="flex-1 overflow-y-auto px-4 space-y-4">
+                           @for (item of cart(); track item.product.id) {
+                               <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+                                   <!-- Row 1: Name + Delete -->
+                                   <div class="flex justify-between items-start mb-3">
+                                       <span class="font-bold text-slate-800 dark:text-white text-base leading-snug mr-2">{{ item.name }}</span>
+                                       <button (click)="removeFromCart(item.product.id)" class="text-slate-400 hover:text-red-500 transition-colors p-1 -mt-1 -mr-1">
+                                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                       </button>
+                                   </div>
+
+                                   <!-- Row 2: Grid Inputs -->
+                                   <div class="grid grid-cols-3 gap-3 items-end mb-3">
+                                       <!-- Qty -->
+                                       <div class="flex flex-col">
+                                           <label class="text-[10px] text-slate-400 mb-1 ml-1">數量</label>
+                                           <input type="number" 
+                                                  [value]="item.quantity" 
+                                                  (input)="onQtyInput(item.product.id, $event)" 
+                                                  class="w-full text-center py-2 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-lg font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
+                                       </div>
+                                       <!-- Price -->
+                                       <div class="flex flex-col">
+                                            <label class="text-[10px] text-slate-400 mb-1 ml-1">單價</label>
+                                            <input type="number" 
+                                                   [value]="item.price" 
+                                                   (input)="onPriceInput(item.product.id, $event)" 
+                                                   class="w-full text-center py-2 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-lg font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
+                                       </div>
+                                       <!-- Subtotal -->
+                                       <div class="flex flex-col items-end pb-2">
+                                            <label class="text-[10px] text-slate-400 mb-1">小計</label>
+                                            <span class="font-bold text-lg text-sky-600 dark:text-sky-400">${{ item.price * item.quantity | number }}</span>
+                                       </div>
+                                   </div>
+
+                                   <!-- Row 3: Note Toggle -->
+                                   <div class="flex items-center">
+                                       <button (click)="toggleCartNote(item.product.id)" class="text-xs flex items-center transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                                               [class.text-amber-600]="item.note"
+                                               [class.text-slate-500]="!item.note">
+                                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                           </svg>
+                                           {{ isCartNoteExpanded(item.product.id) ? '收起備註' : (item.note ? '編輯備註 (已填)' : '新增備註') }}
+                                       </button>
+                                   </div>
+
+                                   <!-- Row 4: Textarea (Conditional) -->
+                                   @if (isCartNoteExpanded(item.product.id)) {
+                                       <div class="mt-3 animate-[fadeIn_0.2s]">
+                                           <textarea rows="3" 
+                                                     [value]="item.note||''" 
+                                                     (input)="onNoteInput(item.product.id, $event)" 
+                                                     placeholder="輸入備註..." 
+                                                     class="w-full p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-amber-500 outline-none resize-none"></textarea>
+                                       </div>
+                                   }
+                               </div>
+                           }
+                      </div>
+                  </div>
+              }
+              
+              <!-- Step 8: Review Summary (Was missing) -->
+              @if (currentStep() === 'review-summary') {
+                  <div class="max-w-3xl mx-auto space-y-6 px-2 sm:px-4">
+                      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
+                          <h3 class="text-2xl font-bold text-center mb-6 text-slate-800 dark:text-white border-b pb-4 dark:border-slate-700">訂單確認</h3>
+                          
+                          <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
+                              <div>
+                                  <h4 class="font-bold text-slate-400 uppercase mb-2">客戶資料</h4>
+                                  <p class="text-lg font-medium">{{ orderForm.get('customerName')?.value }}</p>
+                                  <p class="text-slate-500 mt-1">{{ orderForm.get('receiverName')?.value }} / {{ orderForm.get('receiverPhone')?.value }}</p>
+                                  <p class="text-slate-500">{{ orderForm.get('receiverAddress')?.value }}</p>
+                              </div>
+                              <div class="text-right">
+                                  <h4 class="font-bold text-slate-400 uppercase mb-2">訂單資訊</h4>
+                                  <p><span class="text-slate-500 mr-2">日期:</span> {{ orderForm.get('orderDate')?.value }}</p>
+                                  <p><span class="text-slate-500 mr-2">業務:</span> {{ orderForm.get('salesperson')?.value }}</p>
+                                  <p><span class="text-slate-500 mr-2">付款:</span> {{ orderForm.get('paymentTerms')?.value }}</p>
+                                  @if (orderForm.get('codAmount')?.value > 0) {
+                                      <p class="text-red-500 font-bold mt-1">代收: ${{ orderForm.get('codAmount')?.value | number }}</p>
+                                  }
+                              </div>
+                          </div>
+                          
+                          <div class="border rounded-lg overflow-hidden dark:border-slate-600 mb-6">
+                              <table class="w-full text-sm">
+                                  <thead class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                      <tr>
+                                          <th class="p-3 text-left">品項</th>
+                                          <th class="p-3 text-center">數量</th>
+                                          <th class="p-3 text-right">單價</th>
+                                          <th class="p-3 text-right">小計</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                                      @for (item of cart(); track item.product.id) {
+                                          <tr>
+                                              <td class="p-3">
+                                                  <div>{{ item.name }}</div>
+                                                  @if(item.note){ <div class="text-xs text-slate-400">{{item.note}}</div> }
+                                              </td>
+                                              <td class="p-3 text-center font-bold">{{ item.quantity }}</td>
+                                              <td class="p-3 text-right">${{ item.price | number }}</td>
+                                              <td class="p-3 text-right">${{ item.price * item.quantity | number }}</td>
+                                          </tr>
+                                      }
+                                  </tbody>
+                              </table>
+                          </div>
+                          
+                          <div class="text-right space-y-1">
+                              <div class="text-slate-500">共 {{ cart().length }} 項商品</div>
+                              <div class="text-3xl font-black text-sky-600 dark:text-sky-400">
+                                  ${{ cartTotal().total | number }}
+                              </div>
+                          </div>
+                          
+                          <div class="mt-8 pt-6 border-t dark:border-slate-700 flex justify-center">
+                              <button (click)="submitWizardOrder()" class="px-10 py-4 bg-sky-600 text-white rounded-full font-bold text-lg shadow-xl hover:bg-sky-700 hover:scale-105 transition-all">
+                                  確認送出訂單
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              }
+              
+              <!-- Step 9: Communication (Modified to use new Print Logic) -->
+               @if (currentStep() === 'communication') {
+                  <div class="max-w-2xl mx-auto p-4 flex flex-col items-center px-2 sm:px-4">
+                      <div class="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <h2 class="text-2xl font-bold mb-2 dark:text-white">{{ editingOrderId() ? '更新成功！' : '建立成功！' }}</h2>
+                      <p class="text-slate-500 mb-6">您可以複製以下內容傳送給客戶。</p>
+                      
+                      <textarea [value]="communicationText()" readonly class="w-full h-48 p-4 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:border-slate-700 mb-4 text-sm font-mono"></textarea>
+                      
+                      <div class="w-full flex flex-col gap-3">
+                          <button (click)="copyAndFinish()" class="w-full py-3 bg-sky-600 text-white rounded-xl font-bold shadow-md hover:bg-sky-700 transition-colors">複製並結束</button>
+                          
+                          <!-- PRINT BUTTON triggers openPrintPreview which opens the modal below -->
+                          <button (click)="printCurrentOrder()" class="w-full py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-white rounded-xl font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center justify-center transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                              列印 / 預覽單據
+                          </button>
+
+                          <button (click)="finishWizard()" class="mt-2 text-slate-500 hover:text-slate-700 underline text-sm">直接結束</button>
+                      </div>
+                  </div>
+              }
+           </div>
+           
+           <!-- Fixed Footer -->
+           <div class="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center items-center" *ngIf="currentStep() !== 'communication'">
+              <div class="max-w-4xl mx-auto w-full flex justify-between items-center px-4">
+                  <!-- Back Button -->
+                  <button (click)="goBack()" 
+                          class="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors">
+                      上一步
+                  </button>
+
+                  <!-- Next Button logic -->
+                  @if (currentStep() === 'select-brand' && selectedBrand()) {
+                      <button (click)="goToCompany()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                          下一步 (選擇公司) &rarr;
+                      </button>
+                  }
+                  @if (currentStep() === 'select-company' && selectedCompany()) {
+                      <button (click)="goToCustomer()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                          下一步 (選擇客戶) &rarr;
+                      </button>
+                  }
+                  @if (currentStep() === 'select-products') {
+                      <div class="text-right mr-4 flex flex-col items-end">
+                          <div class="text-xs text-slate-500">已選 {{ cart().length }} 項</div>
+                          <div class="text-xl font-bold text-sky-600 dark:text-sky-400">${{ cartTotal().total | number }}</div>
+                      </div>
+                      <button (click)="goToManufacturing()" [disabled]="cart().length === 0" class="px-6 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 disabled:bg-slate-300 disabled:cursor-not-allowed font-bold transition-all flex items-center">
+                          下一步 (代工選單) &rarr;
+                      </button>
+                  }
+                  @if (currentStep() === 'select-manufacturing') {
+                      <button (click)="goToExtras()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                          下一步 (運費/雜項) &rarr;
+                      </button>
+                  }
+                  @if (currentStep() === 'select-extras') {
+                      <button (click)="goToCartAdjust()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                          下一步 (確認數量) &rarr;
+                      </button>
+                  }
+                  @if (currentStep() === 'cart-adjust') {
+                      <button (click)="goToFillInfo()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                          下一步 (填寫資訊) &rarr;
+                      </button>
+                  }
+                  @if (currentStep() === 'fill-info') {
+                      <button (click)="goToReview()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                          下一步 (總覽確認) &rarr;
+                      </button>
+                  }
+              </div>
+          </div>
+
+      </div>
+  }
+</div>
+
+<!-- Print Preview Modal (Updated with Template Selection) -->
+@if (showPrintPreview()) {
+  <div class="fixed inset-0 z-[100] bg-slate-900/75 flex flex-col items-center justify-center backdrop-blur-sm animate-[fadeIn_0.2s]">
+    <div class="bg-white dark:bg-slate-800 w-full h-full flex flex-col overflow-hidden shadow-2xl">
+      <!-- Toolbar -->
+      <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex-shrink-0">
+        <div class="flex items-center space-x-4">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+              列印預覽
+            </h3>
+            
+            <!-- Template Selection Dropdown -->
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-medium text-slate-600 dark:text-slate-300">版型:</label>
+                <select [value]="currentPrintTemplateId()" (change)="onPrintTemplateChange($event)" class="p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:text-white min-w-[150px]">
+                   @for (tpl of availableOrderTemplates(); track tpl.id) {
+                       <option [value]="tpl.id">{{ tpl.name }}</option>
+                   }
+                </select>
+            </div>
+        </div>
+
+        <div class="flex space-x-3">
+          <button (click)="downloadPdf()" [disabled]="isDownloadingPdf()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded shadow flex items-center font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (isDownloadingPdf()) {
+                  <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  處理中...
+              } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+                  下載 PDF
+              }
+          </button>
+          <button (click)="confirmPrint()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded shadow flex items-center font-bold">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            列印
+          </button>
+          <button (click)="closePrintPreview()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded font-medium">關閉</button>
+        </div>
+      </div>
+      <!-- Preview Area -->
+      <!-- Updated class to allow scrolling when zoomed -->
+      <div class="flex-1 bg-slate-100 dark:bg-slate-900 p-4 overflow-auto flex justify-center -webkit-overflow-scrolling-touch">
+         <iframe #previewFrame [src]="previewHtmlSrc()" class="w-full h-full bg-white shadow-lg rounded max-w-[210mm] border-0 min-w-[320px]"></iframe>
+      </div>
+      
+      <!-- Mobile Hint -->
+      <div class="bg-black/80 text-white text-xs p-2 text-center md:hidden">
+          提示：您可以用兩指縮放以查看細節
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Full View Edit Modal -->
+@if (showFullViewModal()) {
+  <div class="fixed inset-0 z-50 overflow-hidden" role="dialog">
+    <div class="flex items-center justify-center min-h-screen text-center h-full">
+      <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" (click)="closeFullView()"></div>
+      
+      <div class="relative w-full h-full md:w-[95vw] md:h-[95vh] bg-white dark:bg-slate-800 rounded-lg shadow-2xl flex flex-col overflow-hidden text-left transform transition-all dark:border dark:border-slate-700">
+        
+        <!-- Header -->
+        <div class="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-between items-center">
+            <div>
+               <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                   訂單全覽編輯 (Full Edit)
+               </h3>
+               <div class="text-xs text-slate-500 mt-1">單號: <span class="font-mono font-bold">{{ fullViewHeaderForm.get('baseOrderId')?.value }}</span></div>
+            </div>
+            <div class="flex space-x-3">
+                <button (click)="saveFullView()" class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow font-bold transition-colors">
+                    儲存變更
+                </button>
+                <button (click)="closeFullView()" class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                    取消
+                </button>
+            </div>
+        </div>
+        
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900/50">
+            <div class="max-w-7xl mx-auto space-y-6">
+                
+                <!-- 1. Header Details Form -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm" [formGroup]="fullViewHeaderForm">
+                    <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase mb-4 border-b pb-2 dark:border-slate-700">基本資料</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">訂單日期</label>
+                            <input type="date" formControlName="orderDate" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                        </div>
+                        <div>
+                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">訂單狀態</label>
+                             <select formControlName="status" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                                 @for(opt of statusOptions; track opt) {
+                                     <option [value]="opt">{{ opt }}</option>
+                                 }
+                             </select>
+                        </div>
+                        <div>
+                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">負責業務</label>
+                             <select formControlName="salesperson" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                                 @for (emp of employees(); track emp.id) { <option [value]="emp.name">{{ emp.name }}</option> }
+                             </select>
+                        </div>
+                        <div class="flex items-center pt-5">
+                             <input type="checkbox" formControlName="paymentStatus" id="fvPayStatus" class="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
+                             <label for="fvPayStatus" class="ml-2 text-sm font-bold text-slate-700 dark:text-slate-300">已付款</label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">收件人</label>
+                            <input type="text" formControlName="receiverName" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">電話</label>
+                            <input type="text" formControlName="receiverPhone" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">地址</label>
+                            <input type="text" formControlName="receiverAddress" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                        <div>
+                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">物流方式</label>
+                             <select formControlName="shipLogistics" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                                 <option value="">請選擇</option>
+                                 @for(opt of logisticsOptions; track opt) { <option [value]="opt">{{ opt }}</option> }
+                             </select>
+                        </div>
+                        <div>
+                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">代收金額 (COD)</label>
+                             <input type="number" formControlName="codAmount" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm font-bold text-rose-600">
+                        </div>
+                        <div class="md:col-span-2">
+                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">備註 / 特殊需求</label>
+                             <input type="text" formControlName="specialRequests" class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Items List -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                     <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+                         <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase">訂單明細 ({{ fullViewItems().length }})</h4>
+                         
+                         <!-- Simple Tax Toggle inside items header for quick access -->
+                         <div class="flex items-center space-x-2" [formGroup]="fullViewHeaderForm">
+                             <label class="text-xs font-bold text-slate-600 dark:text-slate-300">應稅 (5%)</label>
+                             <input type="checkbox" formControlName="orderTaxType" class="rounded text-sky-600 focus:ring-sky-500">
+                         </div>
+                     </div>
+                     
+                     <div class="overflow-x-auto">
+                         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                             <thead class="bg-white dark:bg-slate-800">
+                                 <tr>
+                                     <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-12">#</th>
+                                     <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider min-w-[200px]">商品名稱</th>
+                                     <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-24">數量</th>
+                                     <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-32">單價</th>
+                                     <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-32">小計</th>
+                                     <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-24">未出貨</th>
+                                     <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-24">已出貨</th>
+                                     <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">備註</th>
+                                     <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-16">刪除</th>
+                                 </tr>
+                             </thead>
+                             <tbody class="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-800">
+                                 @for (item of fullViewItems(); track item.orderId; let i = $index) {
+                                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                         <td class="px-6 py-4 text-xs text-slate-400">{{ i + 1 }}</td>
+                                         <td class="px-6 py-4 text-sm font-medium text-slate-800 dark:text-white">
+                                             {{ item.productName }}
+                                             <div class="text-xs text-slate-400 font-mono">{{ item.productId }}</div>
+                                         </td>
+                                         <td class="px-6 py-4">
+                                             <input type="number" 
+                                                    [value]="item.quantity" 
+                                                    (input)="updateFullViewItem(i, 'quantity', $any($event.target).value)" 
+                                                    class="w-full text-center p-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white font-bold">
+                                         </td>
+                                         <td class="px-6 py-4">
+                                             <input type="number" 
+                                                    [value]="item.priceBeforeTax" 
+                                                    (input)="updateFullViewItem(i, 'priceBeforeTax', $any($event.target).value)" 
+                                                    class="w-full text-right p-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                         </td>
+                                         <td class="px-6 py-4 text-right text-sm font-mono text-slate-700 dark:text-slate-300">
+                                             ${{ (item.quantity * item.priceBeforeTax) | number }}
+                                         </td>
+                                         <td class="px-6 py-4 text-center text-sm font-bold text-amber-600">
+                                             {{ (item.quantity || 0) - (item.shippedQuantity || 0) }}
+                                         </td>
+                                         <td class="px-6 py-4 text-center text-sm font-bold text-slate-500">
+                                             {{ item.shippedQuantity || 0 }}
+                                         </td>
+                                         <td class="px-6 py-4">
+                                             <input type="text" 
+                                                    [value]="item.productNote" 
+                                                    (input)="updateFullViewItem(i, 'productNote', $any($event.target).value)" 
+                                                    class="w-full p-1 border-b border-transparent focus:border-sky-500 bg-transparent outline-none text-xs text-slate-600 dark:text-slate-400 placeholder-slate-300">
+                                         </td>
+                                         <td class="px-6 py-4 text-center">
+                                             <button (click)="removeFullViewItem(i)" class="text-slate-400 hover:text-red-500 p-1">
+                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                             </button>
+                                         </td>
+                                     </tr>
+                                 }
+                             </tbody>
+                             <tfoot class="bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
+                                 <tr>
+                                     <td colspan="4" class="px-6 py-3 text-right text-sm font-bold text-slate-600 dark:text-slate-400">總計 (含稅/不含稅 依設定)</td>
+                                     <td class="px-6 py-3 text-right text-lg font-black text-sky-600 dark:text-sky-400 font-mono">
+                                         ${{ fullViewTotal() | number }}
+                                     </td>
+                                     <td colspan="2"></td>
+                                 </tr>
+                             </tfoot>
+                         </table>
+                     </div>
+                </div>
+                
+            </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+}

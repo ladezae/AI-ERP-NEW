@@ -1,0 +1,139 @@
+
+<div class="p-4 md:p-8 h-full flex flex-col overflow-hidden">
+  <header class="mb-6 flex justify-between items-start flex-shrink-0">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800 dark:text-white flex items-center">
+          <span class="mr-3 p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg text-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          </span>
+          靈感筆記本 (Idea Board)
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-2 ml-14">捕捉靈感、驗證假設並追蹤已完成的想法。</p>
+    </div>
+    
+    <button (click)="openAddModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-md transition-colors flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        新增筆記
+    </button>
+  </header>
+
+  <!-- Kanban Board -->
+  <div class="flex-1 overflow-x-auto overflow-y-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full min-w-[800px]">
+          @for (col of columns; track col.status) {
+              <div class="flex flex-col h-full rounded-xl border shadow-sm overflow-hidden bg-slate-50 dark:bg-slate-900/50" [ngClass]="col.color">
+                  <!-- Column Header -->
+                  <div class="p-4 border-b border-white/20 flex items-center justify-between">
+                      <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="col.icon" />
+                          </svg>
+                          {{ col.title }}
+                      </h3>
+                      <span class="bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300">
+                          {{ getNotesByStatus(col.status)().length }}
+                      </span>
+                  </div>
+
+                  <!-- Cards Container -->
+                  <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                      @for (note of getNotesByStatus(col.status)(); track note.id) {
+                          <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow group relative">
+                              
+                              <div class="flex justify-between items-start mb-2">
+                                  <h4 class="font-bold text-slate-800 dark:text-white text-sm line-clamp-1" [title]="note.title">{{ note.title }}</h4>
+                                  
+                                  <!-- Action Menu (Visible on Hover) -->
+                                  <div class="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button (click)="openEditModal(note)" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-sky-500">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                      </button>
+                                      <button (click)="deleteNote(note.id)" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                      </button>
+                                  </div>
+                              </div>
+                              
+                              <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 mb-3 whitespace-pre-wrap">{{ note.content }}</p>
+                              
+                              <div class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
+                                  <span class="text-[10px] text-slate-400">{{ note.updatedAt | taiwanDate }}</span>
+                                  
+                                  <!-- Move Controls -->
+                                  <div class="flex space-x-1">
+                                      @if (col.status !== 'draft') {
+                                          <button (click)="moveNote(note, 'backward')" class="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-700 dark:hover:text-white" title="移回上一階段">
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                                          </button>
+                                      }
+                                      @if (col.status !== 'completed') {
+                                          <button (click)="moveNote(note, 'forward')" class="p-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-700 dark:hover:text-white" title="移至下一階段">
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                          </button>
+                                      }
+                                  </div>
+                              </div>
+                          </div>
+                      } @empty {
+                          <div class="text-center py-10 opacity-50">
+                              <div class="text-slate-400 dark:text-slate-500 text-sm">尚無筆記</div>
+                          </div>
+                      }
+                  </div>
+              </div>
+          }
+      </div>
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-[100]" role="dialog" aria-modal="true">
+    <!-- Backdrop & Centering Container -->
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0 h-full">
+      
+      <!-- Backdrop -->
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+
+      <!-- Enlarged Modal Panel -->
+      <div class="relative bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-5xl sm:w-full h-[90vh] flex flex-col z-10">
+        <form [formGroup]="noteForm" (ngSubmit)="onSubmit()" class="flex flex-col h-full">
+          <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 flex-1 overflow-y-auto flex flex-col">
+            <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white mb-4 flex-shrink-0">
+              {{ isEditMode() ? '編輯筆記' : '新增靈感筆記' }}
+            </h3>
+            
+            <div class="flex flex-col gap-4 flex-1">
+               <div class="flex-shrink-0">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">標題</label>
+                  <input type="text" formControlName="title" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="輸入主題...">
+               </div>
+               
+               <div class="flex-1 flex flex-col min-h-0">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">內容</label>
+                  <textarea formControlName="content" class="flex-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm border p-4 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none leading-relaxed" placeholder="詳細描述您的想法..."></textarea>
+               </div>
+
+               <div class="flex-shrink-0">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">狀態</label>
+                  <select formControlName="status" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                      <option value="draft">🌱 草稿區</option>
+                      <option value="validation">🧪 驗證區</option>
+                      <option value="completed">✅ 完成區</option>
+                  </select>
+               </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100 dark:border-slate-600 flex-shrink-0">
+            <button type="submit" [disabled]="noteForm.invalid" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-gray-400 transition-colors">
+              儲存
+            </button>
+            <button type="button" (click)="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

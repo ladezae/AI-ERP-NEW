@@ -1,0 +1,1250 @@
+
+
+
+
+
+
+
+
+
+<div class="flex h-full flex-col md:flex-row overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors">
+  
+  <!-- Sidebar Navigation -->
+  <aside class="w-full md:w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex-shrink-0 flex flex-col h-full z-10 shadow-sm md:shadow-none">
+    <div class="p-6 border-b border-slate-100 dark:border-slate-700">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        系統設定
+      </h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Preferences</p>
+    </div>
+    
+    <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+      <button (click)="setActiveTab('appearance')" 
+              [class]="activeTab() === 'appearance' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">🎨</span> 外觀設定 (Appearance)
+      </button>
+      <button (click)="setActiveTab('print-layout')" 
+              [class]="activeTab() === 'print-layout' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">📄</span> 單據版型 (Layouts)
+      </button>
+      <button (click)="setActiveTab('templates')" 
+              [class]="activeTab() === 'templates' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">🤖</span> 辨識與通訊範本
+      </button>
+      <button (click)="setActiveTab('schema')" 
+              [class]="activeTab() === 'schema' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">📚</span> 資料字典 (Schema)
+      </button>
+      <button (click)="setActiveTab('settings')" 
+              [class]="activeTab() === 'settings' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">⚙️</span> 一般設定 (General)
+      </button>
+      <button (click)="setActiveTab('data-management')" 
+              [class]="activeTab() === 'data-management' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">💾</span> 資料管理 (Data)
+      </button>
+      <button (click)="setActiveTab('ai-cost')" 
+              [class]="activeTab() === 'ai-cost' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">💰</span> AI 費用監控 (Cost)
+      </button>
+      <button (click)="setActiveTab('external-portal')" 
+              [class]="activeTab() === 'external-portal' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">🌐</span> 客戶入口網站 (Portal)
+      </button>
+      <button (click)="setActiveTab('logs')" 
+              [class]="activeTab() === 'logs' ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+              class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+        <span class="mr-3">📊</span> 系統日誌 & AI 監控
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto p-4 md:p-8 h-full relative">
+    @switch (activeTab()) {
+      
+      <!-- Tab 1: Appearance -->
+      @case ('appearance') {
+        <div class="max-w-2xl mx-auto space-y-8">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">主題色彩 (Theme)</h3>
+            <div class="grid grid-cols-3 gap-4">
+              <button (click)="setTheme('light')" class="p-4 border-2 rounded-xl flex flex-col items-center justify-center transition-all"
+                      [class.border-sky-500]="currentTheme() === 'light'" [class.bg-sky-50]="currentTheme() === 'light'" [class.border-slate-200]="currentTheme() !== 'light'">
+                  <div class="w-12 h-12 bg-white rounded-full shadow mb-3"></div>
+                  <span class="text-sm font-medium text-slate-700">淺色模式</span>
+              </button>
+              <button (click)="setTheme('dark')" class="p-4 border-2 rounded-xl flex flex-col items-center justify-center transition-all bg-slate-800"
+                      [class.border-sky-500]="currentTheme() === 'dark'" [class.border-slate-700]="currentTheme() !== 'dark'">
+                  <div class="w-12 h-12 bg-slate-700 rounded-full shadow mb-3 border border-slate-600"></div>
+                  <span class="text-sm font-medium text-white">深色模式</span>
+              </button>
+              <button (click)="setTheme('medium')" class="p-4 border-2 rounded-xl flex flex-col items-center justify-center transition-all bg-[#f5f5f4]"
+                      [class.border-sky-500]="currentTheme() === 'medium'" [class.border-slate-200]="currentTheme() !== 'medium'">
+                  <div class="w-12 h-12 bg-[#e7e5e4] rounded-full shadow mb-3 border border-[#d6d3d1]"></div>
+                  <span class="text-sm font-medium text-[#292524]">護眼模式</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">字體大小 (Font Size)</h3>
+            <div class="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+               <span class="text-xs text-slate-500">A</span>
+               <input type="range" min="1" max="7" [value]="currentFontSize()" (input)="setFontSize($any($event.target).value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700">
+               <span class="text-xl text-slate-900 dark:text-white font-bold">A</span>
+            </div>
+            <div class="mt-2 text-center text-sm text-slate-500">目前等級: {{ currentFontSize() }}</div>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 2: Print Layout -->
+      @case ('print-layout') {
+         <app-export-config></app-export-config>
+      }
+
+      <!-- Tab 3: Templates (OCR & Comm) - UPDATED -->
+      @case ('templates') {
+         <div class="flex flex-col h-full">
+             <!-- Header with History Button -->
+             <div class="flex justify-between items-center mb-6">
+                 <div>
+                     <h2 class="text-2xl font-bold text-slate-800 dark:text-white">辨識與通訊範本管理</h2>
+                     <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">管理物流單據辨識區域 (OCR ROI) 與 AI 訊息回覆範本。</p>
+                 </div>
+                 <button (click)="openTemplateHistoryModal()" class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shadow-sm flex items-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     歷史版本 / 還原
+                 </button>
+             </div>
+
+             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 overflow-hidden">
+                 
+                 <!-- Col 1: OCR Templates -->
+                 <div class="flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                     <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                         <h3 class="font-bold text-slate-800 dark:text-white flex items-center">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                             物流單辨識範本 (OCR)
+                         </h3>
+                         <button (click)="createNewTemplate()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded transition-colors">新增範本</button>
+                     </div>
+                     <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                         @for (tpl of shippingTemplates(); track tpl.id) {
+                             <div class="border border-slate-200 dark:border-slate-700 rounded p-3 hover:shadow-md transition-shadow group relative">
+                                 <div class="flex justify-between items-start">
+                                     <div>
+                                         <div class="font-bold text-slate-800 dark:text-white">{{ tpl.name }}</div>
+                                         <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">物流商: {{ tpl.logistics }}</div>
+                                     </div>
+                                     <div class="flex space-x-2">
+                                         <button (click)="editTemplate(tpl)" class="text-sky-600 hover:text-sky-800 text-xs">編輯</button>
+                                         <button (click)="deleteTemplate(tpl.id)" class="text-red-500 hover:text-red-700 text-xs">刪除</button>
+                                     </div>
+                                 </div>
+                                 <div class="mt-2 text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-slate-700/50 p-1 rounded w-fit">
+                                     ROI: X{{tpl.roi.x.toFixed(0)}}% Y{{tpl.roi.y.toFixed(0)}}% W{{tpl.roi.width.toFixed(0)}}% H{{tpl.roi.height.toFixed(0)}}%
+                                 </div>
+                             </div>
+                         } @empty {
+                             <div class="text-center py-10 text-slate-400 text-sm">尚無 OCR 範本</div>
+                         }
+                     </div>
+                 </div>
+
+                 <!-- Col 2: Communication Templates -->
+                 <div class="flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                     <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                         <h3 class="font-bold text-slate-800 dark:text-white flex items-center">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                             通訊通知範本 (Messaging)
+                         </h3>
+                         <button (click)="createNewCommTemplate()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded transition-colors">新增範本</button>
+                     </div>
+                     <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                         @for (tpl of commTemplates(); track tpl.id) {
+                             <div class="border border-slate-200 dark:border-slate-700 rounded p-3 hover:shadow-md transition-shadow group">
+                                 <div class="flex justify-between items-start mb-2">
+                                     <div>
+                                         <div class="font-bold text-slate-800 dark:text-white flex items-center">
+                                             {{ tpl.name }}
+                                             @if(tpl.isSystemDefault) { <span class="ml-2 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px]">預設</span> }
+                                         </div>
+                                         <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">類型: {{ tpl.type === 'order' ? '出貨通知' : '採購通知' }}</div>
+                                     </div>
+                                     <div class="flex space-x-2">
+                                         <button (click)="editCommTemplate(tpl)" class="text-sky-600 hover:text-sky-800 text-xs">編輯</button>
+                                         <button (click)="deleteCommTemplate(tpl.id)" class="text-red-500 hover:text-red-700 text-xs">刪除</button>
+                                     </div>
+                                 </div>
+                                 <div class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 bg-slate-50 dark:bg-slate-700/30 p-2 rounded">
+                                     {{ tpl.content }}
+                                 </div>
+                             </div>
+                         } @empty {
+                             <div class="text-center py-10 text-slate-400 text-sm">尚無通訊範本</div>
+                         }
+                     </div>
+                 </div>
+             </div>
+         </div>
+      }
+
+      <!-- Tab 4: Schema -->
+      @case ('schema') {
+         <div class="flex h-full gap-6">
+             <!-- Left: Model Selector -->
+             <div class="w-1/3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+                 <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                     <h3 class="font-bold text-slate-800 dark:text-white">資料模型 (Models)</h3>
+                 </div>
+                 <div class="flex-1 overflow-y-auto p-2">
+                     @for(schema of schemas(); track schema.name) {
+                         <button (click)="selectSchema(schema.name)" 
+                                 class="w-full text-left px-4 py-3 rounded-lg text-sm transition-colors flex justify-between items-center group"
+                                 [class.bg-sky-50]="activeSchemaName() === schema.name"
+                                 [class.dark:bg-sky-900/20]="activeSchemaName() === schema.name"
+                                 [class.text-sky-700]="activeSchemaName() === schema.name"
+                                 [class.dark:text-sky-300]="activeSchemaName() === schema.name"
+                                 [class.hover:bg-slate-50]="activeSchemaName() !== schema.name"
+                                 [class.dark:hover:bg-slate-700]="activeSchemaName() !== schema.name">
+                             <div>
+                                 <div class="font-bold">{{ schema.chineseName }}</div>
+                                 <div class="text-xs opacity-60 font-mono">{{ schema.name }}</div>
+                             </div>
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                         </button>
+                     }
+                 </div>
+             </div>
+
+             <!-- Right: Field Details -->
+             <div class="w-2/3 flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                 <!-- Header -->
+                 <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                     <div>
+                         <h3 class="font-bold text-lg text-slate-800 dark:text-white">{{ activeSchema()?.chineseName }} ({{ activeSchema()?.name }})</h3>
+                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ activeSchema()?.description }}</p>
+                     </div>
+                     <div class="flex items-center space-x-2">
+                         <div class="relative">
+                             <input type="text" [value]="schemaSearchTerm()" (input)="onSchemaSearchTermChange($event)" placeholder="搜尋欄位..." class="pl-8 pr-3 py-1.5 text-sm border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                         </div>
+                         <button (click)="openHistoryModal()" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shadow-sm flex items-center">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                             版本歷史 / 還原
+                         </button>
+                     </div>
+                 </div>
+
+                 <!-- Fields List -->
+                 <div class="flex-1 overflow-y-auto">
+                     <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
+                         <thead class="bg-slate-50 dark:bg-slate-800">
+                             <tr>
+                                 <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-1/4">欄位名稱 (Field)</th>
+                                 <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-1/6">類型 (Type)</th>
+                                 <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">中文描述 (Description)</th>
+                             </tr>
+                         </thead>
+                         <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
+                             @for(field of filteredSchemaFields(); track field.name) {
+                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                     <td class="px-6 py-4 whitespace-nowrap">
+                                         <div class="text-sm font-bold text-slate-800 dark:text-white">{{ field.chineseName }}</div>
+                                         <div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">{{ field.name }}</div>
+                                     </td>
+                                     <td class="px-6 py-4 whitespace-nowrap">
+                                         <span class="px-2 py-1 text-[10px] font-mono rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                                             {{ field.type }}
+                                         </span>
+                                     </td>
+                                     <td class="px-6 py-4">
+                                         <input type="text" [value]="field.description" (change)="updateDescription(activeSchema()!.name, field.name, $event)" class="w-full bg-transparent border-none p-0 text-sm text-slate-600 dark:text-slate-300 focus:ring-0 focus:border-b focus:border-sky-500 placeholder-slate-300 dark:placeholder-slate-600 transition-colors" placeholder="點擊編輯描述...">
+                                     </td>
+                                 </tr>
+                             } @empty {
+                                 <tr>
+                                     <td colspan="3" class="px-6 py-12 text-center text-slate-400 text-sm">無符合的欄位資料</td>
+                                 </tr>
+                             }
+                         </tbody>
+                     </table>
+                 </div>
+             </div>
+         </div>
+      }
+
+      <!-- Tab 5: Settings (General) - MOVED CLOUD CONFIG TO TOP -->
+      @case ('settings') {
+         <div class="space-y-6">
+             <!-- NEW: Cloud Database Config (Top Priority) -->
+             <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl"
+                  [class.border-amber-400]="ds.connectionStatus() === 'mock'"
+                  [class.ring-2]="ds.connectionStatus() === 'mock'"
+                  [class.ring-amber-200]="ds.connectionStatus() === 'mock'">
+                 
+                 <div class="flex items-center justify-between mb-2">
+                     <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                         雲端資料庫連線設定
+                     </h3>
+                     
+                     <!-- Status Indicator -->
+                     @if (ds.connectionStatus() === 'connected') {
+                         <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">已連線 (Connected)</span>
+                     } @else if (ds.connectionStatus() === 'mock') {
+                         <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">本機模式 (未同步)</span>
+                     } @else {
+                         <span class="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">連線錯誤</span>
+                     }
+                 </div>
+                 
+                 <p class="text-sm text-slate-500 mb-4">
+                     請至 Firebase Console > Project Settings > General > Your apps > SDK setup and configuration > Config，複製 <code>const firebaseConfig = &#123; ... &#125;</code> 大括號內的 JSON 物件並貼於下方。
+                 </p>
+
+                 <div class="space-y-4">
+                     <div>
+                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Firebase Config JSON</label>
+                         <textarea 
+                            [(ngModel)]="firebaseConfigInput" 
+                            rows="6" 
+                            class="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono text-xs shadow-inner" 
+                            placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+                     </div>
+                     <button (click)="saveFirebaseConfig()" class="w-full md:w-auto px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded shadow transition-colors font-bold text-sm flex items-center justify-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                         儲存設定並重新連線
+                     </button>
+                 </div>
+             </div>
+
+             <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl">
+                 <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6">系統參數設定</h3>
+                 <div class="space-y-4">
+                     <div>
+                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">公司抬頭名稱 (預設)</label>
+                         <input type="text" [value]="ds.systemSettings().companyName" 
+                                (change)="ds.updateSettings({companyName: $any($event.target).value})" 
+                                class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                     </div>
+                     <div>
+                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">預設營業稅率 (0.05 = 5%)</label>
+                         <input type="number" step="0.01" [value]="ds.systemSettings().taxRate" 
+                                (change)="ds.updateSettings({taxRate: $any($event.target).value})" 
+                                class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                     </div>
+                     <div>
+                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">預設付款條件</label>
+                         <input type="text" [value]="ds.systemSettings().defaultPaymentTerms" 
+                                (change)="ds.updateSettings({defaultPaymentTerms: $any($event.target).value})" 
+                                class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                     </div>
+                     <div>
+                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">幣別</label>
+                         <input type="text" [value]="ds.systemSettings().currency" 
+                                (change)="ds.updateSettings({currency: $any($event.target).value})" 
+                                class="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                     </div>
+                 </div>
+             </div>
+         </div>
+      }
+
+      <!-- Tab 9: External Portal Configuration -->
+      @case ('external-portal') {
+          <div class="max-w-4xl mx-auto space-y-8">
+              <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-white">
+                      <h3 class="text-2xl font-bold mb-2 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                          客戶專屬入口網站設定
+                      </h3>
+                      <p class="text-indigo-100 opacity-90">
+                          提供客戶即時報價、庫存查詢與下單功能的獨立頁面。
+                      </p>
+                  </div>
+                  
+                  <div class="p-8 space-y-8">
+                      <!-- Public Link -->
+                      <div class="space-y-3">
+                          <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">入口網站公開網址</label>
+                          <div class="flex gap-2">
+                              <div class="flex-1 bg-slate-100 dark:bg-slate-900 p-3 rounded-lg font-mono text-sm text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 break-all">
+                                  https://erp-ai-platform.web.app/#/portal
+                              </div>
+                              <button class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-white hover:bg-slate-50 transition-colors shadow-sm flex items-center shrink-0">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-3 9h.01M9 16h.01" /></svg>
+                                  複製
+                              </button>
+                          </div>
+                          <p class="text-xs text-slate-400">您可以將此網址提供給您的 VIP 客戶。</p>
+                      </div>
+
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <!-- Access Control -->
+                          <div class="space-y-4">
+                              <h4 class="font-bold text-slate-800 dark:text-white flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                  存取權限與安全
+                              </h4>
+                              <div class="space-y-3">
+                                  <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer">
+                                      <input type="checkbox" checked class="w-5 h-5 rounded text-indigo-600">
+                                      <div>
+                                          <div class="text-sm font-bold text-slate-800 dark:text-white">啟用入口網站</div>
+                                          <div class="text-xs text-slate-500">關閉後外部連結將失效</div>
+                                      </div>
+                                  </label>
+                                  <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer">
+                                      <input type="checkbox" checked class="w-5 h-5 rounded text-indigo-600">
+                                      <div>
+                                          <div class="text-sm font-bold text-slate-800 dark:text-white">強制隱藏成本數據</div>
+                                          <div class="text-xs text-slate-500">系統層級攔截，確保不外洩</div>
+                                      </div>
+                                  </label>
+                                  <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer">
+                                      <input type="checkbox" class="w-5 h-5 rounded text-indigo-600">
+                                      <div>
+                                          <div class="text-sm font-bold text-slate-800 dark:text-white">僅限 VIP 客戶存取</div>
+                                          <div class="text-xs text-slate-500">需登入後才能查看報價</div>
+                                      </div>
+                                  </label>
+                              </div>
+                          </div>
+
+                          <!-- Display Settings -->
+                          <div class="space-y-4">
+                              <h4 class="font-bold text-slate-800 dark:text-white flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                                  顯示設定
+                              </h4>
+                              <div class="space-y-4">
+                                  <div>
+                                      <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">首頁歡迎詞</label>
+                                      <textarea rows="3" class="w-full p-3 text-sm border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="歡迎回來，這是您的專屬報價平台..."></textarea>
+                                  </div>
+                                  <div>
+                                      <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">預設顯示分類</label>
+                                      <select class="w-full p-2 text-sm border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                          <option>全部商品</option>
+                                          <option>熱銷排行</option>
+                                          <option>新品上市</option>
+                                      </select>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- AI Features -->
+                      <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-700">
+                          <h4 class="font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                              <span class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                              </span>
+                              入口網站 AI 增強功能
+                          </h4>
+                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                  <div class="text-sm font-bold text-slate-800 dark:text-white mb-1">Edge AI 摘要</div>
+                                  <p class="text-xs text-slate-500 mb-3">使用裝置端 Gemini Nano 自動產生商品亮點摘要。</p>
+                                  <div class="flex items-center justify-between">
+                                      <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">免費</span>
+                                      <input type="checkbox" checked class="w-4 h-4 rounded text-indigo-600">
+                                  </div>
+                              </div>
+                              <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                  <div class="text-sm font-bold text-slate-800 dark:text-white mb-1">語音搜尋</div>
+                                  <p class="text-xs text-slate-500 mb-3">啟用 Web Speech API 讓客戶可以用語音找商品。</p>
+                                  <div class="flex items-center justify-between">
+                                      <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">內建</span>
+                                      <input type="checkbox" checked class="w-4 h-4 rounded text-indigo-600">
+                                  </div>
+                              </div>
+                              <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm opacity-50">
+                                  <div class="text-sm font-bold text-slate-800 dark:text-white mb-1">智慧推薦</div>
+                                  <p class="text-xs text-slate-500 mb-3">根據客戶歷史訂單自動推薦關聯商品。</p>
+                                  <div class="flex items-center justify-between">
+                                      <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded uppercase">開發中</span>
+                                      <input type="checkbox" disabled class="w-4 h-4 rounded text-slate-300">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div class="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+                      <button class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all transform hover:scale-105 active:scale-95">
+                          儲存所有設定
+                      </button>
+                  </div>
+              </div>
+          </div>
+      }
+      
+      <!-- Tab 6: Logs & AI Metrics -->
+      @case ('logs') {
+          <div class="flex flex-col h-full">
+              <div class="flex justify-between items-center mb-6">
+                  <div>
+                      <h2 class="text-2xl font-bold text-slate-800 dark:text-white">AI 使用日誌監控</h2>
+                      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">追蹤每一次 AI 呼叫的 Token 消耗與上下文。</p>
+                  </div>
+                  <button (click)="clearAiLogs()" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      清除所有日誌
+                  </button>
+              </div>
+
+              <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex-1 flex flex-col">
+                  <div class="overflow-x-auto flex-1">
+                      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                          <thead class="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10">
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">時間 (Timestamp)</th>
+                                  <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">功能 (Context)</th>
+                                  <th class="px-6 py-3 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Input</th>
+                                  <th class="px-6 py-3 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Output</th>
+                                  <th class="px-6 py-3 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
+                                  <th class="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">預估費用</th>
+                              </tr>
+                          </thead>
+                          <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
+                              @for (log of aiUsageLogs(); track log.id) {
+                                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                      <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400 font-mono">
+                                          {{ log.timestamp | date:'MM/dd HH:mm:ss' }}
+                                      </td>
+                                      <td class="px-6 py-4 whitespace-nowrap">
+                                          <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider"
+                                                [class.bg-blue-100]="log.context === 'Chat'"
+                                                [class.text-blue-700]="log.context === 'Chat'"
+                                                [class.bg-purple-100]="log.context === 'OCR'"
+                                                [class.text-purple-700]="log.context === 'OCR'"
+                                                [class.bg-emerald-100]="log.context === 'DataParse'"
+                                                [class.text-emerald-700]="log.context === 'DataParse'"
+                                                [class.bg-amber-100]="log.context === 'Insight'"
+                                                [class.text-amber-700]="log.context === 'Insight'"
+                                                [class.bg-slate-100]="!['Chat', 'OCR', 'DataParse', 'Insight'].includes(log.context)"
+                                                [class.text-slate-700]="!['Chat', 'OCR', 'DataParse', 'Insight'].includes(log.context)">
+                                              {{ log.context }}
+                                          </span>
+                                      </td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-600 dark:text-slate-300 font-mono">
+                                          {{ log.inputTokens | number }}
+                                      </td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-600 dark:text-slate-300 font-mono">
+                                          {{ log.outputTokens | number }}
+                                      </td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-slate-800 dark:text-white font-mono">
+                                          {{ log.totalTokens | number }}
+                                      </td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                                          ${{ ((log.inputTokens/1000000)*aiPricing().inputRate + (log.outputTokens/1000000)*aiPricing().outputRate) | number:'1.4-4' }}
+                                      </td>
+                                  </tr>
+                              } @empty {
+                                  <tr>
+                                      <td colspan="6" class="px-6 py-20 text-center text-slate-400 italic">
+                                          尚無 AI 使用紀錄。
+                                      </td>
+                                  </tr>
+                              }
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      }
+
+      <!-- Tab 7: Data Management -->
+      @case ('data-management') {
+         <div class="max-w-3xl mx-auto space-y-8">
+             
+             <!-- Local Snapshot Section (NEW) -->
+             <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-6">
+                 <div class="flex justify-between items-start mb-6">
+                     <div>
+                         <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            本機快照備份 (Local Snapshots)
+                         </h3>
+                         <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                             系統可自動或手動將目前資料儲存於瀏覽器中，方便隨時還原。
+                         </p>
+                     </div>
+                     <button (click)="createSnapshot()" [disabled]="isCreatingSnapshot()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-bold shadow transition-colors flex items-center disabled:opacity-70">
+                         @if (isCreatingSnapshot()) {
+                             <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                             建立中...
+                         } @else {
+                             建立快照
+                         }
+                     </button>
+                 </div>
+                 
+                 <!-- Auto Backup Controls -->
+                 <div class="flex items-center space-x-4 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg mb-4">
+                     <label class="flex items-center space-x-2 cursor-pointer">
+                         <input type="checkbox" [checked]="ds.systemSettings().autoBackup" (change)="toggleAutoBackup($event)" class="rounded text-sky-600 focus:ring-sky-500 w-5 h-5">
+                         <span class="font-bold text-slate-700 dark:text-slate-300">啟用自動備份</span>
+                     </label>
+                     <div class="flex items-center space-x-2" [class.opacity-50]="!ds.systemSettings().autoBackup">
+                         <span class="text-sm text-slate-500">每隔</span>
+                         <input type="number" [value]="ds.systemSettings().autoBackupInterval" (change)="updateBackupInterval($event)" class="w-16 p-1 text-center border rounded dark:bg-slate-700 dark:border-slate-600" [disabled]="!ds.systemSettings().autoBackup">
+                         <span class="text-sm text-slate-500">分鐘</span>
+                     </div>
+                 </div>
+
+                 <!-- Snapshot List -->
+                 <div class="border rounded-lg overflow-hidden dark:border-slate-700">
+                     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                         <thead class="bg-slate-50 dark:bg-slate-700/50">
+                             <tr>
+                                 <th class="px-4 py-2 text-left font-medium text-slate-500">時間</th>
+                                 <th class="px-4 py-2 text-left font-medium text-slate-500">類型</th>
+                                 <th class="px-4 py-2 text-left font-medium text-slate-500">大小</th>
+                                 <th class="px-4 py-2 text-right font-medium text-slate-500">操作</th>
+                             </tr>
+                         </thead>
+                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700/30">
+                             @for (snap of localSnapshots(); track snap.key) {
+                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                     <td class="px-4 py-3 text-slate-700 dark:text-slate-300 font-mono">{{ snap.dateStr }}</td>
+                                     <td class="px-4 py-3">
+                                         <span class="px-2 py-0.5 rounded text-xs font-bold"
+                                               [class.bg-purple-100]="snap.type === 'auto'"
+                                               [class.text-purple-700]="snap.type === 'auto'"
+                                               [class.bg-sky-100]="snap.type === 'manual'"
+                                               [class.text-sky-700]="snap.type === 'manual'">
+                                             {{ snap.type === 'auto' ? '自動' : '手動' }}
+                                         </span>
+                                     </td>
+                                     <td class="px-4 py-3 text-slate-500">{{ snap.size }}</td>
+                                     <td class="px-4 py-3 text-right space-x-2">
+                                         <button (click)="restoreSnapshot(snap)" class="text-sky-600 hover:text-sky-800 dark:text-sky-400 font-medium">還原</button>
+                                         <button (click)="deleteSnapshot(snap)" class="text-red-500 hover:text-red-700 dark:text-red-400 font-medium">刪除</button>
+                                     </td>
+                                 </tr>
+                             } @empty {
+                                 <tr>
+                                     <td colspan="4" class="py-8 text-center text-slate-400 italic">尚無快照紀錄</td>
+                                 </tr>
+                             }
+                         </tbody>
+                     </table>
+                 </div>
+                 <p class="text-xs text-slate-400 mt-2">* 自動備份最多保留最近 5 份紀錄。</p>
+             </div>
+             
+             <!-- NEW: Force Cloud Sync Button -->
+             <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg shadow-md p-6 text-white">
+                 <h3 class="text-xl font-bold mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                    上傳本機資料至雲端 (Force Sync to Cloud)
+                 </h3>
+                 <p class="text-emerald-100 text-sm mb-6">
+                     如果您目前處於「離線/本機模式」且生成了演示資料，您可以使用此功能將所有本機資料一次性上傳至 Firebase 雲端資料庫。
+                 </p>
+                 <button (click)="triggerCloudSync()" [disabled]="isSyncing()" class="w-full py-3 bg-white text-emerald-700 hover:bg-emerald-50 rounded-lg font-bold shadow transition-colors flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+                    @if (isSyncing()) {
+                        <svg class="animate-spin h-5 w-5 mr-2 text-emerald-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        正在上傳中...
+                    } @else {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        立即同步 (Upload Now)
+                    }
+                 </button>
+             </div>
+
+             <!-- Backup & Restore Cards (Same as before) -->
+             <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-6">
+                 <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                    完整資料匯出 (Full Export)
+                 </h3>
+                 <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">
+                     匯出目前系統內的所有資料為 JSON 格式檔案。適合異地備存。
+                 </p>
+                 <button (click)="downloadBackup()" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold shadow-md transition-colors flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+                    匯出 JSON 備份檔
+                 </button>
+             </div>
+
+             <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-6">
+                 <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    外部檔案還原 (Import Restore)
+                 </h3>
+                 <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">
+                     匯入先前備份的 JSON 檔案以還原資料。
+                     <strong class="text-red-500 block mt-1">警告：此操作將會覆蓋目前的系統資料，請謹慎使用。</strong>
+                 </p>
+                 <label class="block w-full">
+                     <span class="sr-only">選擇備份檔</span>
+                     <div class="w-full py-3 px-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center text-slate-500 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors" [class.opacity-50]="isRestoring()">
+                        @if (isRestoring()) {
+                            <svg class="animate-spin h-5 w-5 mr-2 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            正在還原中...
+                        } @else {
+                            <span class="font-medium text-purple-600 dark:text-purple-400">點擊上傳並還原備份檔案</span>
+                        }
+                     </div>
+                     <input type="file" class="hidden" accept=".json" (change)="uploadBackup($event)" [disabled]="isRestoring()">
+                 </label>
+             </div>
+         </div>
+      }
+      
+      <!-- Tab 8: AI Cost Monitoring (New) -->
+      @case ('ai-cost') {
+          <div class="space-y-6">
+              <!-- API Key Configuration Card (NEW) -->
+              <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div class="flex justify-between items-start mb-4">
+                      <div>
+                          <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                              Gemini API 金鑰設定 (API Key)
+                          </h3>
+                          <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                              使用 AI 辨識、分析與對話功能。您可以選擇平台金鑰，或手動設定長駐金鑰。
+                          </p>
+                      </div>
+                      <div class="flex space-x-2">
+                          @if (aiService.sharedKey()) {
+                              <div class="flex items-center px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-bold border border-emerald-100 dark:border-emerald-800/50">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                  系統共用金鑰已啟用
+                              </div>
+                          }
+                          <button (click)="openApiKeyDialog()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg font-bold text-sm hover:bg-slate-200 transition-all flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                              平台金鑰選擇
+                          </button>
+                      </div>
+                  </div>
+
+                  <!-- Diagnostic Info (NEW) -->
+                  <div class="mt-4 grid grid-cols-2 gap-4">
+                      <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                          <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">金鑰偵測狀態</span>
+                          <div class="flex items-center">
+                              @switch (aiService.keySource()) {
+                                  @case ('server') {
+                                      <span class="flex h-2 w-2 rounded-full bg-emerald-500 mr-2"></span>
+                                      <span class="text-xs font-bold text-emerald-600">✅ 伺服器金鑰已就緒</span>
+                                  }
+                                  @case ('local') {
+                                      <span class="flex h-2 w-2 rounded-full bg-blue-500 mr-2"></span>
+                                      <span class="text-xs font-bold text-blue-600">✅ 本機金鑰已就緒</span>
+                                  }
+                                  @case ('platform') {
+                                      <span class="flex h-2 w-2 rounded-full bg-indigo-500 mr-2"></span>
+                                      <span class="text-xs font-bold text-indigo-600">✅ 平台金鑰已就緒</span>
+                                  }
+                                  @default {
+                                      <span class="flex h-2 w-2 rounded-full bg-red-500 mr-2"></span>
+                                      <span class="text-xs font-bold text-red-600">❌ 尚未偵測到金鑰</span>
+                                  }
+                              }
+                          </div>
+                      </div>
+                      <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                          <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">伺服器連線測試</span>
+                          <div class="flex items-center">
+                              @if (aiService.sharedKey()) {
+                                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300">已連線 ({{ aiService.sharedKey().substring(0, 6) }}...)</span>
+                              } @else {
+                                  <span class="text-xs font-bold text-slate-400 italic">等待連線中...</span>
+                              }
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Manual Key Input (Permanent Fallback) -->
+                  <div class="mt-6 p-4 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-xl">
+                      <label class="block text-sm font-bold text-indigo-900 dark:text-indigo-300 mb-2">手動設定長駐金鑰 (推薦用於獨立分頁)</label>
+                      <div class="flex space-x-2">
+                          <div class="relative flex-1">
+                              <input [type]="isKeySaved() ? 'password' : 'text'" 
+                                     [value]="manualApiKey()"
+                                     (input)="manualApiKey.set($any($event.target).value)"
+                                     placeholder="請貼上您的 API Key (例如: AIzaSy...)" 
+                                     class="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                              @if (isKeySaved()) {
+                                  <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                      <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                      <span class="ml-2 text-[10px] font-bold text-emerald-600 uppercase">已長駐儲存</span>
+                                  </div>
+                              }
+                          </div>
+                          @if (!isKeySaved()) {
+                              <button (click)="saveManualKey()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm shadow-md transition-all">
+                                  儲存至本機
+                              </button>
+                          } @else {
+                              <button (click)="clearManualKey()" class="px-6 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg font-bold text-sm hover:bg-red-100 transition-all">
+                                  清除金鑰
+                              </button>
+                          }
+                      </div>
+                      <p class="text-[10px] text-slate-400 mt-2 italic">
+                          * 儲存後金鑰將記憶在您的瀏覽器中，即使在獨立分頁開啟也能正常使用 AI 功能。
+                      </p>
+                  </div>
+                  
+                  <div class="mt-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-lg p-4 flex items-start">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <div class="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                          <p class="font-bold mb-1">提示：</p>
+                          <ul class="list-disc list-inside space-y-1">
+                              <li>若您在 AI Studio 預覽面板中使用，點擊「平台金鑰選擇」即可。</li>
+                              <li>若您習慣在「獨立分頁」中使用，請務必使用下方的「儲存至本機」功能。</li>
+                          </ul>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Quota Progress Card -->
+              <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div class="flex justify-between items-center mb-4">
+                      <h3 class="text-lg font-bold text-slate-800 dark:text-white">本月 AI 額度監控 (Monthly Quota)</h3>
+                      <span class="text-sm font-bold" [class.text-red-500]="ds.aiUsageStats().isOverQuota" [class.text-sky-600]="!ds.aiUsageStats().isOverQuota">
+                          {{ ds.aiUsageStats().totalTokens | number }} / {{ ds.aiUsageStats().quota | number }} Tokens
+                      </span>
+                  </div>
+                  
+                  <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-4 mb-2 overflow-hidden">
+                      <div class="h-full transition-all duration-500" 
+                           [style.width.%]="ds.aiUsageStats().usagePct"
+                           [class.bg-sky-500]="ds.aiUsageStats().usagePct < 70"
+                           [class.bg-amber-500]="ds.aiUsageStats().usagePct >= 70 && ds.aiUsageStats().usagePct < 90"
+                           [class.bg-red-500]="ds.aiUsageStats().usagePct >= 90">
+                      </div>
+                  </div>
+                  <div class="flex justify-between text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                      <span>0%</span>
+                      <span>{{ ds.aiUsageStats().usagePct | number:'1.1-1' }}% 已使用</span>
+                      <span>100%</span>
+                  </div>
+              </div>
+
+              <!-- Pricing & Quota Config Card -->
+              <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                  <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">費用與額度設定 (Configuration)</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                          <label class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Input Token 費率 (USD/1M)</label>
+                          <div class="relative">
+                              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                              <input type="number" 
+                                     [value]="aiPricing().inputRate" 
+                                     (change)="updateAiPricing('inputRate', $event)" 
+                                     class="w-full pl-6 pr-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono"
+                                     step="0.001">
+                          </div>
+                      </div>
+                      <div>
+                          <label class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Output Token 費率 (USD/1M)</label>
+                          <div class="relative">
+                              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                              <input type="number" 
+                                     [value]="aiPricing().outputRate" 
+                                     (change)="updateAiPricing('outputRate', $event)" 
+                                     class="w-full pl-6 pr-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono"
+                                     step="0.001">
+                          </div>
+                      </div>
+                      <div>
+                          <label class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">每月 Token 額度限制</label>
+                          <div class="relative">
+                              <input type="number" 
+                                     [value]="ds.systemSettings().aiMonthlyQuota" 
+                                     (change)="updateAiQuota($event)" 
+                                     class="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono"
+                                     step="100000">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Dashboard Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <!-- Monthly Cost USD -->
+                  <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-5 text-white shadow-lg">
+                      <div class="text-indigo-100 text-xs font-bold uppercase mb-1">本月預估費用 (USD)</div>
+                      <div class="text-3xl font-extrabold">${{ aiCostStats().totalCostUSD | number:'1.4-4' }}</div>
+                  </div>
+                  
+                  <!-- Monthly Cost TWD -->
+                  <div class="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">本月預估費用 (TWD)</div>
+                      <div class="text-3xl font-extrabold text-slate-800 dark:text-white">NT$ {{ aiCostStats().totalCostTWD | number:'1.0-2' }}</div>
+                      <div class="text-xs text-slate-400 mt-1">匯率約 1:32</div>
+                  </div>
+                  
+                  <!-- Input Tokens -->
+                  <div class="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">本月 Input Tokens</div>
+                      <div class="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{{ aiCostStats().totalInput | number }}</div>
+                  </div>
+                  
+                  <!-- Output Tokens -->
+                  <div class="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">本月 Output Tokens</div>
+                      <div class="text-2xl font-bold font-mono text-green-600 dark:text-green-400">{{ aiCostStats().totalOutput | number }}</div>
+                  </div>
+              </div>
+              
+              <!-- Usage Breakdown Table -->
+              <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                      <h3 class="text-lg font-bold text-slate-800 dark:text-white">功能使用統計 (Usage by Feature)</h3>
+                  </div>
+                  <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                      <thead class="bg-slate-50 dark:bg-slate-700">
+                          <tr>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">功能 (Context)</th>
+                              <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">呼叫次數</th>
+                              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">預估費用 (USD)</th>
+                          </tr>
+                      </thead>
+                      <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                          @for (item of aiCostStats().contextStats | keyvalue; track item.key) {
+                              <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                  <td class="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{{ item.key }}</td>
+                                  <td class="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-300">{{ item.value.count }}</td>
+                                  <td class="px-6 py-4 text-sm text-right font-mono text-indigo-600 dark:text-indigo-400">${{ item.value.cost | number:'1.4-4' }}</td>
+                              </tr>
+                          } @empty {
+                              <tr>
+                                  <td colspan="3" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                                      本月尚無 AI 使用紀錄。
+                                  </td>
+                              </tr>
+                          }
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      }
+    }
+  </main>
+</div>
+
+<!-- Schema History Modal -->
+@if (showHistoryModal()) {
+    <div class="fixed inset-0 z-[150] overflow-hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen text-center h-full p-4">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" (click)="closeHistoryModal()"></div>
+            
+            <div class="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left transform transition-all border dark:border-slate-700 animate-[fadeIn_0.2s]">
+                
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        資料結構版本歷史 (Schema History)
+                    </h3>
+                    <button (click)="closeHistoryModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+                    @if (isRestoringSchema()) {
+                        <div class="flex flex-col items-center justify-center py-12">
+                            <svg class="animate-spin h-10 w-10 text-sky-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <p class="text-slate-600 dark:text-slate-300 font-bold">正在還原資料結構...</p>
+                        </div>
+                    } @else {
+                        <div class="relative pl-6 border-l-2 border-slate-200 dark:border-slate-700 space-y-6">
+                            @for (ver of schemaHistory; track ver.id) {
+                                <div class="relative group">
+                                    <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800"
+                                         [class.bg-green-500]="ver.id === 'v_current'"
+                                         [class.bg-slate-300]="ver.id !== 'v_current'"
+                                         [class.dark:bg-slate-600]="ver.id !== 'v_current'"></div>
+                                    
+                                    <div class="bg-white dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm hover:border-sky-300 dark:hover:border-sky-700 transition-colors">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="font-bold text-slate-800 dark:text-white flex items-center">
+                                                    {{ ver.label }}
+                                                    @if (ver.id === 'v_current') {
+                                                        <span class="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">目前版本</span>
+                                                    }
+                                                </h4>
+                                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ ver.date }} · {{ ver.description }}</div>
+                                            </div>
+                                            @if (ver.id !== 'v_current') {
+                                                <button (click)="restoreVersion(ver.id)" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-500 text-slate-700 dark:text-slate-200 text-xs font-bold rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
+                                                    還原此版本
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                
+                <div class="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 text-center text-xs text-slate-400">
+                    注意：還原操作不可逆，請確認後再執行。還原後，現有新增的欄位定義可能會遺失。
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Templates History Modal (NEW) -->
+@if (showTemplateHistoryModal()) {
+    <div class="fixed inset-0 z-[150] overflow-hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen text-center h-full p-4">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" (click)="closeTemplateHistoryModal()"></div>
+            
+            <div class="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left transform transition-all border dark:border-slate-700 animate-[fadeIn_0.2s]">
+                
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        辨識與通訊範本歷史紀錄 (Template History)
+                    </h3>
+                    <button (click)="closeTemplateHistoryModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+                    @if (isRestoringTemplates()) {
+                        <div class="flex flex-col items-center justify-center py-12">
+                            <svg class="animate-spin h-10 w-10 text-purple-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <p class="text-slate-600 dark:text-slate-300 font-bold">正在還原範本設定...</p>
+                        </div>
+                    } @else {
+                        <div class="relative pl-6 border-l-2 border-slate-200 dark:border-slate-700 space-y-6">
+                            @for (ver of templateHistory; track ver.id) {
+                                <div class="relative group">
+                                    <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800"
+                                         [class.bg-green-500]="ver.id === 't_current'"
+                                         [class.bg-slate-300]="ver.id !== 't_current'"
+                                         [class.dark:bg-slate-600]="ver.id !== 't_current'"></div>
+                                    
+                                    <div class="bg-white dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="font-bold text-slate-800 dark:text-white flex items-center">
+                                                    {{ ver.label }}
+                                                    @if (ver.id === 't_current') {
+                                                        <span class="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">目前版本</span>
+                                                    }
+                                                </h4>
+                                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ ver.date }} · {{ ver.description }}</div>
+                                            </div>
+                                            @if (ver.id !== 't_current') {
+                                                <button (click)="restoreTemplateVersion(ver.id)" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-500 text-slate-700 dark:text-slate-200 text-xs font-bold rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
+                                                    還原此版本
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                
+                <div class="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 text-center text-xs text-slate-400">
+                    注意：還原操作將覆寫目前的辨識區域與訊息範本設定，請確認後再執行。
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Template Edit Modal (OCR) -->
+@if (isEditingTemplate() && currentTemplate()) {
+    <div class="fixed inset-0 z-[160] overflow-hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen text-center h-full p-4">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" (click)="cancelEditTemplate()"></div>
+            
+            <div class="relative w-full max-w-4xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left transform transition-all border dark:border-slate-700 h-[90vh]">
+                
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                        編輯物流單辨識範本 (OCR)
+                    </h3>
+                    <div class="flex space-x-2">
+                        <button (click)="saveTemplate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors">儲存</button>
+                        <button (click)="cancelEditTemplate()" class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 transition-colors">取消</button>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="flex-1 overflow-hidden flex">
+                    <!-- Left: Config -->
+                    <div class="w-80 border-r border-slate-200 dark:border-slate-700 p-6 overflow-y-auto space-y-4 bg-slate-50 dark:bg-slate-900/20">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">範本名稱</label>
+                            <input type="text" [(ngModel)]="currentTemplate()!.name" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">物流商 (Logistics Provider)</label>
+                            <select [(ngModel)]="currentTemplate()!.logistics" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <option *ngFor="let opt of logisticsOptions" [value]="opt">{{ opt }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">追蹤網址規則 (URL Pattern)</label>
+                            <input type="text" [(ngModel)]="currentTemplate()!.trackingUrlPattern" class="w-full p-2 text-xs border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono" placeholder="https://...?id={{id}}">
+                            <p class="text-[10px] text-slate-400 mt-1">使用 {{id}} 作為單號變數</p>
+                        </div>
+                        
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">上傳樣本圖片</label>
+                            <input type="file" (change)="onOcrImageUpload($event)" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        </div>
+                        
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                            <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">測試辨識</h4>
+                            <button (click)="trainAiRecognition()" [disabled]="isTraining()" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-bold disabled:opacity-50 flex justify-center items-center">
+                                @if(isTraining()) { <span class="animate-spin mr-2">...</span> }
+                                執行 AI 測試
+                            </button>
+                            @if(trainingResult()) {
+                                <div class="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs">
+                                    <div class="font-bold text-green-700 dark:text-green-400">辨識成功</div>
+                                    <div class="text-slate-600 dark:text-slate-300">單號: {{trainingResult()?.trackingId}}</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Right: Image Area -->
+                    <div class="flex-1 bg-slate-200 dark:bg-black/40 flex items-center justify-center p-4 overflow-hidden relative select-none">
+                        @if (currentTemplate()?.imageUrl) {
+                            <div #imageContainer class="relative shadow-lg max-w-full max-h-full" 
+                                 (mousedown)="startDrawing($event)" 
+                                 (mousemove)="drawing($event)" 
+                                 (mouseup)="stopDrawing()"
+                                 (mouseleave)="stopDrawing()">
+                                <img [src]="currentTemplate()!.imageUrl" class="max-w-full max-h-[80vh] object-contain pointer-events-none">
+                                
+                                <!-- ROI Overlay -->
+                                <div class="absolute border-2 border-red-500 bg-red-500/20 pointer-events-none"
+                                     [style.left.%]="currentTemplate()!.roi.x"
+                                     [style.top.%]="currentTemplate()!.roi.y"
+                                     [style.width.%]="currentTemplate()!.roi.width"
+                                     [style.height.%]="currentTemplate()!.roi.height">
+                                     <div class="absolute -top-6 left-0 bg-red-500 text-white text-[10px] px-1 rounded">ROI 辨識區</div>
+                                </div>
+
+                                <!-- Drawing Box -->
+                                @if (drawBox()) {
+                                    <div class="absolute border-2 border-blue-500 bg-blue-500/20 pointer-events-none"
+                                         [style.left.%]="drawBox()!.x"
+                                         [style.top.%]="drawBox()!.y"
+                                         [style.width.%]="drawBox()!.w"
+                                         [style.height.%]="drawBox()!.h">
+                                    </div>
+                                }
+                            </div>
+                        } @else {
+                            <div class="text-slate-400 text-sm">請先上傳樣本圖片以設定辨識區域</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Template Edit Modal (Communication) -->
+@if (isEditingCommTemplate() && currentCommTemplate()) {
+    <div class="fixed inset-0 z-[160] overflow-hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen text-center h-full p-4">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" (click)="cancelEditCommTemplate()"></div>
+            
+            <div class="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left transform transition-all border dark:border-slate-700 animate-[fadeIn_0.2s]">
+                
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                        編輯通訊通知範本
+                    </h3>
+                    <div class="flex space-x-2">
+                        <button (click)="saveCommTemplate()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors">儲存</button>
+                        <button (click)="cancelEditCommTemplate()" class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 transition-colors">取消</button>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">範本名稱</label>
+                            <input type="text" [(ngModel)]="currentCommTemplate()!.name" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">適用類型</label>
+                            <select [(ngModel)]="currentCommTemplate()!.type" class="w-full p-2 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <option value="order">出貨通知 (Order)</option>
+                                <option value="purchase">採購通知 (Purchase)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">內容範本</label>
+                            <div class="flex items-center space-x-2">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" [(ngModel)]="currentCommTemplate()!.isSystemDefault" class="rounded text-emerald-600 focus:ring-emerald-500">
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">設為預設</span>
+                                </label>
+                            </div>
+                        </div>
+                        <textarea id="commContent" [(ngModel)]="currentCommTemplate()!.content" rows="8" class="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm font-mono leading-relaxed" placeholder="親愛的客戶..."></textarea>
+                    </div>
+                    
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded border border-slate-100 dark:border-slate-700">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">可用變數 (點擊插入)</label>
+                        <div class="flex flex-wrap gap-2">
+                            @let vars = TEMPLATE_VARIABLES[currentCommTemplate()!.type];
+                            @for (v of vars; track v.key) {
+                                <button (click)="insertVariable(v.key)" class="px-2 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-xs text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 transition-colors">
+                                    {{ v.label }}
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,528 @@
+
+
+<div class="p-8 h-full overflow-y-auto">
+  <header class="mb-6 flex justify-between items-end">
+    <div>
+       <h1 class="text-3xl font-bold text-slate-800 dark:text-white">客戶管理</h1>
+       <p class="text-slate-500 dark:text-slate-400 mt-1">管理客戶資料、收貨地址與交易細節。</p>
+    </div>
+    
+    <!-- Action Buttons (Desktop) -->
+    <div class="hidden md:flex space-x-3">
+        <!-- Import Button -->
+        <button 
+          (click)="triggerImport()"
+          [disabled]="isImporting()"
+          class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (isImporting()) {
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            }
+          <span>{{ isImporting() ? '匯入中...' : '匯入 Excel' }}</span>
+        </button>
+        <input type="file" id="customerImportInput" class="hidden" accept=".xlsx,.xls,.csv" (change)="onImportFileSelected($event)">
+
+        <button 
+          (click)="downloadTemplate()"
+          class="px-4 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors flex items-center justify-center space-x-2 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+          <span>下載匯入範本</span>
+        </button>
+    </div>
+  </header>
+
+  <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 transition-colors">
+    <!-- Action Bar -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
+      <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-wrap">
+        <!-- Search Input -->
+        <div class="relative w-full md:w-64">
+          <input 
+            type="text" 
+            placeholder="搜尋名稱、統編、電話、LINE..." 
+            class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+            [value]="searchTerm()"
+            (input)="onSearchTermChange($event)"
+            />
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+        </div>
+
+        <!-- Salesperson Filter Dropdown -->
+        <select (change)="onSalespersonChange($event)" class="w-full md:w-32 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="">全部業務</option>
+            @for (emp of employees(); track emp.id) {
+               <option [value]="emp.name">{{ emp.name }}</option>
+            }
+        </select>
+
+        <!-- Status Filter Dropdown -->
+        <select (change)="onStatusChange($event)" class="w-full md:w-32 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="all">全部狀態</option>
+            <option value="active">正常交易</option>
+            <option value="stopped">停止交易</option>
+        </select>
+
+        <!-- Notification Filter Dropdown -->
+        <select (change)="onNotificationFilterChange($event)" class="w-full md:w-36 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="all">全部通知設定</option>
+            <option value="notify">需要貨到通知</option>
+            <option value="none">無需通知</option>
+        </select>
+
+        <!-- Wishlist Filter Dropdown -->
+        <select (change)="onWishlistFilterChange($event)" class="w-full md:w-36 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+            <option value="all">全部許願</option>
+            <option value="has_wishlist">有許願商品</option>
+            <option value="no_wishlist">無許願商品</option>
+        </select>
+      </div>
+
+      <button 
+        (click)="openAddModal()"
+        class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 w-full md:w-auto justify-center">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        <span>新增客戶</span>
+      </button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="overflow-x-auto max-h-[65vh]">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10 shadow-sm">
+          <tr>
+            <th appResizable tableId="customers" colId="name" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">客戶名稱</th>
+            <th appResizable tableId="customers" colId="line" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">LINE暱稱</th>
+            <th appResizable tableId="customers" colId="top3" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 min-w-[200px]">熱銷商品 (TOP 3)</th>
+            <th appResizable tableId="customers" colId="payment" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">付款條件/稅別</th>
+            <th appResizable tableId="customers" colId="notes" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">許願商品與備註</th>
+            <th appResizable tableId="customers" colId="actions" scope="col" class="relative px-6 py-3 bg-slate-50 dark:bg-slate-700">
+              <span class="sr-only">編輯</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+          @for (customer of filteredCustomers(); track customer.id) {
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors" [class.opacity-60]="customer.isStopTrading">
+              <!-- 1. 客戶名稱 -->
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center text-indigo-500 dark:text-indigo-300 font-bold text-xs relative overflow-hidden">
+                    {{ customer.shortName.substring(0,2) }}
+                    @if(customer.isStopTrading) {
+                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span class="text-white text-[8px]">停</span>
+                        </div>
+                    }
+                  </div>
+                  <div class="ml-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="text-sm font-medium transition-colors"
+                             [class.text-red-500]="customer.level === 'C'"
+                             [class.text-slate-900]="customer.level !== 'C'"
+                             [class.dark:text-white]="customer.level !== 'C'">
+                             {{ customer.shortName }}
+                        </div>
+                        
+                        <div class="text-xs font-mono transition-colors"
+                             [class.text-red-500]="customer.level === 'C'"
+                             [class.text-slate-400]="customer.level !== 'C'">
+                             {{ customer.id }}
+                        </div>
+
+                        @if(customer.isStopTrading) {
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 font-bold">停止交易</span>
+                        }
+                        @if(customer.needsDeliveryNotification) {
+                            <span class="text-amber-500 dark:text-amber-400" title="需要貨到通知">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                </svg>
+                            </span>
+                        }
+                    </div>
+                    
+                    <div class="text-xs mt-0.5 transition-colors"
+                         [class.text-red-500]="customer.level === 'C'"
+                         [class.text-slate-500]="customer.level !== 'C'"
+                         [class.dark:text-slate-400]="customer.level !== 'C'">
+                         {{ customer.fullName }}
+                    </div>
+
+                    @if (customer.taxId) {
+                        <div class="text-[10px] text-slate-400">統編: {{ customer.taxId }}</div>
+                    }
+                  </div>
+                </div>
+              </td>
+              <!-- 2. LINE暱稱 -->
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                 @if (customer.lineId) {
+                    <span class="text-green-600 dark:text-green-400 font-medium">{{ customer.lineId }}</span>
+                 } @else {
+                    <span class="text-slate-300 dark:text-slate-600">-</span>
+                 }
+              </td>
+              <!-- 3. 熱銷商品 TOP 3 -->
+              <td class="px-6 py-4 align-top">
+                 <div class="flex flex-col gap-1">
+                    @for (prod of getTopProducts(customer.id); track prod.name; let idx = $index) {
+                       <div class="flex items-center text-xs">
+                          <span class="w-4 h-4 flex items-center justify-center rounded-full text-[10px] font-bold mr-2"
+                                [class.bg-yellow-100]="idx===0" [class.text-yellow-700]="idx===0"
+                                [class.bg-gray-100]="idx>0" [class.text-gray-600]="idx>0"
+                                [class.dark:bg-yellow-900]="idx===0" [class.dark:text-yellow-300]="idx===0"
+                                [class.dark:bg-gray-700]="idx>0" [class.dark:text-gray-300]="idx>0">
+                             {{ idx + 1 }}
+                          </span>
+                          <span class="text-slate-700 dark:text-slate-300 truncate max-w-[120px]" title="{{ prod.name }}">{{ prod.name }}</span>
+                          <span class="text-slate-400 ml-auto">({{ prod.count }})</span>
+                       </div>
+                    } @empty {
+                       <span class="text-xs text-slate-400 italic">尚無購買紀錄</span>
+                    }
+                 </div>
+              </td>
+              <!-- 4. 付款條件 -->
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      [ngClass]="{
+                        'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300': customer.clientPaymentTerms === '先匯款',
+                        'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300': customer.clientPaymentTerms === '貨到付款',
+                        'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300': !customer.clientPaymentTerms || customer.clientPaymentTerms === '帳期後付'
+                      }">
+                  {{ customer.clientPaymentTerms || '帳期後付' }}
+                </span>
+                <div class="text-xs mt-1" [class.text-blue-600]="customer.taxType" [class.text-slate-400]="!customer.taxType">
+                    {{ customer.taxType ? '應稅' : '免稅' }}
+                </div>
+              </td>
+              <!-- 5. 備註 -->
+              <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs align-top">
+                <div class="flex flex-col space-y-2">
+                  @let wishlist = getWishlistItems(customer.expectedProducts);
+                  
+                  @if (wishlist.length > 0) {
+                    <div class="flex flex-col space-y-1">
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 w-fit">許願</span>
+                      <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-0.5 pl-1">
+                        @for (item of wishlist; track $index) {
+                           <li class="flex items-start">
+                             <span class="mr-1">•</span>
+                             <span class="break-words">{{ item }}</span>
+                           </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                  
+                  @if (customer.specialRequests) {
+                    <div class="flex flex-col space-y-1">
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 w-fit">備註</span>
+                      <div class="text-xs break-words whitespace-pre-wrap pl-1">{{ customer.specialRequests }}</div>
+                    </div>
+                  }
+                  
+                  @if (wishlist.length === 0 && !customer.specialRequests) {
+                    <span class="text-slate-300 dark:text-slate-600">-</span>
+                  }
+                </div>
+              </td>
+              <!-- 6. Actions -->
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button (click)="openEditModal(customer)" class="text-sky-600 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-300 mr-3">編輯</button>
+                <button (click)="deleteCustomer(customer)" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">刪除</button>
+              </td>
+            </tr>
+          } @empty {
+             <tr>
+                <td colspan="6" class="text-center py-10 text-slate-500 dark:text-slate-400">
+                    找不到符合搜尋條件的客戶。
+                </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+        <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+          <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[85vh] overflow-y-auto">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4" id="modal-title">
+              {{ isEditMode() ? '編輯客戶' : '新增客戶' }}
+            </h3>
+            
+            <div class="space-y-6">
+              
+              <!-- Group 1: 基本資料 -->
+              <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase mb-3 pb-1 border-b border-slate-300 dark:border-slate-600">基本資料 (Basic Info)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">客戶編號 (ID)</label>
+                    <input type="text" formControlName="id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 disabled:bg-slate-100 disabled:text-slate-500 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        客戶簡稱 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" formControlName="shortName" 
+                           [class.border-red-500]="customerForm.get('shortName')?.invalid && customerForm.get('shortName')?.touched"
+                           class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">統一編號</label>
+                    <input type="text" formControlName="taxId" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">客戶全名</label>
+                    <input type="text" formControlName="fullName" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">客戶等級</label>
+                     <select formControlName="level" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                        <option value="">請選擇</option>
+                        <option value="VIP">VIP</option>
+                        <option value="A級">A級</option>
+                        <option value="B級">B級</option>
+                        <option value="C">C級</option>
+                     </select>
+                  </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">負責業務 (綁定員工)</label>
+                    <select formControlName="salesperson" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                       <option value="">請選擇業務</option>
+                       @for (emp of employees(); track emp.id) {
+                         <option [value]="emp.name">{{ emp.name }}</option>
+                       }
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Group 2: 聯絡資訊 -->
+              <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase mb-3 pb-1 border-b border-slate-300 dark:border-slate-600">聯絡資訊 (Contact)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">聯絡人職稱</label>
+                    <input type="text" formControlName="jobTitle" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        公司電話 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" formControlName="phone" 
+                           [class.border-red-500]="customerForm.errors?.['atLeastOneContact'] && (customerForm.get('phone')?.touched || customerForm.get('mobile')?.touched)"
+                           class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                           placeholder="市話與手機擇一必填">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        手機 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" formControlName="mobile" 
+                           [class.border-red-500]="customerForm.errors?.['atLeastOneContact'] && (customerForm.get('phone')?.touched || customerForm.get('mobile')?.touched)"
+                           class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                           placeholder="市話與手機擇一必填">
+                  </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">LINE暱稱</label>
+                    <input type="text" formControlName="lineId" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                   <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">電子郵件</label>
+                    <input type="email" formControlName="email" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+               <!-- Group 3: 收貨地址 -->
+              <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase mb-3 pb-1 border-b border-slate-300 dark:border-slate-600">收貨地址 (Shipping)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                  <!-- Addr 1 -->
+                  <div class="md:col-span-6">
+                    <span class="text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30 px-2 py-1 rounded">地址一 (主要)</span>
+                  </div>
+                  <div class="md:col-span-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        地址 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" formControlName="address1" 
+                           [class.border-red-500]="customerForm.get('address1')?.invalid && customerForm.get('address1')?.touched"
+                           class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div class="md:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">收件人</label>
+                    <input type="text" formControlName="receiver1" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div class="md:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">電話</label>
+                    <input type="text" formControlName="phone1" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+
+                  <!-- Addr 2 -->
+                   <div class="md:col-span-6 mt-2">
+                    <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">地址二 (備用)</span>
+                  </div>
+                  <div class="md:col-span-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">地址</label>
+                    <input type="text" formControlName="address2" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                  <div class="md:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">收件人</label>
+                    <input type="text" formControlName="receiver2" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                   <div class="md:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">電話</label>
+                    <input type="text" formControlName="phone2" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+               <!-- Group 4: 交易條款 -->
+              <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase mb-3 pb-1 border-b border-slate-300 dark:border-slate-600">交易條款 (Trade Conditions)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                   <!-- Payment Terms Select -->
+                   <div class="col-span-1">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">付款條件</label>
+                      <select formControlName="clientPaymentTerms" class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                          <option value="先匯款">先匯款</option>
+                          <option value="貨到付款">貨到付款</option>
+                          <option value="帳期後付">帳期後付</option>
+                      </select>
+                  </div>
+                  <!-- Tax Type Checkbox -->
+                  <div class="flex items-center pt-6">
+                      <input type="checkbox" formControlName="taxType" id="custTaxType" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 cursor-pointer">
+                      <label for="custTaxType" class="ml-2 block text-sm text-slate-700 dark:text-slate-300 cursor-pointer">是否應稅 (Checked=應稅)</label>
+                  </div>
+                  <!-- Stop Trading Checkbox -->
+                  <div class="flex items-center pt-6">
+                      <input type="checkbox" formControlName="isStopTrading" id="custStopTrading" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 cursor-pointer">
+                      <label for="custStopTrading" class="ml-2 block text-sm font-bold text-red-600 dark:text-red-400 cursor-pointer">停止交易 (Stop Trading)</label>
+                  </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">首交日</label>
+                    <input type="date" formControlName="firstTradeDate" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Group 5: 備註與許願商品 (New Layout) -->
+              <div class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                 <div class="flex items-center justify-between border-b border-blue-200 dark:border-blue-800 pb-2 mb-4">
+                     <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase">許願商品與貨到通知 (Wishlist & Notification)</h4>
+                     
+                     <!-- Delivery Notification Toggle (Moved here) -->
+                     <div class="flex items-center">
+                        <input type="checkbox" formControlName="needsDeliveryNotification" id="needsDelivery" class="h-4 w-4 text-amber-500 focus:ring-amber-500 border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 cursor-pointer">
+                        <label for="needsDelivery" class="ml-2 block text-sm font-bold text-amber-600 dark:text-amber-400 cursor-pointer flex items-center">
+                            需要貨到通知
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 ml-1">
+                              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                            </svg>
+                        </label>
+                    </div>
+                 </div>
+
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left: Search and Select -->
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">搜尋並加入商品</label>
+                            <input type="text" 
+                                   [value]="wishlistSearchTerm()"
+                                   (input)="onWishlistSearch($event)"
+                                   placeholder="輸入商品名稱或編號..." 
+                                   class="w-full pl-8 pr-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            <div class="absolute top-[29px] left-2.5 pointer-events-none text-slate-400">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Search Results -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-md max-h-48 overflow-y-auto bg-white dark:bg-slate-800">
+                            @for (prod of filteredWishlistProducts(); track prod.id) {
+                                <div class="flex justify-between items-center px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-0 group">
+                                    <div class="flex-1 min-w-0 pr-2">
+                                        <div class="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{{ prod.name }}</div>
+                                        <div class="text-xs text-slate-400">{{ prod.id }} | 庫存: {{ prod.stock }}</div>
+                                    </div>
+                                    <button type="button" (click)="addToWishlist(prod)" class="p-1 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                </div>
+                            } @empty {
+                                <div class="p-4 text-center text-xs text-slate-400">
+                                    {{ wishlistSearchTerm() ? '無符合商品' : '請輸入關鍵字搜尋' }}
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Right: Selected List -->
+                    <div class="flex flex-col">
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            已加入清單 ({{ wishlistItems().length }})
+                        </label>
+                        <div class="flex-1 border border-blue-200 dark:border-blue-900 rounded-md bg-white dark:bg-slate-800 overflow-y-auto max-h-60 p-2 space-y-1">
+                            @for (item of wishlistItems(); track item.id) {
+                                <div class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                                    <span class="text-sm text-blue-900 dark:text-blue-100 truncate flex-1">{{ item.name }}</span>
+                                    <button type="button" (click)="removeFromWishlist(item.id)" class="ml-2 text-red-400 hover:text-red-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                </div>
+                            } @empty {
+                                <div class="h-full flex items-center justify-center text-xs text-slate-400">
+                                    尚無許願商品
+                                </div>
+                            }
+                        </div>
+                    </div>
+                 </div>
+
+                 <!-- General Notes -->
+                 <div class="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">特別要求</label>
+                    <textarea formControlName="specialRequests" rows="2" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="其他非商品類的備註..."></textarea>
+                 </div>
+                 
+                 <!-- Hidden fields -->
+                 <div class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300">寄倉包材連結 (URL)</label>
+                    <input type="text" formControlName="consignedPackagingUrl" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                 </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-slate-600">
+            <button type="submit" [disabled]="customerForm.invalid" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-gray-400">
+              儲存
+            </button>
+            <button type="button" (click)="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

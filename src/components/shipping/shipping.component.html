@@ -1,0 +1,915 @@
+
+
+
+
+
+
+
+
+
+
+<div class="p-8 h-full flex flex-col">
+  
+  <!-- List View (Wraps both Tabs) -->
+  @if (currentStep() === 'list') {
+    <header class="mb-6 flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white">出貨管理</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">管理待出貨訂單、扣庫存與物流單號辨識。</p>
+      </div>
+    </header>
+
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 transition-colors flex-1 overflow-hidden flex flex-col">
+      <!-- Tab Navigation -->
+      <div class="border-b border-slate-200 dark:border-slate-700 mb-6 flex-shrink-0">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+          <button 
+            (click)="setActiveTab('pending')"
+            [class]="activeTab() === 'pending' 
+              ? 'border-sky-500 text-sky-600 dark:text-sky-400' 
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'"
+            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>待出貨作業 (Pending)</span>
+          </button>
+          
+          <button 
+            (click)="setActiveTab('history')"
+            [class]="activeTab() === 'history' 
+              ? 'border-sky-500 text-sky-600 dark:text-sky-400' 
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'"
+            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            <span>出貨紀錄 (History)</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Action Bar (Search & Filter) -->
+      <div class="mb-4 flex flex-col md:flex-row gap-4 items-center">
+        <!-- Search Input -->
+        <div class="relative w-full md:w-80">
+          <input 
+            type="text" 
+            placeholder="搜尋單號、客戶、商品..." 
+            class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+            [value]="searchTerm()"
+            (input)="onSearchTermChange($event)"
+            />
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+        </div>
+
+        <!-- NEW: Pending Status Filter Dropdown -->
+        @if (activeTab() === 'pending') {
+            <select [value]="pendingStatusFilter()" (change)="onPendingStatusFilterChange($event)" class="border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="all">全部待出貨</option>
+                <option value="部份出貨">部份出貨 (優先)</option>
+                <option value="處理中">處理中</option>
+            </select>
+
+            <!-- Pending Order Count Badge (Right Aligned) -->
+            <div class="w-full md:w-auto md:ml-auto bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-900/50 rounded-lg px-4 py-1.5 shadow-sm flex items-center justify-between md:justify-start space-x-3">
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">待出貨 (Pending)</span>
+                    <span class="text-xl font-black text-sky-600 dark:text-sky-500 leading-none">{{ pendingOrderCount() }}</span>
+                </div>
+                <div class="h-8 w-8 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                        <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                    </svg>
+                </div>
+            </div>
+        }
+
+        <!-- NEW: History Status Filter Dropdown -->
+        @if (activeTab() === 'history') {
+            <select [value]="historyStatusFilter()" (change)="onHistoryStatusFilterChange($event)" class="border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="all">全部狀態</option>
+                <option value="已出貨">已出貨</option>
+                <option value="部份出貨">部份出貨</option>
+                <option value="已結案">已結案</option>
+                <option value="處理中">處理中</option>
+                <option value="取消">取消</option>
+            </select>
+        }
+      </div>
+
+      <!-- Tables Area -->
+      <div class="flex-1 overflow-x-auto">
+        
+        <!-- Pending Table -->
+        @if (activeTab() === 'pending') {
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10 shadow-sm">
+              <tr>
+                <th appResizable tableId="shipping_pending" colId="id" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">訂單編號 / 日期</th>
+                <th appResizable tableId="shipping_pending" colId="customer" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">客戶 / 業務</th>
+                <th appResizable tableId="shipping_pending" colId="payment" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">付款條件</th>
+                <th appResizable tableId="shipping_pending" colId="content" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">商品內容 (待出貨)</th>
+                <th appResizable tableId="shipping_pending" colId="picking" scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 w-24">訂單備貨</th>
+                <th appResizable tableId="shipping_pending" colId="remarks" scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700 w-32">備註</th>
+                <th appResizable tableId="shipping_pending" colId="count" scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">出貨次數 / 狀態</th>
+                <th appResizable tableId="shipping_pending" colId="actions" scope="col" class="relative px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">
+                  <span class="sr-only">操作</span>
+                  操作
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+              @for (group of shippingOrders(); track group.baseOrderId) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap align-top">
+                    <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                        {{ group.baseOrderId }}
+                        @if (group.items[0].isManufacturingOrder) {
+                            <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">代工</span>
+                        }
+                    </div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ group.orderDate | taiwanDate }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap align-top">
+                    <div class="text-sm text-slate-900 dark:text-white">{{ group.customerName }}</div>
+                    <div class="text-xs text-slate-400">{{ group.salesperson }}</div>
+                    @if (group.customerLineId) {
+                        <div class="text-[10px] font-bold text-green-600 dark:text-green-400 mt-0.5">LINE: {{ group.customerLineId }}</div>
+                    }
+                  </td>
+                  <!-- Payment Terms Column -->
+                  <td class="px-6 py-4 whitespace-nowrap align-top">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                            [class.bg-orange-100]="group.clientPaymentTerms === '先匯款'"
+                            [class.text-orange-800]="group.clientPaymentTerms === '先匯款'"
+                            [class.dark:bg-orange-900/30]="group.clientPaymentTerms === '先匯款'"
+                            [class.dark:text-orange-300]="group.clientPaymentTerms === '先匯款'"
+                            
+                            [class.bg-blue-100]="group.clientPaymentTerms === '貨到付款'"
+                            [class.text-blue-800]="group.clientPaymentTerms === '貨到付款'"
+                            [class.dark:bg-blue-900/30]="group.clientPaymentTerms === '貨到付款'"
+                            [class.dark:text-blue-300]="group.clientPaymentTerms === '貨到付款'"
+
+                            [class.bg-slate-100]="group.clientPaymentTerms === '帳期後付' || !group.clientPaymentTerms"
+                            [class.text-slate-800]="group.clientPaymentTerms === '帳期後付' || !group.clientPaymentTerms"
+                            [class.dark:bg-slate-700]="group.clientPaymentTerms === '帳期後付' || !group.clientPaymentTerms"
+                            [class.dark:text-slate-300]="group.clientPaymentTerms === '帳期後付' || !group.clientPaymentTerms">
+                        {{ group.clientPaymentTerms || '帳期後付' }}
+                      </span>
+                  </td>
+                  <!-- Product Content (Col 3) -->
+                  <td class="px-6 py-4 align-top p-0">
+                    <div class="flex flex-col w-full">
+                      @for (item of group.displayItems; track item.productId) {
+                        <div class="h-9 flex justify-between items-center text-sm border-b border-slate-100 dark:border-slate-700/50 last:border-0 px-6">
+                          <span class="truncate max-w-[200px] text-slate-700 dark:text-slate-300" [title]="item.productName">{{ item.productName }}</span>
+                          <span class="font-mono text-xs whitespace-nowrap ml-2">
+                             <span class="text-green-600 dark:text-green-400">{{ item.shippedQuantity || 0 }}</span> / {{ item.quantity }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                  <!-- Picking Quantity Column (Col 4 - Editable) -->
+                  <td class="px-6 py-4 align-top p-0 text-center">
+                    <div class="flex flex-col w-full items-center">
+                      @for (item of group.displayItems; track item.productId) {
+                        <div class="h-9 w-full flex justify-center items-center border-b border-slate-100 dark:border-slate-700/50 last:border-0">
+                           <input type="number"
+                                  [value]="item.pickingQuantity || 0"
+                                  (change)="updatePickingQuantityList(item.orderId, $event)"
+                                  class="w-16 text-center px-1 py-0.5 text-xs border border-transparent hover:border-slate-300 focus:border-amber-500 focus:ring-0 rounded bg-transparent focus:bg-white dark:focus:bg-slate-700 font-mono font-bold text-amber-600 dark:text-amber-400 transition-colors"
+                                  min="0">
+                        </div>
+                      }
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 align-top">
+                     @if (group.items[0].specialRequests) {
+                        <div (click)="toggleRemark(group.baseOrderId, $event)" 
+                             class="text-[10px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-1.5 py-1 rounded border border-rose-100 dark:border-rose-800 w-32 cursor-pointer transition-all duration-200"
+                             [class.line-clamp-3]="!isRemarkExpanded(group.baseOrderId)"
+                             [class.whitespace-pre-wrap]="isRemarkExpanded(group.baseOrderId)"
+                             [title]="isRemarkExpanded(group.baseOrderId) ? '點擊收合' : '點擊展開: ' + group.items[0].specialRequests">
+                            {{ group.items[0].specialRequests }}
+                        </div>
+                     } @else {
+                        <span class="text-xs text-slate-300 dark:text-slate-600">-</span>
+                     }
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap align-top text-center">
+                    <div class="flex flex-col items-center space-y-1">
+                        <span class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                          第 {{ group.shipmentCount }} 次
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full border"
+                              [class.bg-blue-50]="group.status === '處理中'"
+                              [class.text-blue-600]="group.status === '處理中'"
+                              [class.border-blue-200]="group.status === '處理中'"
+                              [class.dark:bg-blue-900/30]="group.status === '處理中'"
+                              [class.dark:text-blue-300]="group.status === '處理中'"
+                              [class.dark:border-blue-800]="group.status === '處理中'"
+                              
+                              [class.bg-purple-100]="group.status === '部份出貨'"
+                              [class.text-purple-600]="group.status === '部份出貨'"
+                              [class.border-purple-200]="group.status === '部份出貨'"
+                              [class.dark:bg-purple-900/30]="group.status === '部份出貨'"
+                              [class.dark:text-purple-300]="group.status === '部份出貨'"
+                              [class.dark:border-purple-800]="group.status === '部份出貨'">
+                            {{ group.status }}
+                        </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap align-top text-right">
+                    <div class="flex items-center justify-end space-x-2">
+                        <button (click)="openShippingWizard(group)" class="bg-sky-500 hover:bg-sky-600 text-white text-xs px-3 py-1.5 rounded shadow-sm transition-colors flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+                          開始出貨
+                        </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="px-6 py-10 text-center text-slate-500 dark:text-slate-400">
+                    目前沒有符合篩選的待出貨訂單。
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+
+        <!-- History Table (Grouped & Collapsible) -->
+        @if (activeTab() === 'history') {
+          <!-- Sort Toolbar -->
+          <div class="flex justify-end mb-2 space-x-2">
+              <button (click)="setHistorySort('orderId')" 
+                      class="px-3 py-1.5 text-xs font-medium rounded-md border transition-all flex items-center space-x-1"
+                      [class.bg-sky-50]="historySortBy() === 'orderId'"
+                      [class.border-sky-300]="historySortBy() === 'orderId'"
+                      [class.text-sky-700]="historySortBy() === 'orderId'"
+                      [class.dark:bg-sky-900/30]="historySortBy() === 'orderId'"
+                      [class.dark:border-sky-700]="historySortBy() === 'orderId'"
+                      [class.dark:text-sky-300]="historySortBy() === 'orderId'"
+                      [class.bg-white]="historySortBy() !== 'orderId'"
+                      [class.border-slate-300]="historySortBy() !== 'orderId'"
+                      [class.text-slate-600]="historySortBy() !== 'orderId'"
+                      [class.dark:bg-slate-800]="historySortBy() !== 'orderId'"
+                      [class.dark:border-slate-600]="historySortBy() !== 'orderId'"
+                      [class.dark:text-slate-400]="historySortBy() !== 'orderId'">
+                  <span>依訂單號</span>
+                  @if (historySortBy() === 'orderId') {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" [class.rotate-180]="historySortDir() === 'asc'">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                  }
+              </button>
+              <button (click)="setHistorySort('closedAt')" 
+                      class="px-3 py-1.5 text-xs font-medium rounded-md border transition-all flex items-center space-x-1"
+                      [class.bg-sky-50]="historySortBy() === 'closedAt'"
+                      [class.border-sky-300]="historySortBy() === 'closedAt'"
+                      [class.text-sky-700]="historySortBy() === 'closedAt'"
+                      [class.dark:bg-sky-900/30]="historySortBy() === 'closedAt'"
+                      [class.dark:border-sky-700]="historySortBy() === 'closedAt'"
+                      [class.dark:text-sky-300]="historySortBy() === 'closedAt'"
+                      [class.bg-white]="historySortBy() !== 'closedAt'"
+                      [class.border-slate-300]="historySortBy() !== 'closedAt'"
+                      [class.text-slate-600]="historySortBy() !== 'closedAt'"
+                      [class.dark:bg-slate-800]="historySortBy() !== 'closedAt'"
+                      [class.dark:border-slate-600]="historySortBy() !== 'closedAt'"
+                      [class.dark:text-slate-400]="historySortBy() !== 'closedAt'">
+                  <span>依結案時間</span>
+                  @if (historySortBy() === 'closedAt') {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" [class.rotate-180]="historySortDir() === 'asc'">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                  }
+              </button>
+          </div>
+
+          <div class="space-y-4">
+            @for (group of historyGroups(); track group.baseOrderId) {
+              <div class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                  <!-- Group Header -->
+                  <div (click)="toggleHistoryGroup(group.baseOrderId)" 
+                       class="px-6 py-3 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors select-none">
+                      <div class="flex items-center space-x-3">
+                          <!-- Chevron Icon -->
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 transition-transform duration-200" 
+                               [class.rotate-180]="isHistoryGroupExpanded(group.baseOrderId)"
+                               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                          <span class="font-bold text-slate-800 dark:text-white text-sm">{{ group.baseOrderId }}</span>
+                          @if (group.isManufacturingOrder) {
+                              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">代工</span>
+                          }
+                          <span class="text-xs text-slate-500 dark:text-slate-400">{{ group.customerName }}</span>
+                      </div>
+                      
+                      <div class="flex items-center space-x-3">
+                          <!-- Closed Time (If Closed) -->
+                          @if (group.status === '已結案' && group.closedAt) {
+                              <span class="text-xs text-slate-500 dark:text-slate-400 font-mono mr-2 hidden sm:inline-block">
+                                  結案時間: {{ group.closedAt | date:'yyyy-MM-dd HH:mm' }}
+                              </span>
+                          }
+
+                          <!-- Order Status Badge -->
+                          <span class="px-2 py-0.5 rounded text-[10px] border"
+                                [class.bg-green-100]="group.status === '已出貨' || group.status === '已結案'"
+                                [class.text-green-700]="group.status === '已出貨' || group.status === '已結案'"
+                                [class.border-green-200]="group.status === '已出貨' || group.status === '已結案'"
+                                [class.dark:bg-green-900/30]="group.status === '已出貨' || group.status === '已結案'"
+                                [class.dark:text-green-300]="group.status === '已出貨' || group.status === '已結案'"
+                                [class.dark:border-green-800]="group.status === '已出貨' || group.status === '已結案'"
+                                
+                                [class.bg-blue-100]="group.status === '處理中'"
+                                [class.text-blue-700]="group.status === '處理中'"
+                                [class.border-blue-200]="group.status === '處理中'"
+                                [class.dark:bg-blue-900/30]="group.status === '處理中'"
+                                [class.dark:text-blue-300]="group.status === '處理中'"
+                                [class.dark:border-blue-800]="group.status === '處理中'"
+
+                                [class.bg-purple-100]="group.status === '部份出貨'"
+                                [class.text-purple-700]="group.status === '部份出貨'"
+                                [class.border-purple-200]="group.status === '部份出貨'"
+                                [class.dark:bg-purple-900/30]="group.status === '部份出貨'"
+                                [class.dark:text-purple-300]="group.status === '部份出貨'"
+                                [class.dark:border-purple-800]="group.status === '部份出貨'"
+
+                                [class.bg-rose-100]="group.status === '取消'"
+                                [class.text-rose-700]="group.status === '取消'"
+                                [class.border-rose-200]="group.status === '取消'"
+                                [class.dark:bg-rose-900/30]="group.status === '取消'"
+                                [class.dark:text-rose-300]="group.status === '取消'"
+                                [class.dark:border-rose-800]="group.status === '取消'">
+                              {{ group.status }}
+                          </span>
+                          <span class="text-xs text-slate-400">共 {{ group.batches.length }} 次出貨</span>
+                      </div>
+                  </div>
+                  
+                  <!-- Batches (Sub-rows) -->
+                  @if (isHistoryGroupExpanded(group.baseOrderId)) {
+                      <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700/50 animate-slide-down">
+                          <thead class="bg-white dark:bg-slate-800">
+                              <tr>
+                                  <th class="px-6 py-2 text-left text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">出貨單號 (Batch No)</th>
+                                  <th class="px-6 py-2 text-left text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">日期</th>
+                                  <th class="px-6 py-2 text-left text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">出貨內容摘要</th>
+                                  <th class="px-6 py-2 text-left text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">物流追蹤</th>
+                                  <th class="px-6 py-2 text-left text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">備註</th>
+                                  <th class="px-6 py-2 text-center text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">單據</th>
+                                  <th class="px-6 py-2 text-right text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">操作</th>
+                              </tr>
+                          </thead>
+                          <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                              @for (batch of group.batches; track batch.batchNo) {
+                                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                      <td class="px-6 py-3 whitespace-nowrap">
+                                          <div class="flex items-center">
+                                              <button (click)="toggleBatch(batch.batchNo)" class="mr-2 text-slate-400 hover:text-sky-500 transition-colors">
+                                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" [class.rotate-90]="isBatchExpanded(batch.batchNo)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                              </button>
+                                              <div class="text-xs font-mono font-bold text-purple-600 dark:text-purple-400">{{ batch.batchNo }}</div>
+                                          </div>
+                                      </td>
+                                      <td class="px-6 py-3 whitespace-nowrap">
+                                          <div class="text-xs text-slate-600 dark:text-slate-300">{{ batch.date | taiwanDate }}</div>
+                                      </td>
+                                      <td class="px-6 py-3">
+                                          <div class="text-xs text-slate-700 dark:text-slate-200 truncate max-w-[250px]" [title]="batch.productsSummary">
+                                              {{ batch.productsSummary }}
+                                          </div>
+                                      </td>
+                                      <td class="px-6 py-3 whitespace-nowrap">
+                                          <div class="flex items-center space-x-2">
+                                              <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                                                  {{ batch.logistics }}
+                                              </span>
+                                              @if (batch.trackingId) {
+                                                  <span class="font-mono text-xs font-bold text-slate-800 dark:text-white">{{ batch.trackingId }}</span>
+                                                  @if (batch.trackingUrl) {
+                                                      <a [href]="batch.trackingUrl" target="_blank" class="text-blue-500 hover:text-blue-600" title="追蹤連結">
+                                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                                      </a>
+                                                  }
+                                              } @else {
+                                                  <span class="text-[10px] text-red-400 italic">缺單號</span>
+                                              }
+                                          </div>
+                                      </td>
+                                      <td class="px-6 py-3">
+                                          @if (batch.records[0].specialRequests) {
+                                              <div class="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded border border-rose-100 dark:border-rose-800 max-w-[150px] truncate shadow-sm cursor-help" [title]="batch.records[0].specialRequests">
+                                                  {{ batch.records[0].specialRequests }}
+                                              </div>
+                                          } @else {
+                                              <span class="text-slate-300 dark:text-slate-600">-</span>
+                                          }
+                                      </td>
+                                      <td class="px-6 py-3 whitespace-nowrap text-center">
+                                          @if (batch.records[0].waybillImages && batch.records[0].waybillImages!.length > 0) {
+                                              <button (click)="openImageViewer(batch.records[0].waybillImages!)" class="text-purple-600 dark:text-purple-400 hover:text-purple-800 flex items-center justify-center mx-auto space-x-1">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                  @if (batch.records[0].waybillImages!.length > 1) {
+                                                      <span class="text-[9px] font-bold bg-purple-100 dark:bg-purple-900 rounded-full px-1">{{ batch.records[0].waybillImages!.length }}</span>
+                                                  }
+                                              </button>
+                                          } @else {
+                                              <span class="text-slate-300 dark:text-slate-600">-</span>
+                                          }
+                                      </td>
+                                      <td class="px-6 py-3 whitespace-nowrap text-right">
+                                          <div class="flex items-center justify-end space-x-2">
+                                              <!-- NEW: Copy Tracking Button -->
+                                              <button (click)="copyBatchTracking(batch)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="複製物流資訊">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M8 5a2 2 0 002 2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                              </button>
+                                              <!-- EDIT BUTTON MODIFIED to trigger Wizard -->
+                                              <button (click)="editHistoryBatch(batch, group)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 text-xs font-medium">
+                                                  編輯
+                                              </button>
+                                              <button (click)="deleteShipmentBatch(batch)" class="text-red-500 hover:text-red-700 dark:hover:text-red-300" title="刪除此紀錄">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                              </button>
+                                          </div>
+                                      </td>
+                                  </tr>
+                                  
+                                  <!-- New Expanded Detail Row -->
+                                  @if (isBatchExpanded(batch.batchNo)) {
+                                      <tr>
+                                          <td colspan="7" class="bg-slate-50 dark:bg-slate-900/50 p-3 border-b border-slate-100 dark:border-slate-700 shadow-inner">
+                                              <div class="ml-12">
+                                                  <table class="w-full text-xs text-left">
+                                                      <thead>
+                                                          <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                                              <th class="pb-1 font-medium">商品名稱</th>
+                                                              <th class="pb-1 font-medium text-right">本次出貨 (shippingQuantity)</th>
+                                                          </tr>
+                                                      </thead>
+                                                      <tbody class="text-slate-700 dark:text-slate-300">
+                                                          @for (rec of batch.records; track rec.id) {
+                                                              <tr class="border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                                                  <td class="py-1.5">{{ rec.productName }}</td>
+                                                                  <td class="py-1.5 text-right font-mono font-bold">{{ rec.shippingQuantity }}</td>
+                                                              </tr>
+                                                          }
+                                                      </tbody>
+                                                  </table>
+                                              </div>
+                                          </td>
+                                      </tr>
+                                  }
+                              }
+                          </tbody>
+                      </table>
+                  }
+              </div>
+            } @empty {
+              <div class="text-center py-12 text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                  尚無出貨歷史紀錄。
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- View 1: Wizard Overlay (Kept same) -->
+  @if (currentStep() !== 'list') {
+    <div class="fixed inset-0 z-50 bg-slate-100 dark:bg-slate-900 flex flex-col h-full animate-[slide-up_0.3s_ease-out]">
+        
+        <!-- Wizard Header -->
+        <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 shadow-sm flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center space-x-3">
+                <button (click)="cancelWizard()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="取消">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">
+                        @switch (currentStep()) {
+                            @case ('shipping-execution') { 步驟 1: 確認出貨數量 (Quantity Check) }
+                            @case ('logistics-ocr') { 步驟 2: 物流單號辨識 }
+                            @case ('shipping-notification') { 步驟 3: 發送出貨通知 }
+                        }
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        @if (editingBatchNo()) {
+                            編輯歷史出貨單: {{ editingBatchNo() }}
+                        } @else {
+                            訂單：{{ editingOrderId() }} (第 {{ currentShipmentCount() }} 次出貨)
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-4xl mx-auto h-full flex flex-col pb-24">
+                
+                <!-- Step 1: Execution (Quantity) -->
+                @if (currentStep() === 'shipping-execution') {
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[65vh]">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 flex-shrink-0">
+                            <h3 class="font-bold text-slate-700 dark:text-slate-200">本次出貨明細</h3>
+                            @if (!editingBatchNo()) {
+                                <div class="space-x-3">
+                                    <!-- Use movePickingToShip without arguments, it now handles all items in current wizard context -->
+                                    <button (click)="movePickingToShip()" class="text-xs text-amber-600 dark:text-amber-400 hover:underline">帶入備貨 (Move Picked)</button>
+                                    <button (click)="shipAllItems()" class="text-xs text-sky-600 dark:text-sky-400 hover:underline">全部出貨 (Ship All)</button>
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="overflow-y-auto flex-1">
+                            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                                <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">商品</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">訂購量</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">已出貨</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">訂單備貨 (Picking)</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">本次出貨</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                @for (item of shippingItems(); track $index; let i = $index) {
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-medium text-slate-900 dark:text-white">{{ item.product.name }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400 font-mono">{{ item.product.id }}</div>
+                                            
+                                            <!-- NEW: Show Unallocated Remaining -->
+                                            <div class="text-[10px] mt-1 text-slate-400">
+                                                剩餘未分配: {{ getUnallocatedQty(item) }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-center text-sm font-mono text-slate-600 dark:text-slate-300">
+                                            {{ item.orderedQty }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center text-sm font-mono text-green-600 dark:text-green-400">
+                                            {{ item.shippedQty }}
+                                        </td>
+                                        <!-- Editable Picking Quantity -->
+                                        <td class="px-6 py-4 text-center">
+                                            <div class="flex flex-col items-center justify-center">
+                                                <input type="number" 
+                                                       [value]="item.pickingQty" 
+                                                       (input)="updatePickingQty(i, $event)"
+                                                       (keydown.enter)="$event.target.blur()"
+                                                       class="w-24 text-center py-2 border border-amber-300 dark:border-amber-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 font-bold text-xl shadow-sm"
+                                                       min="0" 
+                                                       [max]="(item.orderedQty - item.shippedQty) - item.currentShipQty">
+                                                
+                                                @if (item.pickingQty + item.currentShipQty >= (item.orderedQty - item.shippedQty) && (item.orderedQty - item.shippedQty) > 0) {
+                                                    <span class="text-[10px] text-amber-500 mt-1 font-bold">已達上限</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <div class="flex flex-col items-center justify-center">
+                                                <input type="number" 
+                                                       [value]="item.currentShipQty" 
+                                                       (input)="updateShipQty(i, $event)"
+                                                       (keydown.enter)="$event.target.blur()"
+                                                       class="w-24 text-center py-2 border border-sky-300 dark:border-sky-600 rounded-lg focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-800 text-sky-900 dark:text-sky-100 font-bold text-xl shadow-sm"
+                                                       min="0" 
+                                                       [max]="(item.orderedQty - item.shippedQty) - item.pickingQty">
+                                                
+                                                @if (item.pickingQty + item.currentShipQty >= (item.orderedQty - item.shippedQty) && (item.orderedQty - item.shippedQty) > 0) {
+                                                    <span class="text-[10px] text-sky-500 mt-1 font-bold">已達上限</span>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300">
+                        <strong>庫存公式說明：</strong> 訂購量 >= (已出貨 + 已備貨 + 本次出貨)。您無法輸入超過訂單剩餘數量的數值。
+                    </div>
+                }
+
+                <!-- Step 2: Logistics & OCR -->
+                @if (currentStep() === 'logistics-ocr') {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full" [formGroup]="shippingForm">
+                        
+                        <!-- Left: Form & Image Results (Vertical Stack) -->
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-full overflow-y-auto">
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">物流資訊</h3>
+                            
+                            <div class="space-y-4 flex-1">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">物流公司 (Provider)</label>
+                                    <select formControlName="logistics" class="w-full p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                        @for (opt of logisticsOptions; track opt) {
+                                            <option [value]="opt">{{ opt }}</option>
+                                        }
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">貨運單號 (Tracking ID)</label>
+                                    <input type="text" formControlName="shippingId" class="w-full p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono font-bold tracking-wide" placeholder="請掃描或貼上圖片自動辨識">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">追蹤網址 (Tracking URL)</label>
+                                    <input type="text" formControlName="trackingUrl" class="w-full p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">備註 (Special Requests)</label>
+                                    <textarea formControlName="specialRequests" rows="3" class="w-full p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"></textarea>
+                                </div>
+
+                                <!-- Recognized Images Grid (Placed BELOW remarks) -->
+                                @if (logisticsImages().length > 0) {
+                                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">已辨識單據</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            @for (img of logisticsImages(); track $index) {
+                                                <div class="flex flex-col">
+                                                    <!-- Image Container -->
+                                                    <div class="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 aspect-[4/3] bg-slate-50 dark:bg-slate-900 group">
+                                                        <img [src]="img" class="w-full h-full object-contain">
+                                                        <!-- Delete Button (Top Right) -->
+                                                        <button (click)="removeImage($index)" class="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                        </button>
+                                                    </div>
+                                                    <!-- Tracking ID (Below Image) -->
+                                                    <div class="mt-2 text-center">
+                                                        <div class="text-xs font-bold text-sky-600 dark:text-sky-400 mb-0.5">
+                                                            {{ ocrResults()[$index]?.provider || '未知物流' }}
+                                                        </div>
+                                                        <p class="font-mono font-bold text-slate-800 dark:text-white text-sm break-all transition-transform duration-200 hover:scale-125 cursor-default inline-block px-1 origin-top">
+                                                            {{ ocrResults()[$index]?.trackingId || '---' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Right: OCR Dropzone (Simplified) -->
+                        <div (click)="fileInput.click()"
+                             (dragover)="$event.preventDefault()"
+                             (drop)="onDrop($event)"
+                             class="bg-slate-100 dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center p-6 relative overflow-hidden group min-h-[400px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                            
+                            <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*" multiple>
+                            
+                            <div class="text-center z-10 pointer-events-none">
+                                <div class="w-20 h-20 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 group-hover:scale-110 transition-transform">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                </div>
+                                <h4 class="text-lg font-bold text-slate-600 dark:text-slate-300">點擊、貼上 (Ctrl+V) 或拖曳物流單</h4>
+                                <p class="text-sm text-slate-500 mt-2">AI 自動辨識單號</p>
+                                
+                                <!-- NEW: Quick Save Button -->
+                                @if (shippingForm.get('shippingId')?.value) {
+                                    <button (click)="quickSaveOcrToDb(); $event.stopPropagation()" class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg font-bold transition-all animate-bounce pointer-events-auto">
+                                        ⚡ 辨識成功！立即寫入資料庫 (落雷)
+                                    </button>
+                                }
+                            </div>
+
+                            <!-- Scanning Animation -->
+                            @if (isAnalyzingLogistics()) {
+                                <div class="absolute inset-0 bg-white/50 dark:bg-black/50 z-20 flex flex-col items-center justify-center backdrop-blur-sm">
+                                    <div class="scan-line top-1/2"></div>
+                                    <div class="text-sky-600 dark:text-sky-400 font-bold mt-4 animate-pulse">AI 辨識中...</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Step 3: Notification -->
+                @if (currentStep() === 'shipping-notification') {
+                    <div class="flex flex-col h-full max-w-2xl mx-auto w-full">
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 text-center">出貨通知預覽</h3>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex-1 flex flex-col">
+                            <textarea 
+                                [(ngModel)]="generatedShippingText"
+                                class="flex-1 w-full p-4 bg-slate-50 dark:bg-slate-900 border-none rounded-lg font-mono text-sm resize-none focus:ring-0 text-slate-800 dark:text-slate-200 leading-relaxed"
+                            ></textarea>
+                        </div>
+                        
+                        <div class="mt-6 flex flex-col gap-3">
+                            <div class="flex space-x-3">
+                                <button (click)="copyShippingText()" class="flex-1 py-3 bg-white dark:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                                    僅複製文字
+                                </button>
+                                <button (click)="copyTextAndImage()" class="flex-1 py-3 bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-600 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                                    複製文字 + 首張截圖
+                                </button>
+                            </div>
+                            
+                            <!-- UPDATED: Split Action Buttons with new text -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <button (click)="finalizeShipping(false)" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-lg font-bold transition-colors flex flex-col items-center justify-center">
+                                    <span>{{ editingBatchNo() ? '複製文字 + 首張截圖 + 更新' : '複製文字 + 首張截圖 + 出貨' }}</span>
+                                    <span class="text-[10px] opacity-80 font-normal">狀態: 已出貨/部份出貨</span>
+                                </button>
+                                <button (click)="finalizeShipping(true)" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-lg font-bold transition-colors flex flex-col items-center justify-center">
+                                    <span>{{ editingBatchNo() ? '複製文字 + 首張截圖 + 更新 + 結案' : '複製文字 + 首張截圖 + 出貨 + 結案' }}</span>
+                                    <span class="text-[10px] opacity-80 font-normal">狀態: 強制已結案</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        </div>
+
+        <!-- Wizard Bottom Nav -->
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:pl-0 flex justify-center">
+            <div class="max-w-4xl w-full flex justify-end space-x-3 px-4">
+                @if (currentStep() === 'shipping-execution') {
+                    <button (click)="processStockAndNext()" class="px-8 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow font-medium flex items-center">
+                        下一步：物流單號
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                    </button>
+                }
+                @if (currentStep() === 'logistics-ocr') {
+                    <button (click)="goToStep('shipping-execution')" class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">上一步</button>
+                    <button (click)="goToShippingNotification()" class="px-8 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow font-medium flex items-center">
+                        下一步：產生通知
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                    </button>
+                }
+                @if (currentStep() === 'shipping-notification') {
+                    <button (click)="goToStep('logistics-ocr')" class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">上一步</button>
+                }
+            </div>
+        </div>
+    </div>
+  }
+</div>
+
+<!-- Edit Modal (Shared for Pending & History) -->
+@if (showEditModal()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeEditModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <form [formGroup]="editForm">
+          <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[85vh] overflow-y-auto">
+            <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                {{ editMode() === 'pending' ? '編輯待出貨資訊 (Pending)' : '編輯出貨紀錄 (History)' }}
+            </h3>
+            
+            <div class="space-y-4">
+                
+                @if (editMode() === 'pending') {
+                    <!-- Receiver Info -->
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+                        <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">收件人資訊</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">姓名</label>
+                                <input type="text" formControlName="receiverName" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">電話</label>
+                                <input type="text" formControlName="receiverPhone" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">地址</label>
+                                <input type="text" formControlName="receiverAddress" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+                } @else {
+                    <!-- Shipment Info (History Only) -->
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+                        <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">出貨紀錄</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">實際出貨日</label>
+                                <input type="date" formControlName="actualShippingDate" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">貨運單號</label>
+                                <input type="text" formControlName="shippingId" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">追蹤網址</label>
+                                <input type="text" formControlName="trackingUrl" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Common Fields -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">物流方式</label>
+                    <select formControlName="logistics" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                        @for (opt of logisticsOptions; track opt) {
+                            <option [value]="opt">{{ opt }}</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">備註 (Special Requests)</label>
+                    <textarea formControlName="specialRequests" rows="3" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm border p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"></textarea>
+                </div>
+
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100 dark:border-slate-600 rounded-b-lg">
+            <button type="button" (click)="editMode() === 'pending' ? savePendingEdit() : saveHistoryEdit()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+              儲存變更
+            </button>
+            <button type="button" (click)="closeEditModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-500 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Image Viewer Modal (Gallery) -->
+@if (currentViewImage()) {
+    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" (click)="closeImageViewer()">
+        <div class="relative max-w-5xl max-h-[95vh] w-full flex flex-col items-center" (click)="$event.stopPropagation()">
+            
+            <!-- Main Image -->
+            <div class="relative w-full h-[70vh] flex items-center justify-center">
+                <img [src]="currentViewImage()" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+                
+                <!-- Prev Button -->
+                @if (viewerImages().length > 1) {
+                    <button (click)="prevImage()" class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 sm:-ml-12 p-2 text-white/50 hover:text-white transition-colors bg-black/20 hover:bg-black/50 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                }
+
+                <!-- Next Button -->
+                @if (viewerImages().length > 1) {
+                    <button (click)="nextImage()" class="absolute right-0 top-1/2 -translate-y-1/2 -mr-2 sm:-mr-12 p-2 text-white/50 hover:text-white transition-colors bg-black/20 hover:bg-black/50 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                }
+            </div>
+
+            <!-- Action Toolbar (NEW) -->
+            <div class="mt-4 flex space-x-4">
+                <button (click)="copyCurrentImage()" class="px-6 py-2 bg-white text-slate-900 rounded-full hover:bg-slate-200 transition-colors font-bold shadow-lg flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M8 5a2 2 0 002 2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                    複製圖片 (Copy)
+                </button>
+                <button (click)="downloadCurrentImage()" class="px-6 py-2 bg-slate-700 text-white rounded-full hover:bg-slate-600 transition-colors font-medium border border-slate-600 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>
+                    下載 (Download)
+                </button>
+            </div>
+
+            <!-- Thumbnails / Count -->
+            <div class="mt-4 flex space-x-2 overflow-x-auto max-w-full p-2">
+                @for (img of viewerImages(); track $index) {
+                    <button (click)="viewerIndex.set($index)" 
+                            class="w-12 h-12 rounded-md overflow-hidden border-2 transition-all flex-shrink-0"
+                            [class.border-white]="$index === viewerIndex()"
+                            [class.border-transparent]="$index !== viewerIndex()"
+                            [class.opacity-50]="$index !== viewerIndex()">
+                        <img [src]="img" class="w-full h-full object-cover">
+                    </button>
+                }
+            </div>
+            
+            <button (click)="closeImageViewer()" class="absolute top-0 right-0 sm:-top-4 sm:-right-4 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-red-500/80 rounded-full transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+    </div>
+}
