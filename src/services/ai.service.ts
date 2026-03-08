@@ -3,7 +3,6 @@ import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase.config';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// 【匯出型別】
 export type AiRole = string;
 
 @Injectable({
@@ -25,7 +24,6 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // 【角色切換方法】
   setRole(role: AiRole): void {
     this.currentRole.set(role);
   }
@@ -95,4 +93,50 @@ export class AiService implements OnDestroy {
   saveKeyToStorage(key: string): boolean {
     try { 
       localStorage.setItem('gemini_api_key', key.trim()); 
-      return true
+      return true; 
+    } catch (e) { 
+      return false; 
+    }
+  }
+  
+  clearStoredKey(): void { 
+    localStorage.removeItem('gemini_api_key'); 
+  }
+  
+  async ensureApiKey(): Promise<boolean> { 
+    const key = this.getStoredKey() || await this.fetchSharedKey();
+    return !!(key && key.trim().length > 0);
+  }
+
+  private subscribeToConfigurationChanges() {
+    this.unsubscribeConfig = onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data['apiKey']) this.sharedKey.set(data['apiKey'].trim());
+        if (data['keywords']) this.knowledgeBase.set(data['keywords']);
+        if (data['systemInstruction']) this.currentSystemInstruction.set(data['systemInstruction']);
+        if (data['role']) this.currentRole.set(data['role']);
+      }
+    });
+  }
+
+  async fetchSharedKey(): Promise<string | null> {
+    const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
+    if (snap.exists() && snap.data()['apiKey']) {
+      const key = snap.data()['apiKey'].trim();
+      this.sharedKey.set(key);
+      return key;
+    }
+    return null;
+  }
+
+  private async getGenAIInstance() { 
+    const key = this.getStoredKey() || await this.fetchSharedKey();
+    if (!key) throw new Error("API Key缺失，請先配置。");
+    return new GoogleGenerativeAI(key);
+  }
+
+  ngOnDestroy() { 
+    if (this.unsubscribeConfig) this.unsubscribeConfig(); 
+  }
+}
