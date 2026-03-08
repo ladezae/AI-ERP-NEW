@@ -25,26 +25,51 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // 【核心修復 1】：補齊缺失的 saveKeyToStorage 方法
+  // 【修復 1】：新增 ensureApiKey 方法
+  async ensureApiKey(): Promise<boolean> {
+    const key = localStorage.getItem('gemini_api_key') || await this.fetchSharedKey();
+    return !!(key && key.trim().length > 0);
+  }
+
+  // 【修復 2】：補回儲存與清除方法
   saveKeyToStorage(key: string): boolean {
     try {
-      if (!key) return false;
       localStorage.setItem('gemini_api_key', key.trim());
-      console.log('🔑 [AI ERP] API Key 已儲存至本地瀏覽器。');
       return true;
     } catch (e) {
-      console.error('儲存 Key 失敗', e);
       return false;
     }
   }
 
-  // 【核心修復 2】：補齊缺失的 clearStoredKey 方法
   clearStoredKey(): void {
     localStorage.removeItem('gemini_api_key');
-    console.log('🗑️ [AI ERP] 本地 Key 已清除。');
   }
 
-  // 【核心修復 3】：補齊圖片壓縮方法，避免之前的編譯錯誤
+  // 【核心功能】：物流辨識實作
+  async parseLogisticsImage(imageBase64: string, providerOptions: string[] = []): Promise<any> {
+    try {
+      const genAI = await this.getGenAIInstance();
+      const compressedBase64 = await this.compressImage(imageBase64);
+      const base64Data = compressedBase64.split(',')[1] || compressedBase64;
+
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.0-flash",
+        systemInstruction: "你是一個台灣物流單據 OCR 專家，請回傳純 JSON 格式，包含 provider 和 trackingNumber。" 
+      });
+
+      const result = await model.generateContent([
+        "辨識圖中物流商與單號。",
+        { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+      ]);
+
+      const text = result.response.text();
+      return JSON.parse(text.replace(/```json|```/g, '').trim());
+    } catch (error) {
+      console.error("AI 辨識失敗", error);
+      throw error;
+    }
+  }
+
   private async compressImage(imageBase64: string): Promise<string> {
     return new Promise((resolve) => {
       const img = new Image();
@@ -88,21 +113,18 @@ export class AiService implements OnDestroy {
           return key;
         }
         return null;
-      } catch (e) {
-        return null;
-      }
+      } catch (e) { return null; }
     })();
     return this.sharedKeyPromise;
   }
 
-  // 確保 getGenAIInstance 與 parseLogisticsImage 邏輯正確
   private async getGenAIInstance(): Promise<GoogleGenerativeAI> {
     let apiKey = localStorage.getItem('gemini_api_key') || await this.fetchSharedKey();
     if (!apiKey) {
       const win = window as any;
       apiKey = win.GEMINI_API_KEY || win.API_KEY;
     }
-    if (!apiKey) throw new Error("找不到 API Key");
+    if (!apiKey) throw new Error("API Key missing");
     return new GoogleGenerativeAI(apiKey.trim());
   }
 
