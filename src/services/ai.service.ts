@@ -10,7 +10,7 @@ export class AiService implements OnDestroy {
   private unsubscribeConfig: any = null;
   private firestore = db;
   
-  // --- 【狀態管理 Signals】 滿足所有組件的讀取需求 ---
+  // --- 【狀態管理 Signals】 ---
   sharedKey = signal<string>('');
   researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
   knowledgeBase = signal<string[]>([]);
@@ -22,7 +22,7 @@ export class AiService implements OnDestroy {
     this.fetchSharedKey();
   }
 
-  // --- 【1. 萬用通訊核心】 完美相容 1~3 個參數的呼叫 ---
+  // --- 【1. 萬用通訊核心】 ---
   async sendMessage(prompt: string, image?: string, context?: any): Promise<string> {
     const genAI = await this.getGenAIInstance();
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -40,7 +40,7 @@ export class AiService implements OnDestroy {
     return result.response.text();
   }
 
-  // --- 【2. 業務專屬方法】 全部加上可選參數 (?) 防止 TS2554 報錯 ---
+  // --- 【2. 業務專屬方法】 ---
   async parseLogisticsImage(imageBase64: string, options?: any): Promise<any> {
     const prompt = options ? `辨識此物流單據，參考選項: ${JSON.stringify(options)}` : "請辨識此物流單據內容並轉為 JSON 格式";
     const response = await this.sendMessage(prompt, imageBase64);
@@ -74,5 +74,54 @@ export class AiService implements OnDestroy {
     return text;
   }
 
+  // 確保這個方法的括號完整閉合
   async updateConfiguration(systemInstruction: string, keywords?: string[]): Promise<void> {
     const docRef = doc(this.firestore, 'systemConfig', 'gemini');
+    await updateDoc(docRef, { systemInstruction, keywords: keywords || [] });
+  }
+
+  // --- 【4. 基礎管理與同步】 ---
+  getStoredKey(): string | null { return localStorage.getItem('gemini_api_key'); }
+  
+  saveKeyToStorage(key: string): boolean {
+    try { localStorage.setItem('gemini_api_key', key.trim()); return true; }
+    catch (e) { return false; }
+  }
+  
+  clearStoredKey(): void { localStorage.removeItem('gemini_api_key'); }
+  
+  async ensureApiKey(): Promise<boolean> { 
+    const key = this.getStoredKey() || await this.fetchSharedKey();
+    return !!(key && key.trim().length > 0);
+  }
+
+  private subscribeToConfigurationChanges() {
+    this.unsubscribeConfig = onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data['apiKey']) this.sharedKey.set(data['apiKey'].trim());
+        if (data['keywords']) this.knowledgeBase.set(data['keywords']);
+        if (data['systemInstruction']) this.currentSystemInstruction.set(data['systemInstruction']);
+        if (data['role']) this.currentRole.set(data['role']);
+      }
+    });
+  }
+
+  async fetchSharedKey(): Promise<string | null> {
+    const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
+    if (snap.exists() && snap.data()['apiKey']) {
+      const key = snap.data()['apiKey'].trim();
+      this.sharedKey.set(key);
+      return key;
+    }
+    return null;
+  }
+
+  private async getGenAIInstance() { 
+    const key = this.getStoredKey() || await this.fetchSharedKey();
+    if (!key) throw new Error("API Key缺失，請先配置。");
+    return new GoogleGenerativeAI(key);
+  }
+
+  ngOnDestroy() { if (this.unsubscribeConfig) this.unsubscribeConfig(); }
+}
