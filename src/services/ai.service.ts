@@ -48,6 +48,9 @@ export class AiService implements OnDestroy {
 
   // --- 【2. 業務專屬方法】 ---
   async parseLogisticsImage(imageBase64: string, options?: any): Promise<any> {
+    if (!this.sharedKey()) {
+      await this.fetchSharedKey();
+    }
     const prompt = options ? `辨識此物流單據，參考選項: ${JSON.stringify(options)}` : "請辨識此物流單據內容並轉為 JSON 格式";
     const response = await this.sendMessage(prompt, imageBase64);
     return JSON.parse(response.replace(/```json|```/g, '').trim());
