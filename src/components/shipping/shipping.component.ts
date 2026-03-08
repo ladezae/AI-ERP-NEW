@@ -1122,10 +1122,8 @@ export class ShippingComponent {
                         // If template has an ROI, perform a second targeted scan for better accuracy
                         if (matchedTemplate.roi) {
                             const refinedResult = await this.aiService.parseLogisticsImage(
-                                img, 
-                                this.logisticsOptions, 
-                                matchedTemplate.roi, 
-                                matchedTemplate.trackingUrlPattern?.replace('{{id}}', '{trackingId}')
+                                img,
+                                this.logisticsOptions
                             );
                             
                             // Merge results, preferring the refined tracking ID if it's valid
