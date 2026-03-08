@@ -68,3 +68,5 @@ app.get('*', (req, res) => {
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
+
+// force rebuild 2026-03-08: Trigger new Cloud Build deployment
