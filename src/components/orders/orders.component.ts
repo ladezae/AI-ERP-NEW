@@ -899,9 +899,15 @@ export class OrdersComponent implements OnDestroy {
         let isCalculable = true;
 
         if (product) {
-            isCalculable = product.isCalculable !== false;
+            // undefined 也視為 isCalculable=true，除非明確設為 false
+            // 但費用/折讓類別的商品也一律排除
+            const isFeeCat = ['費用', '折讓'].includes(product.category);
+            isCalculable = product.isCalculable !== false && !isFeeCat;
         } else {
-            if (this.SHIPPING_FEE_IDS.includes(o.productId)) {
+            if (
+                this.SHIPPING_FEE_IDS.includes(o.productId) ||
+                o.productId.startsWith('FEE-')
+            ) {
                 isCalculable = false;
             }
         }
