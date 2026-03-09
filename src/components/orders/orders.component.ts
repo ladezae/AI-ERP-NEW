@@ -1177,7 +1177,8 @@ export class OrdersComponent implements OnDestroy {
   // --- Printing Preview Logic ---
   
   openPrintPreview(group: GroupedOrder) {
-      this.currentPreviewGroup.set(group); 
+    const freshGroup = this.groupedOrders().find(g => g.baseOrderId === group.baseOrderId);
+    this.currentPreviewGroup.set(freshGroup ?? group); 
       
       // Auto-select first template if not set or invalid
       const templates = this.availableOrderTemplates();
