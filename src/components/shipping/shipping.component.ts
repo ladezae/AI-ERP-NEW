@@ -1,5 +1,5 @@
 
-import { ChangeDetectionStrategy, Component, computed, inject, signal, HostListener, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, HostListener, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -90,7 +90,7 @@ interface HistoryGroup {
     }
   `]
 })
-export class ShippingComponent implements AfterViewInit {
+export class ShippingComponent implements AfterViewChecked {
   private dataService = inject(DataService);
   private aiService = inject(AiService);
   private orderService = inject(OrderService);
@@ -168,23 +168,26 @@ export class ShippingComponent implements AfterViewInit {
     '大榮'
   ];
 
+  @ViewChild('pendingTable') pendingTableRef?: ElementRef<HTMLTableElement>;
+  private tableLayoutApplied = false;
+
   constructor() {
     this.initShippingForm();
     this.initEditForm();
   }
 
-  ngAfterViewInit() {
-    setTimeout(() => {
-      const tables = document.querySelectorAll('table');
-      tables.forEach(table => {
-        const parent = table.parentElement;
-        if (parent) {
-          (table as HTMLElement).style.setProperty('table-layout', 'fixed', 'important');
-          (table as HTMLElement).style.setProperty('width', parent.offsetWidth + 'px', 'important');
-          (table as HTMLElement).style.removeProperty('min-width');
-        }
-      });
-    }, 100);
+  ngAfterViewChecked() {
+    console.log('[AfterViewChecked] pendingTableRef:', !!this.pendingTableRef, 'applied:', this.tableLayoutApplied);
+    if (this.pendingTableRef && !this.tableLayoutApplied) {
+      const table = this.pendingTableRef.nativeElement;
+      const parent = table.parentElement;
+      if (parent && parent.offsetWidth > 0) {
+        table.style.setProperty('table-layout', 'fixed', 'important');
+        table.style.setProperty('width', parent.offsetWidth + 'px', 'important');
+        table.style.removeProperty('min-width');
+        this.tableLayoutApplied = true;
+      }
+    }
   }
 
   // --- New Computed: Pending Count (Action Required) ---
@@ -651,6 +654,7 @@ export class ShippingComponent implements AfterViewInit {
   // --- Actions ---
 
   setActiveTab(tab: ShippingTab) {
+      this.tableLayoutApplied = false;
       this.activeTab.set(tab);
       this.searchTerm.set(''); // Clear search when switching tabs
   }

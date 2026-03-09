@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Angular build cache
+.angular/
+
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
