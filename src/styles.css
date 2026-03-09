@@ -3,9 +3,9 @@
 /* Resizable Column Handle Styles */
 .resizer-handle {
   position: absolute;
-  right: -2px; /* Center it on the border */
+  right: 0;
   top: 0;
-  width: 10px; /* Wider hit area */
+  width: 10px;
   height: 100%;
   cursor: col-resize;
   z-index: 50;
@@ -26,7 +26,7 @@
 
 .resizer-handle:hover::after,
 .resizer-handle.resizing::after {
-  background-color: #0ea5e9; /* sky-500 */
+  background-color: #0ea5e9;
   height: 100%;
   top: 0;
   width: 3px;
@@ -38,12 +38,11 @@
 
 .resizable-header {
   position: relative !important;
-  user-select: none; /* Prevent text selection while resizing */
+  user-select: none;
 }
 
-/* Ensure table cells handle overflow correctly when resized very small */
-.table-fixed td, .table-fixed th {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.table-fixed {
+  table-layout: fixed !important;
 }
+
+.tab {}

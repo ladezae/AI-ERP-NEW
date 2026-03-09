@@ -1,5 +1,5 @@
 
-import { ChangeDetectionStrategy, Component, computed, inject, signal, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, HostListener, AfterViewInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -90,7 +90,7 @@ interface HistoryGroup {
     }
   `]
 })
-export class ShippingComponent {
+export class ShippingComponent implements AfterViewInit {
   private dataService = inject(DataService);
   private aiService = inject(AiService);
   private orderService = inject(OrderService);
@@ -171,6 +171,20 @@ export class ShippingComponent {
   constructor() {
     this.initShippingForm();
     this.initEditForm();
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      const tables = document.querySelectorAll('table');
+      tables.forEach(table => {
+        const parent = table.parentElement;
+        if (parent) {
+          (table as HTMLElement).style.setProperty('table-layout', 'fixed', 'important');
+          (table as HTMLElement).style.setProperty('width', parent.offsetWidth + 'px', 'important');
+          (table as HTMLElement).style.removeProperty('min-width');
+        }
+      });
+    }, 100);
   }
 
   // --- New Computed: Pending Count (Action Required) ---
