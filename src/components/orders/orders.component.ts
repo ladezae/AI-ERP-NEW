@@ -901,7 +901,7 @@ export class OrdersComponent implements OnDestroy {
         if (product) {
             // undefined 也視為 isCalculable=true，除非明確設為 false
             // 但費用/折讓類別的商品也一律排除
-            const isFeeCat = ['費用', '折讓'].includes(product.category);
+            const isFeeCat = ['費用', '折讓', '費用與折讓'].includes(product.category) || product.id?.startsWith('FEE-');
             isCalculable = product.isCalculable !== false && !isFeeCat;
         } else {
             if (
