@@ -76,7 +76,7 @@
             <!-- Pending Order Count Badge (Right Aligned) -->
             <div class="w-full md:w-auto md:ml-auto bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-900/50 rounded-lg px-4 py-1.5 shadow-sm flex items-center justify-between md:justify-start space-x-3">
                 <div class="flex flex-col items-end">
-                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">待出貨 (Pending)</span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">待出貨 (PENDING)</span>
                     <span class="text-xl font-black text-sky-600 dark:text-sky-500 leading-none">{{ pendingOrderCount() }}</span>
                 </div>
                 <div class="h-8 w-8 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-500">
@@ -227,7 +227,7 @@
                     <div class="flex items-center justify-end space-x-2">
                         <button (click)="openShippingWizard(group)" class="bg-sky-500 hover:bg-sky-600 text-white text-xs px-3 py-1.5 rounded shadow-sm transition-colors flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
-                          ????
+                          開始出貨
                         </button>
                     </div>
                   </td>
@@ -496,7 +496,7 @@
                 <div>
                     <h2 class="text-lg font-bold text-slate-800 dark:text-white">
                         @switch (currentStep()) {
-                            @case ('shipping-execution') { ?? 1: ?????? (Quantity Check) }
+                            @case ('shipping-execution') { 步驟 1: 確認出貨數量 (Quantity Check) }
                             @case ('logistics-ocr') { ?? 2: ?????? }
                             @case ('shipping-notification') { ?? 3: ?????? }
                         }
@@ -505,7 +505,7 @@
                         @if (editingBatchNo()) {
                             ???????: {{ editingBatchNo() }}
                         } @else {
-                            ???{{ editingOrderId() }} (? {{ currentShipmentCount() }} ???)
+                            訂單 {{ editingOrderId() }} (第 {{ currentShipmentCount() }} 批次)
                         }
                     </p>
                 </div>
@@ -520,12 +520,12 @@
                 @if (currentStep() === 'shipping-execution') {
                     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[65vh]">
                         <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 flex-shrink-0">
-                            <h3 class="font-bold text-slate-700 dark:text-slate-200">??????</h3>
+                            <h3 class="font-bold text-slate-700 dark:text-slate-200">出貨明細</h3>
                             @if (!editingBatchNo()) {
                                 <div class="space-x-3">
                                     <!-- Use movePickingToShip without arguments, it now handles all items in current wizard context -->
-                                    <button (click)="movePickingToShip()" class="text-xs text-amber-600 dark:text-amber-400 hover:underline">???? (Move Picked)</button>
-                                    <button (click)="shipAllItems()" class="text-xs text-sky-600 dark:text-sky-400 hover:underline">???? (Ship All)</button>
+                                    <button (click)="movePickingToShip()" class="text-xs text-amber-600 dark:text-amber-400 hover:underline">帶入備貨 (Move Picked)</button>
+                                    <button (click)="shipAllItems()" class="text-xs text-sky-600 dark:text-sky-400 hover:underline">全部出貨 (Ship All)</button>
                                 </div>
                             }
                         </div>
@@ -534,11 +534,11 @@
                             <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                                 <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">??</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">???</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">???</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">???? (Picking)</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">????</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">商品</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">訂購量</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">已出貨</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">訂單備貨 (Picking)</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">本次出貨</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
@@ -571,7 +571,7 @@
                                                        [max]="(item.orderedQty - item.shippedQty) - item.currentShipQty">
                                                 
                                                 @if (item.pickingQty + item.currentShipQty >= (item.orderedQty - item.shippedQty) && (item.orderedQty - item.shippedQty) > 0) {
-                                                    <span class="text-[10px] text-amber-500 mt-1 font-bold">????</span>
+                                                    <span class="text-[10px] text-amber-500 mt-1 font-bold">備貨數量</span>
                                                 }
                                             </div>
                                         </td>
@@ -586,7 +586,7 @@
                                                        [max]="(item.orderedQty - item.shippedQty) - item.pickingQty">
                                                 
                                                 @if (item.pickingQty + item.currentShipQty >= (item.orderedQty - item.shippedQty) && (item.orderedQty - item.shippedQty) > 0) {
-                                                    <span class="text-[10px] text-sky-500 mt-1 font-bold">????</span>
+                                                    <span class="text-[10px] text-sky-500 mt-1 font-bold">本次出貨</span>
                                                 }
                                             </div>
                                         </td>
@@ -598,7 +598,7 @@
                     </div>
                     
                     <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300">
-                        <strong>???????</strong> ??? >= (??? + ??? + ????)??????????????????
+                        <strong>庫存規則：備貨數 >= (已出貨 + 本次出貨 + 其他待出貨)才不會超賣</strong>
                     </div>
                 }
 
@@ -746,14 +746,14 @@
             <div class="max-w-4xl w-full flex justify-end space-x-3 px-4">
                 @if (currentStep() === 'shipping-execution') {
                     <button (click)="processStockAndNext()" class="px-8 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow font-medium flex items-center">
-                        ????????
+                        儲存並下一步
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                     </button>
                 }
                 @if (currentStep() === 'logistics-ocr') {
                     <button (click)="goToStep('shipping-execution')" class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">???</button>
                     <button (click)="goToShippingNotification()" class="px-8 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow font-medium flex items-center">
-                        ????????
+                        儲存並下一步
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                     </button>
                 }
