@@ -16,15 +16,16 @@ export class MobileQuoteComponent {
 
   // Filter Options
   keyProductTypes = [
+    { label: '全部', value: null },
     { label: '熱賣', value: 'A' },
     { label: '推薦', value: 'B' },
     { label: '特色', value: 'C' }
   ];
 
-  // Filter States (Default null/false)
-  selectedCategory = signal<string | null>(null);
-  selectedKeyProduct = signal<string | null>(null);
-  selectedSugar = signal<boolean | null>(null);
+  // Filter States (Default: 水果乾, 熱賣, 有糖)
+  selectedCategory = signal<string | null>('水果乾');
+  selectedKeyProduct = signal<string | null>('A');
+  selectedSugar = signal<boolean | null>(true);
   searchQuery = signal<string>('');
 
   // Expanded State
@@ -47,7 +48,9 @@ export class MobileQuoteComponent {
   });
 
   filteredProducts = computed(() => {
-    let list = this.products().filter(p => !this.HIDDEN_CATEGORIES.includes(p.category));
+    let list = this.products().filter(p => 
+      !this.HIDDEN_CATEGORIES.includes(p.category) && !p.isDiscontinued
+    );
     const query = this.searchQuery().toLowerCase().trim();
 
     if (query) {
@@ -86,11 +89,11 @@ export class MobileQuoteComponent {
     this.selectedCategory.update(current => current === cat ? null : cat);
   }
 
-  toggleKeyProduct(type: string) {
+  toggleKeyProduct(type: string | null) {
     this.selectedKeyProduct.update(current => current === type ? null : type);
   }
 
-  toggleSugar(val: boolean) {
+  toggleSugar(val: boolean | null) {
     this.selectedSugar.update(current => current === val ? null : val);
   }
 
