@@ -77,7 +77,6 @@ export class AiService implements OnDestroy {
 
   // --- 【2. 業務專屬方法】 ---
 
-  // 明確指定回傳結構，符合 shipping.component.ts 期望格式
   async parseLogisticsImage(imageBase64: string, logisticsOptions?: string[]): Promise<{
     provider: string;
     trackingId: string;
@@ -90,16 +89,20 @@ export class AiService implements OnDestroy {
 
     const optionsStr = logisticsOptions ? logisticsOptions.join('、') : '黑貓、大榮';
 
-    const prompt = `你是一個物流單號辨識專家。請仔細看這張圖片，辨識物流單號資訊。
+    const prompt = `你是台灣物流單據辨識專家。請仔細分析這張圖片。
 
-物流商選項：${optionsStr}
+## 物流商判斷規則
+- 黑貓：圖片出現「黑貓」「宅急便」「T-CAT」「t-cat」「9075」開頭單號
+- 大榮：圖片出現「大榮」「DHC」「台灣宅配通」或非9075開頭的單號
 
-請只回傳 JSON，不要有其他文字：
-{
-  "provider": "物流商名稱（從選項中選一個，無法辨識填空字串）",
-  "trackingId": "追蹤單號（只包含數字和字母，無法辨識填空字串）",
-  "trackingUrl": ""
-}`;
+## 追蹤單號規則
+- 只擷取數字和連字號，例如：9075-8324-3302
+- 不要包含空格或其他字元
+
+可用物流商選項：${optionsStr}
+
+請只回傳以下 JSON 格式，不要有任何其他文字或 markdown：
+{"provider":"物流商名稱","trackingId":"追蹤單號"}`;
 
     const response = await this.sendMessage(prompt, imageBase64);
 
@@ -109,7 +112,7 @@ export class AiService implements OnDestroy {
       return {
         provider: result.provider || '',
         trackingId: result.trackingId || '',
-        trackingUrl: result.trackingUrl || ''
+        trackingUrl: ''
       };
     } catch (e) {
       console.error('[AiService] parseLogisticsImage JSON parse failed:', response);

@@ -1156,6 +1156,11 @@ export class ShippingComponent implements AfterViewChecked {
                             const pattern = matchedTemplate.trackingUrlPattern.replace('{{id}}', '{trackingId}');
                             result.trackingUrl = pattern.replace('{trackingId}', result.trackingId);
                         }
+                    // 補上 trackingUrl（有 ROI 或無 ROI 都適用）
+                    if (matchedTemplate.trackingUrlPattern && result.trackingId && result.trackingId !== '未辨識') {
+                        const firstId = result.trackingId.split(',')[0].trim();
+                        result.trackingUrl = matchedTemplate.trackingUrlPattern.replace('{{id}}', firstId);
+                    }
                     }
                 }
 
