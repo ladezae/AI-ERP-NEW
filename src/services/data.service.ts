@@ -1019,7 +1019,33 @@ export class DataService {
 
   async addPurchaseOrder(po: PurchaseOrder): Promise<void> { this.purchaseOrders.update(current => [po, ...current]); this.saveLocal('erp_purchaseOrders', this.purchaseOrders()); if (this.connectionStatus() === 'connected' && db) { await setDoc(doc(db, 'purchaseOrders', po.purchaseId), po); } }
   async updatePurchaseOrder(po: PurchaseOrder): Promise<void> { this.purchaseOrders.update(current => current.map(p => p.purchaseId === po.purchaseId ? po : p)); this.saveLocal('erp_purchaseOrders', this.purchaseOrders()); if (this.connectionStatus() === 'connected' && db) { await setDoc(doc(db, 'purchaseOrders', po.purchaseId), po); } }
-  async updatePurchaseOrders(pos: PurchaseOrder[]): Promise<void> { const map = new Map(pos.map(p => [p.purchaseId, p])); this.purchaseOrders.update(current => current.map(p => map.get(p.purchaseId) || p)); this.saveLocal('erp_purchaseOrders', this.purchaseOrders()); if (this.connectionStatus() === 'connected' && db) { await Promise.all(pos.map(p => setDoc(doc(db, 'purchaseOrders', p.purchaseId), p))); } }
+  async updatePurchaseOrders(pos: PurchaseOrder[]): Promise<void> {
+    // ★ 結案時自動加庫存 ★
+    const currentPos = this.purchaseOrders();
+    for (const newPo of pos) {
+        const oldPo = currentPos.find(p => p.purchaseId === newPo.purchaseId);
+        if (oldPo && oldPo.status !== '已結案' && newPo.status === '已結案') {
+            const product = this.products().find(p => p.id === newPo.productId);
+            if (product) {
+                const addQty = newPo.quantity || 0;
+                const updatedProduct = {
+                    ...product,
+                    stock: (product.stock || 0) + addQty
+                };
+                await this.updateProduct(updatedProduct);
+                console.log(`[採購結案] ${product.name} 庫存 +${addQty} → ${updatedProduct.stock}`);
+            }
+        }
+    }
+
+    // 原有邏輯
+    const map = new Map(pos.map(p => [p.purchaseId, p]));
+    this.purchaseOrders.update(current => current.map(p => map.get(p.purchaseId) || p));
+    this.saveLocal('erp_purchaseOrders', this.purchaseOrders());
+    if (this.connectionStatus() === 'connected' && db) {
+        await Promise.all(pos.map(p => setDoc(doc(db, 'purchaseOrders', p.purchaseId), p)));
+    }
+  }
   async deletePurchaseOrders(ids: string[]): Promise<void> { const set = new Set(ids); this.purchaseOrders.update(current => current.filter(p => !set.has(p.purchaseId))); this.saveLocal('erp_purchaseOrders', this.purchaseOrders()); if (this.connectionStatus() === 'connected' && db) { await Promise.all(ids.map(id => deleteDoc(doc(db, 'purchaseOrders', id)))); } }
 
   async addShippingOrder(so: ShippingOrder): Promise<void> { this.shippingOrders.update(current => [so, ...current]); this.saveLocal('erp_shippingOrders', this.shippingOrders()); if (this.connectionStatus() === 'connected' && db) { await setDoc(doc(db, 'shippingOrders', so.id), so); } }

@@ -12,8 +12,7 @@ export class AiService implements OnDestroy {
   private firestore = db;
   private readonly GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
   private readonly GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
-  
-  // --- 【狀態管理 Signals】 ---
+
   sharedKey = signal<string>('');
   researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
   knowledgeBase = signal<string[]>([]);
@@ -38,25 +37,17 @@ export class AiService implements OnDestroy {
 
     const userContent: any[] = [];
 
-    // 如果有圖片，使用 Groq 多模態 image_url + text 格式
     if (image && image.includes('base64,')) {
       const [header, base64Data] = image.split(',');
       const mimeMatch = header.match(/data:(.*);base64/);
       const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-
       userContent.push({
         type: 'image_url',
-        image_url: {
-          url: `data:${mimeType};base64,${base64Data}`
-        }
+        image_url: { url: `data:${mimeType};base64,${base64Data}` }
       });
     }
 
-    // 主文字提示
-    userContent.push({
-      type: 'text',
-      text: finalPrompt
-    });
+    userContent.push({ type: 'text', text: finalPrompt });
 
     const response = await fetch(this.GROQ_ENDPOINT, {
       method: 'POST',
@@ -67,12 +58,7 @@ export class AiService implements OnDestroy {
       body: JSON.stringify({
         model: this.GROQ_MODEL,
         max_tokens: 2000,
-        messages: [
-          {
-            role: 'user',
-            content: userContent
-          }
-        ]
+        messages: [{ role: 'user', content: userContent }]
       })
     });
 
@@ -82,25 +68,53 @@ export class AiService implements OnDestroy {
     }
 
     const data = await response.json();
-    const message = data?.choices?.[0]?.message;
-    const content = message?.content;
-
-    // Groq 可能回傳字串或陣列片段，兩種都處理
+    const content = data?.choices?.[0]?.message?.content;
     if (Array.isArray(content)) {
       return content.map((part: any) => part?.text ?? '').join('');
     }
-
     return content ?? '';
   }
 
   // --- 【2. 業務專屬方法】 ---
-  async parseLogisticsImage(imageBase64: string, options?: any): Promise<any> {
-    if (!this.sharedKey()) {
-      await this.fetchSharedKey();
+
+  // 明確指定回傳結構，符合 shipping.component.ts 期望格式
+  async parseLogisticsImage(imageBase64: string, logisticsOptions?: string[]): Promise<{
+    provider: string;
+    trackingId: string;
+    trackingUrl: string;
+  }> {
+    const key = this.sharedKey() || await this.fetchSharedKey();
+    if (!key) {
+      throw new Error('API Key 未設定，請至系統設定配置 Groq API Key');
     }
-    const prompt = options ? `辨識此物流單據，參考選項: ${JSON.stringify(options)}` : "請辨識此物流單據內容並轉為 JSON 格式";
+
+    const optionsStr = logisticsOptions ? logisticsOptions.join('、') : '黑貓、大榮';
+
+    const prompt = `你是一個物流單號辨識專家。請仔細看這張圖片，辨識物流單號資訊。
+
+物流商選項：${optionsStr}
+
+請只回傳 JSON，不要有其他文字：
+{
+  "provider": "物流商名稱（從選項中選一個，無法辨識填空字串）",
+  "trackingId": "追蹤單號（只包含數字和字母，無法辨識填空字串）",
+  "trackingUrl": ""
+}`;
+
     const response = await this.sendMessage(prompt, imageBase64);
-    return JSON.parse(response.replace(/```json|```/g, '').trim());
+
+    try {
+      const cleaned = response.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(cleaned);
+      return {
+        provider: result.provider || '',
+        trackingId: result.trackingId || '',
+        trackingUrl: result.trackingUrl || ''
+      };
+    } catch (e) {
+      console.error('[AiService] parseLogisticsImage JSON parse failed:', response);
+      return { provider: '', trackingId: '未辨識', trackingUrl: '' };
+    }
   }
 
   async generateFormulaFromLogic(logic: string, category?: string, image?: string): Promise<string> {
@@ -108,7 +122,9 @@ export class AiService implements OnDestroy {
   }
 
   async parseUnstructuredData(text: string, schema?: any): Promise<any> {
-    const prompt = schema ? `請依據此 schema 解析文字: ${JSON.stringify(schema)}\n內容: ${text}` : `請將此文字解析為 JSON: ${text}`;
+    const prompt = schema
+      ? `請依據此 schema 解析文字: ${JSON.stringify(schema)}\n內容: ${text}`
+      : `請將此文字解析為 JSON: ${text}`;
     const response = await this.sendMessage(prompt);
     return JSON.parse(response.replace(/```json|```/g, '').trim());
   }
@@ -136,25 +152,30 @@ export class AiService implements OnDestroy {
   }
 
   // --- 【4. 基礎管理與同步】 ---
-  getStoredKey(): string | null { 
-    return localStorage.getItem('gemini_api_key'); 
+
+  getStoredKey(): string | null {
+    const key = this.sharedKey();
+    return key && key.trim().length > 0 ? key.trim() : null;
   }
-  
+
   saveKeyToStorage(key: string): boolean {
-    try { 
-      localStorage.setItem('gemini_api_key', key.trim()); 
-      return true; 
-    } catch (e) { 
-      return false; 
+    try {
+      this.sharedKey.set(key.trim());
+      return true;
+    } catch (e) {
+      return false;
     }
   }
-  
-  clearStoredKey(): void { 
-    localStorage.removeItem('gemini_api_key'); 
+
+  clearStoredKey(): void {
+    this.sharedKey.set('');
   }
-  
-  async ensureApiKey(): Promise<boolean> { 
-    const key = this.getStoredKey() || await this.fetchSharedKey();
+
+  async ensureApiKey(): Promise<boolean> {
+    if (this.sharedKey() && this.sharedKey().trim().length > 0) {
+      return true;
+    }
+    const key = await this.fetchSharedKey();
     return !!(key && key.trim().length > 0);
   }
 
@@ -171,24 +192,28 @@ export class AiService implements OnDestroy {
   }
 
   async fetchSharedKey(): Promise<string | null> {
-    const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
-    if (snap.exists() && snap.data()['apiKey']) {
-      const key = snap.data()['apiKey'].trim();
-      this.sharedKey.set(key);
-      return key;
+    try {
+      const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
+      if (snap.exists() && snap.data()['apiKey']) {
+        const key = snap.data()['apiKey'].trim();
+        this.sharedKey.set(key);
+        return key;
+      }
+    } catch (e) {
+      console.error('[AiService] fetchSharedKey failed:', e);
     }
     return null;
   }
 
   private async getGroqApiKey(): Promise<string> {
-    const key = this.getStoredKey() || await this.fetchSharedKey();
+    const key = this.sharedKey() || await this.fetchSharedKey();
     if (!key || !key.trim()) {
-      throw new Error("API Key缺失，請先在系統設定中配置 Groq API Key。");
+      throw new Error('API Key 缺失，請至系統設定配置 Groq API Key。');
     }
     return key.trim();
   }
 
-  ngOnDestroy() { 
-    if (this.unsubscribeConfig) this.unsubscribeConfig(); 
+  ngOnDestroy() {
+    if (this.unsubscribeConfig) this.unsubscribeConfig();
   }
 }

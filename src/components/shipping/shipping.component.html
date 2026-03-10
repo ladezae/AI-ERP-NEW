@@ -165,7 +165,7 @@
                     <div class="flex flex-col w-full overflow-hidden">
                       @for (item of group.displayItems; track item.productId) {
                         <div class="h-9 flex justify-between items-center text-sm border-b border-slate-100 dark:border-slate-700/50 last:border-0 px-6" style="min-width: 0; overflow: hidden;">
-                          <span class="truncate max-w-[80px] text-slate-700 dark:text-slate-300" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; min-width: 0; width: 0; flex: 1;" [title]="item.productName">{{ item.productName }}</span>
+                          <span class="text-slate-700 dark:text-slate-300" style="display: block; min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="item.productName">{{ item.productName }}</span>
                           <span class="font-mono text-xs whitespace-nowrap ml-2">
                              <span class="text-green-600 dark:text-green-400">{{ item.shippedQuantity || 0 }}</span> / {{ item.quantity }}
                           </span>

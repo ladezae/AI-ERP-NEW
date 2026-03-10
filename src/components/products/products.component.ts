@@ -85,7 +85,8 @@ export class ProductsComponent {
     '土耳其',
     '美國',
     '智利',
-    '伊朗'
+    '伊朗',
+    '馬來西亞'
   ];
 
   readonly units = [
