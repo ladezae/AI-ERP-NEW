@@ -1030,7 +1030,9 @@ export class DataService {
                 const addQty = newPo.quantity || 0;
                 const updatedProduct = {
                     ...product,
-                    stock: (product.stock || 0) + addQty
+                    stock: (product.stock || 0) + addQty,
+                    stockUpdatedAt: new Date().toISOString(),
+                    stockUpdateSource: 'S' as const,
                 };
                 await this.updateProduct(updatedProduct);
                 console.log(`[採購結案] ${product.name} 庫存 +${addQty} → ${updatedProduct.stock}`);

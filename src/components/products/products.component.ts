@@ -870,9 +870,16 @@ export class ProductsComponent {
   async onSubmit() {
     if (this.productForm.valid) {
       const formValue = this.productForm.getRawValue();
-      const productData: Product = { 
-          ...formValue, 
-          lastUpdated: new Date().toISOString() 
+      const existingProduct = this.products().find(p => p.id === formValue.id);
+      const stockChanged = this.isEditMode() && existingProduct && existingProduct.stock !== formValue.stock;
+
+      const productData: Product = {
+          ...formValue,
+          lastUpdated: new Date().toISOString(),
+          ...(stockChanged ? {
+              stockUpdatedAt: new Date().toISOString(),
+              stockUpdateSource: 'M' as const,
+          } : {})
       };
 
       try {
