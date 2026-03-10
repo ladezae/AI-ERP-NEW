@@ -1,3 +1,100 @@
+<style>
+  :host {
+    display: block;
+    height: 100%;
+    background-color: rgb(248 250 252);
+    transition: background-color 0.3s, color 0.3s;
+  }
+  :host-context(.dark) { background-color: rgb(15 23 42); }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .filter-btn-sm {
+    flex-shrink: 0;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    border-width: 1px;
+    border-style: solid;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: all 0.2s;
+  }
+
+  .tag-btn {
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.375rem;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-width: 1px;
+    border-style: solid;
+    transition: all 0.2s;
+  }
+
+  .btn-cat {
+    border-color: rgb(226 232 240);
+    background-color: rgb(255 255 255);
+    color: rgb(100 116 139);
+  }
+  :host-context(.dark) .btn-cat, .dark .btn-cat {
+    background-color: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+    color: rgb(148 163 184);
+  }
+
+  .btn-cat-active {
+    background-color: rgb(2 132 199);
+    color: white;
+    border-color: rgb(2 132 199);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  .btn-kp {
+    border-color: rgb(226 232 240);
+    background-color: rgb(255 255 255);
+    color: rgb(148 163 184);
+  }
+  :host-context(.dark) .btn-kp, .dark .btn-kp {
+    background-color: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+  }
+
+  .btn-kp-active {
+    background-color: rgb(238 242 255);
+    color: rgb(79 70 229);
+    border-color: rgb(199 210 254);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  :host-context(.dark) .btn-kp-active, .dark .btn-kp-active {
+    background-color: rgb(79 70 229 / 0.3);
+    color: rgb(165 180 252);
+    border-color: rgb(67 56 202);
+  }
+
+  .product-card {
+    background-color: rgb(255 255 255);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(241 245 249);
+    overflow: hidden;
+    transition: all 0.15s;
+  }
+  :host-context(.dark) .product-card, .dark .product-card {
+    background-color: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+  }
+  .product-card:active {
+    transform: scale(0.98);
+    background-color: rgb(248 250 252);
+  }
+  :host-context(.dark) .product-card:active, .dark .product-card:active {
+    background-color: rgb(51 65 85);
+  }
+</style>
 
 <div class="flex flex-col h-full max-w-md mx-auto bg-slate-50 dark:bg-slate-900 relative transition-colors duration-300">
   <!-- Sticky Header with Filters -->

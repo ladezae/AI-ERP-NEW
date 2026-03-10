@@ -33,6 +33,7 @@ import { MobileQuoteComponent } from '../components/mobile-quote/mobile-quote.co
 import { DataService } from '../services/data.service';
 import { ScreenService } from '../services/screen.service';
 import { ViewType } from '../models/erp.models';
+import { Router, RouterOutlet } from '@angular/router';
 
 import { ExternalPortalComponent } from '../components/external-portal/external-portal.component';
 
@@ -42,6 +43,7 @@ import { ExternalPortalComponent } from '../components/external-portal/external-
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    RouterOutlet,
     SidebarComponent,
     BottomNavComponent,
     DashboardComponent,
@@ -77,6 +79,12 @@ import { ExternalPortalComponent } from '../components/external-portal/external-
     <div class="flex h-full bg-gray-100 dark:bg-slate-900 transition-colors duration-300"
          [class.bg-stone-100]="isMediumTheme()">
       
+      @if (isMobileQuoteRoute()) {
+        <div class="w-full h-full">
+          <router-outlet></router-outlet>
+        </div>
+      }
+      @else {
       <!-- Standalone Mobile Mode: Full Screen App Experience -->
       @if (currentView() === 'standalone-mobile') {
           <app-mobile-layout class="w-full h-full" [isStandalone]="true" (exitStandalone)="onNavigate('dashboard')"></app-mobile-layout>
@@ -218,6 +226,7 @@ import { ExternalPortalComponent } from '../components/external-portal/external-
               </div>
           }
       }
+    }
     </div>
   `
 })
@@ -225,8 +234,14 @@ export class AppComponent {
   public dataService = inject(DataService);
   public screenService = inject(ScreenService);
   private document = inject(DOCUMENT);
+  private router = inject(Router);
   
   currentView = signal<ViewType>('dashboard');
+  
+  /** True when URL is /mobile-quote so router-outlet is shown instead of @switch layout */
+  isMobileQuoteRoute(): boolean {
+    return this.router.url.includes('/mobile-quote');
+  }
   
   // Computed to help template apply medium theme classes
   isMediumTheme = signal(false);
@@ -255,6 +270,8 @@ export class AppComponent {
              // Open Orders Component and trigger Wizard
              this.dataService.autoStartOrderWizard.set(true);
              this.currentView.set('orders');
+        } else if (hash === '#mobile-quote') {
+             this.currentView.set('mobile-quote');
         }
     } catch(e) {
         console.error('Hash routing error', e);
@@ -301,6 +318,10 @@ export class AppComponent {
   }
 
   onNavigate(view: ViewType): void {
+    if (view === 'mobile-quote') {
+      this.router.navigate(['/mobile-quote']);
+      return;
+    }
     this.currentView.set(view);
     this.dataService.currentView.set(view);
     // Clear hash when navigating away within the app to prevent stuck state on reload

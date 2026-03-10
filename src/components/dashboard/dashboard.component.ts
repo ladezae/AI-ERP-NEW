@@ -184,6 +184,21 @@ export class DashboardComponent {
       });
   }
 
+  goToMobileQuote() {
+      this.navigate.emit('mobile-quote' as any);
+  }
+
+  copyMobileQuoteLink(event: Event) {
+      event.stopPropagation();
+      const baseUrl = window.location.origin + window.location.pathname;
+      const link = `${baseUrl}#mobile-quote`;
+      navigator.clipboard.writeText(link).then(() => {
+          alert('已複製手機報價連結！');
+      }).catch(() => {
+          prompt('請手動複製連結:', link);
+      });
+  }
+
   // NEW: Copy Create Order Link
   copyCreateOrderLink(event: Event) {
       event.stopPropagation();
