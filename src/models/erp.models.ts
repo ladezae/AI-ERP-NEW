@@ -35,6 +35,8 @@ export interface Product {
   imageUrl: string;
   nutritionLabelUrl?: string; // Added: 營養標示圖片 URL
   serviceStatus?: '正常供貨' | '缺貨等復供' | '滿箱代訂' | '限量配貨' | '付款順序供貨' | ''; // Added: 服務狀態
+  stockUpdatedAt?: string;
+  stockUpdateSource?: 'S' | 'M';
   lastUpdated: string;
 }
 

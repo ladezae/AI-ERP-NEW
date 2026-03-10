@@ -765,10 +765,15 @@ export class ProductsComponent {
   // --- Inline Editing ---
   
   onStockUpdate(product: Product, event: Event) {
-      const newVal = parseFloat((event.target as HTMLInputElement).value); // Allowed decimals
-      // Allowed negative values
+      const newVal = parseFloat((event.target as HTMLInputElement).value);
       if (!isNaN(newVal)) {
-          const updated = { ...product, stock: newVal, lastUpdated: new Date().toISOString() };
+          const updated = {
+              ...product,
+              stock: newVal,
+              stockUpdatedAt: new Date().toISOString(),
+              stockUpdateSource: 'M' as const,
+              lastUpdated: new Date().toISOString()
+          };
           this.dataService.updateProduct(updated);
       }
   }

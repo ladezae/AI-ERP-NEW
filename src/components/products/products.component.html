@@ -408,6 +408,24 @@
                           class="pl-1 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-sky-500 focus:ring-0 text-sm font-semibold text-slate-900 dark:text-white px-1 py-0.5 transition-colors w-[8ch]"
                           step="0.001">
                     </div>
+                    @if (product.stockUpdatedAt) {
+                      <div class="flex items-center space-x-1 mt-0.5">
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500">
+                          {{ product.stockUpdatedAt | date:'MM/dd HH:mm' }}
+                        </span>
+                        <span class="text-[10px] font-bold px-1 rounded"
+                              [class.bg-sky-100]="product.stockUpdateSource === 'S'"
+                              [class.text-sky-600]="product.stockUpdateSource === 'S'"
+                              [class.dark:bg-sky-900]="product.stockUpdateSource === 'S'"
+                              [class.dark:text-sky-300]="product.stockUpdateSource === 'S'"
+                              [class.bg-amber-100]="product.stockUpdateSource === 'M'"
+                              [class.text-amber-700]="product.stockUpdateSource === 'M'"
+                              [class.dark:bg-amber-900]="product.stockUpdateSource === 'M'"
+                              [class.dark:text-amber-300]="product.stockUpdateSource === 'M'">
+                          {{ product.stockUpdateSource || '?' }}
+                        </span>
+                      </div>
+                    }
                     @if (product.stock < product.safetyStock) {
                       <span class="mt-0.5 px-2 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200">
                         庫存不足
