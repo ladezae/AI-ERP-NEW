@@ -837,21 +837,14 @@ export class DataService {
   }
 
   private checkSession() {
-      const savedUser = localStorage.getItem('erp_current_user');
-      if (savedUser) {
-          try {
-              this.currentUser.set(JSON.parse(savedUser));
-          } catch(e) {}
-      } else {
-          // Auto-login default admin if no session found
-          const adminUser: Employee = {
-              id: 'ADMIN', name: 'System Admin', email: 'admin@sys.com', phone: '',
-              department: 'IT', jobTitle: 'Admin', roleId: 'ADMIN', roleName: 'Super Admin',
-              status: 'Active', joinDate: '', avatarUrl: '', account: 'admin', password: '123'
-          };
-          this.currentUser.set(adminUser);
-          this.saveLocal('erp_current_user', adminUser);
+    const savedUser = localStorage.getItem('erp_current_user');
+    if (savedUser) {
+      try {
+        this.currentUser.set(JSON.parse(savedUser));
+      } catch (e) {
+        this.currentUser.set(null);
       }
+    }
   }
 
   login(account: string, pass: string): boolean {

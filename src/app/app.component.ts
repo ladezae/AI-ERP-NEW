@@ -84,6 +84,9 @@ import { ExternalPortalComponent } from '../components/external-portal/external-
           <router-outlet></router-outlet>
         </div>
       }
+      @else if (!dataService.currentUser()) {
+        <app-login class="w-full h-full flex items-center justify-center"></app-login>
+      }
       @else {
       <!-- Standalone Mobile Mode: Full Screen App Experience -->
       @if (currentView() === 'standalone-mobile') {
