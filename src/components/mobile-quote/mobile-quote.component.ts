@@ -76,6 +76,11 @@ export class MobileQuoteComponent {
       list = list.filter(p => p.sugar === sugar);
     }
 
+    list = list.map(p => ({
+      ...p,
+      imageUrl: (p.imageUrl && !p.imageUrl.includes('picsum')) ? p.imageUrl : ''
+    }));
+
     return list;
   });
 
@@ -107,6 +112,13 @@ export class MobileQuoteComponent {
       }
       return next;
     });
+  }
+
+  onImgError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    if (!img.src.includes('temp.jpg')) {
+      img.src = 'assets/temp.jpg';
+    }
   }
 
   resetFilters() {
