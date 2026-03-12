@@ -954,7 +954,7 @@ export class ProductsComponent {
           // 確保新商品是銷售中
           isDiscontinued: false,
           // 保留營養標示圖片
-          nutritionLabelUrl: product.nutritionLabelUrl
+          nutritionLabelUrl: product.nutritionLabelUrl ?? null,
       });
       
       // 3. 確保 ID 欄位是可編輯的

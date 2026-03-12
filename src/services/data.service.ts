@@ -971,6 +971,11 @@ export class DataService {
   }
   
   // CRUD Methods (Simplified for brevity as requested)
+  private cleanProductData(data: any) {
+    return Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    );
+  }
   async addProduct(product: Product): Promise<void> { 
     console.log('DataService: Adding product', product.id);
     this.sanitizeImageUrls(product);
@@ -978,7 +983,7 @@ export class DataService {
     this.saveLocal('erp_products', this.products()); 
     if (this.connectionStatus() === 'connected' && db) { 
         console.log('DataService: Syncing new product to Firebase', product.id);
-        await setDoc(doc(db, 'products', product.id), product); 
+        await setDoc(doc(db, 'products', product.id), this.cleanProductData(product)); 
     } 
     this.lastSyncTime.set(new Date()); 
   }
@@ -989,7 +994,7 @@ export class DataService {
     this.saveLocal('erp_products', this.products()); 
     if (this.connectionStatus() === 'connected' && db) { 
         console.log('DataService: Syncing updated product to Firebase', product.id);
-        await setDoc(doc(db, 'products', product.id), product); 
+        await setDoc(doc(db, 'products', product.id), this.cleanProductData(product)); 
     } 
     this.lastSyncTime.set(new Date()); 
   }
