@@ -217,6 +217,11 @@ export class DashboardComponent {
       this.dataService.markTaskAsRead(task.id);
   }
 
+  goToTasksAndDismiss() {
+      this.myUnreadTasks().forEach(task => this.dataService.markTaskAsRead(task.id));
+      this.navigate.emit('tasks');
+  }
+
   getCardColorClass(category: string): string {
       switch (category) {
           // Finance: Green (Emerald)

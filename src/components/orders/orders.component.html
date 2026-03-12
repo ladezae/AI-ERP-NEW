@@ -620,93 +620,166 @@
                       <!-- General Product Grid (UPDATED to 1-Column with Detailed Card) -->
                       <div class="flex flex-col gap-4 pb-24">
                           @for (prod of wizardFilteredProducts(); track prod.id) {
-                              
+
+                              @let isOem = prod.id.startsWith('OEM-');
+                              @let oemVariants = getCartItemsByBaseId(prod.id);
+                              @let cartItem = getCartItem(prod.id);
+
                               <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 relative group transition-colors"
-                                   [class.border-sky-500]="getCartItem(prod.id)"
-                                   [class.dark:border-sky-500]="getCartItem(prod.id)">
-                                   
-                                   @let cartItem = getCartItem(prod.id);
+                                   [class.border-sky-500]="!isOem && cartItem"
+                                   [class.dark:border-sky-500]="!isOem && cartItem"
+                                   [class.border-purple-500]="isOem && oemVariants.length > 0"
+                                   [class.ring-1]="isOem && oemVariants.length > 0"
+                                   [class.ring-purple-500]="isOem && oemVariants.length > 0">
 
-                                   @if (cartItem) {
-                                       <!-- IN CART: FULL CONTROLS (Match Step 7) -->
-                                       <!-- Row 1: Name + Delete -->
-                                       <div class="flex justify-between items-start mb-3">
-                                           <div class="flex flex-col mr-2">
-                                               <span class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ cartItem.name }}</span>
-                                               <span class="text-xs text-slate-400 font-mono mt-0.5">{{ prod.id }} | 庫存: {{ prod.stock }}</span>
-                                           </div>
-                                           <button (click)="removeFromCart(prod.id); $event.stopPropagation()" class="text-slate-400 hover:text-red-500 transition-colors p-1 -mt-1 -mr-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                           </button>
-                                       </div>
-
-                                       <!-- Row 2: Grid Inputs -->
-                                       <div class="grid grid-cols-3 gap-3 items-end mb-3">
-                                           <!-- Qty -->
-                                           <div class="flex flex-col">
-                                               <label class="text-[10px] text-slate-400 mb-1 ml-1">數量</label>
-                                               <input type="number" 
-                                                      [value]="cartItem.quantity" 
-                                                      (input)="onQtyInput(prod.id, $event)" 
-                                                      class="w-full text-center py-2.5 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-xl font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
-                                           </div>
-                                           <!-- Price -->
-                                           <div class="flex flex-col">
-                                                <label class="text-[10px] text-slate-400 mb-1 ml-1">單價</label>
-                                                <input type="number" 
-                                                       [value]="cartItem.price" 
-                                                       (input)="onPriceInput(prod.id, $event)" 
-                                                       class="w-full text-center py-2.5 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-lg font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
-                                           </div>
-                                           <!-- Subtotal -->
-                                           <div class="flex flex-col items-end pb-2">
-                                                <label class="text-[10px] text-slate-400 mb-1">小計</label>
-                                                <span class="font-bold text-xl text-sky-600 dark:text-sky-400">${{ cartItem.price * cartItem.quantity | number }}</span>
-                                           </div>
-                                       </div>
-
-                                       <!-- Row 3: Note Toggle -->
-                                       <div class="flex items-center">
-                                           <button (click)="toggleCartNote(prod.id)" class="text-xs flex items-center transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
-                                                   [class.text-amber-600]="cartItem.note"
-                                                   [class.text-slate-500]="!cartItem.note">
-                                               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                               </svg>
-                                               {{ isCartNoteExpanded(prod.id) ? '收起備註' : (cartItem.note ? '編輯備註 (已填)' : '新增備註') }}
-                                           </button>
-                                       </div>
-
-                                       <!-- Row 4: Textarea -->
-                                       @if (isCartNoteExpanded(prod.id)) {
-                                           <div class="mt-3 animate-[fadeIn_0.2s]">
-                                               <textarea rows="2" 
-                                                         [value]="cartItem.note||''" 
-                                                         (input)="onNoteInput(prod.id, $event)" 
-                                                         placeholder="輸入備註..." 
-                                                         class="w-full p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-amber-500 outline-none resize-none"></textarea>
-                                           </div>
-                                       }
-
-                                   } @else {
-                                       <!-- NOT IN CART: Simple Add View -->
-                                       <div class="flex justify-between items-center">
-                                           <div class="flex flex-col pr-4">
-                                               <div class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ prod.name }}</div>
-                                               <div class="flex items-center space-x-3 mt-1.5">
-                                                   <span class="text-xs bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-300 font-mono">{{ prod.id }}</span>
-                                                   <span class="text-base font-bold text-slate-600 dark:text-slate-300">${{ prod.priceBeforeTax }}</span>
-                                                   @if (prod.stock <= 0) { <span class="text-xs text-red-500 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">缺貨</span> }
-                                                   @else { <span class="text-xs text-slate-400">存: {{ prod.stock }}</span> }
-                                               </div>
-                                           </div>
-                                           <button (click)="addToCart(prod)" class="flex-shrink-0 w-12 h-12 rounded-full bg-sky-100 dark:bg-slate-700 text-sky-600 dark:text-sky-400 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all shadow-sm">
+                                  @if (isOem) {
+                                      <!-- OEM 商品：Header + Variants（同 Step 5 樣式） -->
+                                      <div class="flex justify-between items-start mb-2">
+                                          <div class="flex flex-col pr-4">
+                                              <div class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ prod.name }}</div>
+                                              <div class="flex items-center space-x-3 mt-1.5">
+                                                  <span class="text-xs bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-300 font-mono">{{ prod.id }}</span>
+                                                  <span class="text-base font-bold text-slate-600 dark:text-slate-300">${{ prod.priceBeforeTax }}</span>
+                                              </div>
+                                          </div>
+                                          <button (click)="addToCart(prod)" class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="新增變體">
                                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                               </svg>
-                                           </button>
-                                       </div>
-                                   }
+                                          </button>
+                                      </div>
+
+                                      @if (oemVariants.length > 0) {
+                                          <div class="mt-4 space-y-3 pl-2 border-l-4 border-purple-200 dark:border-purple-900">
+                                              @for (item of oemVariants; track item.product.id) {
+                                                  <div class="bg-slate-50 dark:bg-slate-700/30 p-3 rounded-md border border-slate-100 dark:border-slate-600 relative">
+                                                      <div class="flex justify-between items-start mb-2 pr-6">
+                                                          <div class="text-sm font-bold text-purple-700 dark:text-purple-300">{{ item.name }}</div>
+                                                          <button (click)="removeFromCart(item.product.id)" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors p-1">
+                                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                          </button>
+                                                      </div>
+
+                                                      <div class="grid grid-cols-3 gap-3 items-end mb-3">
+                                                          <div class="flex flex-col">
+                                                              <label class="text-[10px] text-slate-400 mb-1 ml-1">數量</label>
+                                                              <input type="number"
+                                                                     [value]="item.quantity"
+                                                                     (input)="onQtyInput(item.product.id, $event)"
+                                                                     class="w-full text-center py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xl font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-purple-500">
+                                                          </div>
+                                                          <div class="flex flex-col">
+                                                              <label class="text-[10px] text-slate-400 mb-1 ml-1">單價</label>
+                                                              <input type="number"
+                                                                     [value]="item.price"
+                                                                     (input)="onPriceInput(item.product.id, $event)"
+                                                                     class="w-full text-center py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-lg font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-purple-500">
+                                                          </div>
+                                                          <div class="flex flex-col items-end pb-2">
+                                                              <label class="text-[10px] text-slate-400 mb-1">小計</label>
+                                                              <span class="font-bold text-xl text-purple-600 dark:text-purple-400">${{ item.price * item.quantity | number }}</span>
+                                                          </div>
+                                                      </div>
+
+                                                      <div class="flex items-center">
+                                                          <button (click)="toggleCartNote(item.product.id)" class="text-xs flex items-center transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                                                                  [class.text-amber-600]="item.note"
+                                                                  [class.text-slate-500]="!item.note">
+                                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                              </svg>
+                                                              {{ isCartNoteExpanded(item.product.id) ? '收起備註' : (item.note ? '編輯備註 (已填)' : '新增備註') }}
+                                                          </button>
+                                                      </div>
+
+                                                      @if (isCartNoteExpanded(item.product.id)) {
+                                                          <div class="mt-3">
+                                                              <textarea rows="2"
+                                                                        [value]="item.note||''"
+                                                                        (input)="onNoteInput(item.product.id, $event)"
+                                                                        placeholder="輸入備註..."
+                                                                        class="w-full p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-amber-500 outline-none resize-none"></textarea>
+                                                          </div>
+                                                      }
+                                                  </div>
+                                              }
+                                          </div>
+                                      }
+
+                                  } @else {
+                                      <!-- 一般商品：原有邏輯完全不動 -->
+                                      @if (cartItem) {
+                                          <div class="flex justify-between items-start mb-3">
+                                              <div class="flex flex-col mr-2">
+                                                  <span class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ cartItem.name }}</span>
+                                                  <span class="text-xs text-slate-400 font-mono mt-0.5">{{ prod.id }} | 庫存: {{ prod.stock }}</span>
+                                              </div>
+                                              <button (click)="removeFromCart(prod.id); $event.stopPropagation()" class="text-slate-400 hover:text-red-500 transition-colors p-1 -mt-1 -mr-1">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                              </button>
+                                          </div>
+
+                                          <div class="grid grid-cols-3 gap-3 items-end mb-3">
+                                              <div class="flex flex-col">
+                                                  <label class="text-[10px] text-slate-400 mb-1 ml-1">數量</label>
+                                                  <input type="number"
+                                                         [value]="cartItem.quantity"
+                                                         (input)="onQtyInput(prod.id, $event)"
+                                                         class="w-full text-center py-2.5 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-xl font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
+                                              </div>
+                                              <div class="flex flex-col">
+                                                  <label class="text-[10px] text-slate-400 mb-1 ml-1">單價</label>
+                                                  <input type="number"
+                                                         [value]="cartItem.price"
+                                                         (input)="onPriceInput(prod.id, $event)"
+                                                         class="w-full text-center py-2.5 bg-slate-50 dark:bg-slate-700 border-none rounded-lg text-lg font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-500">
+                                              </div>
+                                              <div class="flex flex-col items-end pb-2">
+                                                  <label class="text-[10px] text-slate-400 mb-1">小計</label>
+                                                  <span class="font-bold text-xl text-sky-600 dark:text-sky-400">${{ cartItem.price * cartItem.quantity | number }}</span>
+                                              </div>
+                                          </div>
+
+                                          <div class="flex items-center">
+                                              <button (click)="toggleCartNote(prod.id)" class="text-xs flex items-center transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                                                      [class.text-amber-600]="cartItem.note"
+                                                      [class.text-slate-500]="!cartItem.note">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                  </svg>
+                                                  {{ isCartNoteExpanded(prod.id) ? '收起備註' : (cartItem.note ? '編輯備註 (已填)' : '新增備註') }}
+                                              </button>
+                                          </div>
+
+                                          @if (isCartNoteExpanded(prod.id)) {
+                                              <div class="mt-3 animate-[fadeIn_0.2s]">
+                                                  <textarea rows="2"
+                                                            [value]="cartItem.note||''"
+                                                            (input)="onNoteInput(prod.id, $event)"
+                                                            placeholder="輸入備註..."
+                                                            class="w-full p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-amber-500 outline-none resize-none"></textarea>
+                                              </div>
+                                          }
+
+                                      } @else {
+                                          <div class="flex justify-between items-center">
+                                              <div class="flex flex-col pr-4">
+                                                  <div class="font-bold text-slate-800 dark:text-white text-lg leading-snug">{{ prod.name }}</div>
+                                                  <div class="flex items-center space-x-3 mt-1.5">
+                                                      <span class="text-xs bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-300 font-mono">{{ prod.id }}</span>
+                                                      <span class="text-base font-bold text-slate-600 dark:text-slate-300">${{ prod.priceBeforeTax }}</span>
+                                                      @if (prod.stock <= 0) { <span class="text-xs text-red-500 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">缺貨</span> }
+                                                      @else { <span class="text-xs text-slate-400">存: {{ prod.stock }}</span> }
+                                                  </div>
+                                              </div>
+                                              <button (click)="addToCart(prod)" class="flex-shrink-0 w-12 h-12 rounded-full bg-sky-100 dark:bg-slate-700 text-sky-600 dark:text-sky-400 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all shadow-sm">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                                  </svg>
+                                              </button>
+                                          </div>
+                                      }
+                                  }
                               </div>
                           } @empty {
                               <div class="col-span-full text-center py-12">
