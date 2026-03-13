@@ -1,4 +1,4 @@
-import {
+��import {
     ChangeDetectionStrategy, Component,
     computed, inject, signal,
     ElementRef, ViewChild, effect
@@ -80,7 +80,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     aiPricing = computed(() => this.dataService.systemSettings().aiPricing ?? { inputRate: 0.075, outputRate: 0.30 });
   
     // AI Cost Computed
-    aiCostStats = computed(() => {
+    aiCostStats = computed((=> {
       const logs = this.aiUsageLogs();
       const pricing = this.aiPricing();
   
@@ -97,7 +97,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
         totalOutput += l.outputTokens;
       });
   
-      const inputCost = (totalInput / 1000000) * pricing.inputRate;
+      const inputCost = (totalInput / 1000000* pricing.inputRate;
       const outputCost = (totalOutput / 1000000) * pricing.outputRate;
       const totalCost = inputCost + outputCost;
   
@@ -106,7 +106,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       monthlyLogs.forEach(l => {
         if (!contextStats[l.context]) contextStats[l.context] = { count: 0, cost: 0 };
         const iCost = (l.inputTokens / 1000000) * pricing.inputRate;
-        const oCost = (l.outputTokens / 1000000) * pricing.outputRate;
+        const oCost = (l.outputTokens / 1000000* pricing.outputRate;
         contextStats[l.context].count++;
         contextStats[l.context].cost += (iCost + oCost);
       });
@@ -155,8 +155,8 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     readonly logisticsOptions = ['黑貓', '新竹貨運'];
   
     // Using schemas from DataService instead of hardcoded array
-    schemas = computed(() => {
-      return this.dataService.systemSchemas().sort((a, b) => a.chineseName.localeCompare(b.chineseName));
+    schemas = computed((=> {
+      return this.dataService.systemSchemas().sort((a, b=> a.chineseName.localeCompare(b.chineseName));
     });
   
     activeSchema = computed(() => {
@@ -169,11 +169,11 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       if (!schema) return [];
   
       const term = this.schemaSearchTerm().toLowerCase().trim();
-      if (!term) return schema.fields;
+      if (!termreturn schema.fields;
   
       return schema.fields.filter(f =>
         f.name.toLowerCase().includes(term) ||
-        f.chineseName.toLowerCase().includes(term) ||
+        f.chineseName.toLowerCase().includes(term||
         f.description.toLowerCase().includes(term) ||
         f.type.toLowerCase().includes(term)
       );
@@ -194,32 +194,32 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.isKeySaved.set(!this.aiService.getStoredKey());
     }
   
-    refreshSnapshots() {
+    refreshSnapshots({
       this.localSnapshots.set(this.dataService.listLocalSnapshots());
     }
   
-    setTheme(theme: 'light' | 'medium' | 'dark') {
+    setTheme(theme: 'light' | 'medium' | 'dark'{
       this.dataService.updateSettings({ theme });
     }
   
-    setFontSize(level: number) {
+    setFontSize(level: number{
       this.dataService.updateSettings({ fontSizeLevel: level as any });
     }
   
-    setActiveTab(tab: SystemTab) {
+    setActiveTab(tab: SystemTab{
       this.activeTab.set(tab);
-      if (tab === 'data-management') {
+      if (tab === 'data-management'{
         this.refreshSnapshots();
       }
     }
   
-    goToSettings() {
+    goToSettings({
       this.setActiveTab('settings');
       const main = document.querySelector('main');
       if (main) main.scrollTop = 0;
     }
   
-    selectSchema(name: string) {
+    selectSchema(name: string{
       this.activeSchemaName.set(name);
       this.schemaSearchTerm.set('');
     }
@@ -228,13 +228,13 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.schemaSearchTerm.set((event.target as HTMLInputElement).value);
     }
   
-    updateDescription(schemaName: string, fieldName: string, event: Event) {
+    updateDescription(schemaName: string, fieldName: string, event: Event{
       // In a real app, this would dispatch an update to DataService
       console.log(`Updated ${schemaName}.${fieldName} description to: ${(event.target as HTMLInputElement).value}`);
     }
   
     getTypeClass(type: string): string {
-      switch (type) {
+      switch (type{
         case 'string': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
         case 'number': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
         case 'boolean': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
@@ -251,13 +251,13 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.showHistoryModal.set(false);
     }
   
-    restoreVersion(versionId: string) {
+    restoreVersion(versionId: string{
       if (!confirm('還原後將覆蓋目前資料，確定要還原嗎？')) return;
   
       this.isRestoringSchema.set(true);
   
       // Simulate restore process
-      setTimeout(() => {
+      setTimeout((=> {
         if (versionId === 'v_3days' || versionId === 'v_init') {
           // Restore to Default (Factory Reset logic)
           this.dataService.resetSchemasToDefault();
@@ -270,12 +270,12 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       }, 1000);
     }
   
-    // --- Template History Logic (NEW) ---
-    openTemplateHistoryModal() {
+    // --- Template History Logic (NEW---
+    openTemplateHistoryModal({
       this.showTemplateHistoryModal.set(true);
     }
   
-    closeTemplateHistoryModal() {
+    closeTemplateHistoryModal({
       this.showTemplateHistoryModal.set(false);
     }
   
@@ -284,11 +284,11 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
   
       this.isRestoringTemplates.set(true);
   
-      setTimeout(() => {
+      setTimeout((=> {
         if (versionId === 't_3days') {
           this.dataService.loadMockData(); // Re-seeds mock data which acts as a restore
           alert('已還原至 3 天前備份，還原後將重新載入頁面');
-        } else if (versionId === 't_default') {
+        } else if (versionId === 't_default'{
           // Clear templates and reload defaults
           this.dataService.loadMockData();
           alert('出廠設定已還原，還原後將重新載入頁面');
@@ -302,9 +302,9 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
   
     // --- Other Settings Logic ---
   
-    updateAiPricing(key: 'inputRate' | 'outputRate', event: Event) {
+    updateAiPricing(key: 'inputRate' | 'outputRate', event: Event{
       const val = parseFloat((event.target as HTMLInputElement).value);
-      if (isNaN(val)) return;
+      if (isNaN(val)return;
   
       const current = this.aiPricing();
       this.dataService.updateSettings({
@@ -321,8 +321,8 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.dataService.updateSettings({ aiMonthlyQuota: val });
     }
   
-    clearAiLogs() {
-      if (confirm('確定要清除 AI 使用紀錄？')) {
+    clearAiLogs({
+      if (confirm('確定要清除 AI 使用紀錄？'){
         this.dataService.clearAiUsageLogs();
         alert('已清除');
       }
@@ -335,7 +335,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       setTimeout(() => {
         const success = this.dataService.createLocalSnapshot('manual');
         this.isCreatingSnapshot.set(false);
-        if (success) {
+        if (success{
           this.refreshSnapshots();
           alert('快照建立成功');
         }
@@ -355,23 +355,23 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     }
   
     deleteSnapshot(snap: BackupSnapshot) {
-      if (confirm('確定要刪除此快照？')) {
+      if (confirm('確定要刪除此快照？'){
         this.dataService.deleteLocalSnapshot(snap.key);
         this.refreshSnapshots();
         alert('已刪除');
       }
     }
   
-    toggleAutoBackup(event: Event) {
+    toggleAutoBackup(event: Event{
       const checked = (event.target as HTMLInputElement).checked;
       this.dataService.updateSettings({ autoBackup: checked });
       // Trigger side effect manually or rely on service interval reset
       this.dataService.initAutoBackup();
     }
   
-    updateBackupInterval(event: Event) {
+    updateBackupInterval(event: Event{
       const val = parseInt((event.target as HTMLInputElement).value, 10);
-      if (!isNaN(val) && val > 0) {
+      if (!isNaN(val&& val > 0{
         this.dataService.updateSettings({ autoBackupInterval: val });
         this.dataService.initAutoBackup();
       }
@@ -406,9 +406,9 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
   
     saveTemplate() {
       const tpl = this.currentTemplate();
-      if (tpl) {
+      if (tpl{
         const exists = this.shippingTemplates().some(t => t.id === tpl.id);
-        if (exists) {
+        if (exists{
           this.dataService.updateShippingTemplate(tpl);
         } else {
           this.dataService.addShippingTemplate(tpl);
@@ -417,7 +417,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       }
     }
   
-    deleteTemplate(id: string) {
+    deleteTemplate(id: string{
       if (confirm('確定要刪除此範本？')) {
         this.dataService.deleteShippingTemplate(id);
       }
@@ -425,35 +425,35 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
   
     async onOcrImageUpload(event: Event) {
       const input = event.target as HTMLInputElement;
-      if (input.files && input.files[0]) {
+      if (input.files && input.files[0]{
         const file = input.files[0];
         try {
           const base64 = await this.imageService.compressImage(file);
           this.currentTemplate.update(t => t ? { ...t, imageUrl: base64 } : null);
-        } catch(e) { console.error(e); }
+        } catch(e{ console.error(e); }
       }
     }
   
     // ROI Drawing...
-    startDrawing(event: MouseEvent) {
+    startDrawing(event: MouseEvent{
       if (!this.imageContainer) return;
       const rect = this.imageContainer.nativeElement.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      const xPct = (x / rect.width) * 100;
+      const xPct = (x / rect.width* 100;
       const yPct = (y / rect.height) * 100;
       this.isDrawing.set(true);
       this.startPoint = { x: xPct, y: yPct };
       this.drawBox.set({ x: xPct, y: yPct, w: 0, h: 0 });
     }
   
-    drawing(event: MouseEvent) {
-      if (!this.isDrawing() || !this.imageContainer) return;
+    drawing(event: MouseEvent{
+      if (!this.isDrawing() || !this.imageContainerreturn;
       const rect = this.imageContainer.nativeElement.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       const xPct = (x / rect.width) * 100;
-      const yPct = (y / rect.height) * 100;
+      const yPct = (y / rect.height* 100;
       const w = Math.abs(xPct - this.startPoint.x);
       const h = Math.abs(yPct - this.startPoint.y);
       const left = Math.min(xPct, this.startPoint.x);
@@ -461,11 +461,11 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.drawBox.set({ x: left, y: top, w, h });
     }
   
-    stopDrawing() {
+    stopDrawing({
       if (this.isDrawing()) {
         this.isDrawing.set(false);
         const box = this.drawBox();
-        if (box && box.w > 1 && box.h > 1) {
+        if (box && box.w > 1 && box.h > 1{
           this.currentTemplate.update(t => t ? {
             ...t,
             roi: { x: box.x, y: box.y, width: box.w, height: box.h }
@@ -477,12 +477,12 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
   
     async trainAiRecognition() {
       const tpl = this.currentTemplate();
-      if (!tpl || !tpl.imageUrl) return;
+      if (!tpl || !tpl.imageUrlreturn;
   
       // Check for API Key first
       const hasKey = await this.aiService.ensureApiKey();
       if (!hasKey) {
-        if (!window.aistudio) {
+        if (!window.aistudio{
           alert('Gemini API 金鑰未設定，請先設定 API 金鑰，或使用 AI Studio');
         }
         return;
@@ -499,10 +499,10 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
         this.trainingResult.set(result);
   
         alert(`辨識成功\n辨識結果\n追蹤碼: ${result.trackingId}\n提供者: ${result.provider}`);
-      } catch (error: any) {
+      } catch (error: any{
         // If the error is about API key, prompt user to select one
-        if (error.message && error.message.includes('API key must be set')) {
-          if (window.aistudio) {
+        if (error.message && error.message.includes('API key must be set'){
+          if (window.aistudio{
             if (confirm('Gemini API 金鑰未設定，是否開啟 AI Studio 選擇金鑰？')) {
               await window.aistudio.openSelectKey();
             }
@@ -518,7 +518,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     }
   
     // --- Comm Templates Logic ...
-    createNewCommTemplate() {
+    createNewCommTemplate({
       const newTpl: CommunicationTemplate = {
         id: `COMM-${Date.now()}`,
         name: '通訊範本',
@@ -531,17 +531,17 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.isEditingCommTemplate.set(true);
     }
   
-    editCommTemplate(tpl: CommunicationTemplate) {
+    editCommTemplate(tpl: CommunicationTemplate{
       this.currentCommTemplate.set(JSON.parse(JSON.stringify(tpl)));
       this.isEditingCommTemplate.set(true);
     }
   
-    cancelEditCommTemplate() {
+    cancelEditCommTemplate({
       this.isEditingCommTemplate.set(false);
       this.currentCommTemplate.set(null);
     }
   
-    saveCommTemplate() {
+    saveCommTemplate({
       const tpl = this.currentCommTemplate();
       if (tpl) {
         const exists = this.commTemplates().some(t => t.id === tpl.id);
@@ -555,21 +555,21 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     }
   
     deleteCommTemplate(id: string) {
-      if (confirm('確定要刪除此範本？')) {
+      if (confirm('確定要刪除此範本？'){
         this.dataService.deleteCommunicationTemplate(id);
       }
     }
   
-    insertVariable(key: string) {
-      const field = document.getElementById('commContent') as HTMLTextAreaElement;
-      if (field && this.currentCommTemplate()) {
+    insertVariable(key: string{
+      const field = document.getElementById('commContent'as HTMLTextAreaElement;
+      if (field && this.currentCommTemplate(){
         const start = field.selectionStart;
         const end = field.selectionEnd;
         const text = this.currentCommTemplate()!.content;
         const insert = `{{${key}}}`;
         const newText = text.substring(0, start) + insert + text.substring(end);
         this.currentCommTemplate.update(t => t ? { ...t, content: newText } : null);
-        setTimeout(() => {
+        setTimeout((=> {
           field.focus();
           field.setSelectionRange(start + insert.length, start + insert.length);
         });
@@ -577,7 +577,7 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     }
   
     // --- Data Management ...
-    downloadBackup() {
+    downloadBackup({
       const json = this.dataService.getAllDataAsJson();
       const blob = new Blob([json], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
@@ -598,14 +598,14 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       this.isRestoring.set(true);
       const file = input.files[0];
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = async (e=> {
         try {
           const json = e.target?.result as string;
           const data = JSON.parse(json);
           await this.dataService.restoreFullBackup(data);
           alert('匯入成功，還原後請重新整理頁面');
           window.location.reload();
-        } catch (err) {
+        } catch (err{
           console.error(err);
           alert('匯入失敗：檔案格式不正確');
         } finally {
@@ -631,8 +631,8 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       }
     }
   
-    async triggerCloudPull() {
-      if (!confirm('確定要從雲端下載資料嗎？\n(Firebase 需已連線，會覆蓋本機資料)')) return;
+    async triggerCloudPull({
+      if (!confirm('確定要從雲端下載資料嗎？\n(Firebase 需已連線，會覆蓋本機資料)')return;
       this.isSyncing.set(true);
       try {
         await this.dataService.syncCloudToLocal();
@@ -649,9 +649,9 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
     manualApiKey = signal('');
     isKeySaved = signal(false);
   
-    saveManualKey() {
+    saveManualKey({
       const key = this.manualApiKey();
-      if (!key.trim()) {
+      if (!key.trim(){
         alert('請輸入 API 金鑰');
         return;
       }
@@ -671,15 +671,15 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       alert('金鑰已清除');
     }
   
-    async openApiKeyDialog() {
-      if (window.aistudio) {
+    async openApiKeyDialog({
+      if (window.aistudio{
         await window.aistudio.openSelectKey();
       } else {
         alert('請使用手動輸入 API 金鑰，AI Studio 需要 Chrome 擴充功能，前往 AI Studio 取得 API 金鑰\n金鑰僅存於本機，不會上傳');
       }
     }
   
-    saveFirebaseConfig() {
+    saveFirebaseConfig({
       try {
         this.dataService.saveFirebaseConfig(this.firebaseConfigInput());
       } catch (e: any) {
@@ -695,11 +695,11 @@ imports: [CommonModule, FormsModule, ExportConfigComponent],
       { id: 'v_init', label: '出廠預設 (Factory Default)', date: 'Initial Setup', description: '出廠設定', isDefault: true }
     ];
   
-    // Mock Template History (readonly) (NEW)
+    // Mock Template History (readonly(NEW)
     readonly templateHistory = [
       { id: 't_current', label: '目前版本 (Current)', date: 'Now', description: '目前使用中', isDefault: false },
       { id: 't_backup_1', label: '昨日備份', date: 'Yesterday 18:00', description: '自動備份 #1024', isDefault: false },
       { id: 't_3days', label: '3 天前 (3 Days Ago)', date: '2024-05-20 09:00', description: '備份 #1024', isDefault: true },
       { id: 't_default', label: '出廠設定 (Factory)', date: 'Factory', description: '出廠預設', isDefault: true }
     ];
-  }
+    
