@@ -11,7 +11,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ViewType } from '../../models/erp.models'; // Import ViewType
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import * as d3 from 'd3';
 
 // Updated Step Type
 type OrderStep = 'list' | 'select-brand' | 'select-company' | 'select-customer' | 'select-products' | 'select-manufacturing' | 'select-extras' | 'fill-info' | 'review-summary' | 'communication' | 'cart-adjust';
@@ -53,23 +52,6 @@ interface GroupedOrder {
   daysSinceOrder: number;
 }
 
-// Graph Interfaces
-interface GraphNode extends d3.SimulationNodeDatum {
-  id: string;
-  label: string;
-  group: 'order' | 'customer' | 'product';
-  radius: number;
-  x?: number;
-  y?: number;
-  fx?: number | null;
-  fy?: number | null;
-}
-
-interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
-  source: string | GraphNode;
-  target: string | GraphNode;
-  value: number;
-}
 
 @Component({
   selector: 'app-orders',
@@ -91,7 +73,6 @@ export class OrdersComponent implements OnDestroy {
   private document = inject(DOCUMENT);
 
   @ViewChild('previewFrame') previewFrame!: ElementRef<HTMLIFrameElement>;
-  @ViewChild('graphContainer') graphContainer!: ElementRef<HTMLDivElement>;
 
   // Data Signals
   orders = this.dataService.orders;
@@ -105,7 +86,6 @@ export class OrdersComponent implements OnDestroy {
 
   // List View State
   searchTerm = signal('');
-  isVisualMode = signal(false); // Toggle for Visual Graph Mode
   expandedOrderNotes = signal<Set<string>>(new Set()); // Track expanded notes in list view
   
   // Sorting Signals
@@ -313,16 +293,6 @@ export class OrdersComponent implements OnDestroy {
             this.dataService.autoStartOrderWizard.set(false);
         }
     });
-
-    // Effect: Graph Rendering
-    effect(() => {
-        if (this.isVisualMode() && this.currentStep() === 'list') {
-            // Need a slight delay to ensure container exists in DOM
-            setTimeout(() => {
-                this.renderRelationshipGraph();
-            }, 50);
-        }
-    });
   }
   
   ngOnDestroy() {
@@ -343,197 +313,7 @@ export class OrdersComponent implements OnDestroy {
       return this.expandedCartNotes().has(productId);
   }
 
-  // --- Visual Graph Logic ---
-  
-  toggleVisualMode() {
-      this.isVisualMode.update(v => !v);
-  }
-  
-  private renderRelationshipGraph() {
-      if (!this.graphContainer) return;
-      
-      const element = this.graphContainer.nativeElement;
-      // Clear previous
-      d3.select(element).selectAll('*').remove();
-      
-      const width = element.clientWidth;
-      const height = element.clientHeight;
-      
-      const data = this.prepareGraphData();
-      
-      if (data.nodes.length === 0) {
-          d3.select(element).append('div')
-            .attr('class', 'flex items-center justify-center h-full text-slate-400')
-            .text('目前篩選條件下無資料');
-          return;
-      }
 
-      // Zoom support
-      const zoom = d3.zoom<SVGSVGElement, unknown>()
-          .scaleExtent([0.1, 4])
-          .on('zoom', (event) => {
-              g.attr('transform', event.transform);
-          });
-
-      const svg = d3.select(element).append('svg')
-          .attr('width', width)
-          .attr('height', height)
-          .call(zoom)
-          .on("dblclick.zoom", null); // Disable double click zoom
-
-      const g = svg.append('g');
-
-      // Simulation
-      const simulation = d3.forceSimulation<GraphNode, GraphLink>(data.nodes)
-          .force('link', d3.forceLink<GraphNode, GraphLink>(data.links).id(d => d.id).distance(100))
-          .force('charge', d3.forceManyBody().strength(-300))
-          .force('center', d3.forceCenter(width / 2, height / 2))
-          .force('collide', d3.forceCollide().radius(d => (d as any).radius + 10).iterations(2));
-
-      // Links
-      const link = g.append('g')
-          .attr('stroke', '#94a3b8') // slate-400
-          .attr('stroke-opacity', 0.6)
-          .selectAll('line')
-          .data(data.links)
-          .join('line')
-          .attr('stroke-width', d => Math.sqrt(d.value));
-
-      // Nodes
-      const node = g.append('g')
-          .attr('stroke', '#fff')
-          .attr('stroke-width', 1.5)
-          .selectAll('circle')
-          .data(data.nodes)
-          .join('circle')
-          .attr('r', d => d.radius)
-          .attr('fill', d => this.getNodeColor(d.group))
-          .call(d3.drag<SVGCircleElement, GraphNode>()
-              .on('start', dragstarted)
-              .on('drag', dragged)
-              .on('end', dragended));
-
-      // Labels
-      const text = g.append('g')
-          .selectAll('text')
-          .data(data.nodes)
-          .join('text')
-          .text(d => d.label)
-          .attr('x', 12)
-          .attr('y', 4)
-          .attr('font-size', '10px')
-          .attr('fill', d => document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569') // slate-300 / slate-600
-          .style('pointer-events', 'none'); // Let clicks pass through to node
-
-      // Title/Tooltip
-      node.append('title').text(d => d.label);
-
-      simulation.on('tick', () => {
-          link
-              .attr('x1', d => (d.source as GraphNode).x!)
-              .attr('y1', d => (d.source as GraphNode).y!)
-              .attr('x2', d => (d.target as GraphNode).x!)
-              .attr('y2', d => (d.target as GraphNode).y!);
-
-          node
-              .attr('cx', d => d.x!)
-              .attr('cy', d => d.y!);
-              
-          text
-              .attr('x', d => d.x! + 12)
-              .attr('y', d => d.y! + 4);
-      });
-
-      function dragstarted(event: any) {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          event.subject.fx = event.subject.x;
-          event.subject.fy = event.subject.y;
-      }
-
-      function dragged(event: any) {
-          event.subject.fx = event.x;
-          event.subject.fy = event.y;
-      }
-
-      function dragended(event: any) {
-          if (!event.active) simulation.alphaTarget(0);
-          event.subject.fx = null;
-          event.subject.fy = null;
-      }
-  }
-  
-  private getNodeColor(group: string): string {
-      switch(group) {
-          case 'order': return '#3b82f6'; // blue-500
-          case 'customer': return '#10b981'; // emerald-500
-          case 'product': return '#f97316'; // orange-500
-          default: return '#9ca3af';
-      }
-  }
-  
-  private prepareGraphData(): { nodes: GraphNode[], links: GraphLink[] } {
-      const orders = this.groupedOrders(); // Use filtered orders to respect search
-      const nodes: Map<string, GraphNode> = new Map();
-      const links: GraphLink[] = [];
-      
-      // Limit to top 50 to prevent performance issues
-      const limitedOrders = orders.slice(0, 50);
-      
-      limitedOrders.forEach(group => {
-          // 1. Order Node (Center)
-          if (!nodes.has(group.baseOrderId)) {
-              nodes.set(group.baseOrderId, {
-                  id: group.baseOrderId,
-                  label: `${group.baseOrderId} (${group.status})`,
-                  group: 'order',
-                  radius: 12
-              });
-          }
-          
-          // 2. Customer Node
-          const custId = `CUST-${group.customerId}`; // Prefix to avoid ID collision
-          if (!nodes.has(custId)) {
-              nodes.set(custId, {
-                  id: custId,
-                  label: group.customerName,
-                  group: 'customer',
-                  radius: 15 // Bigger
-              });
-          }
-          
-          // Link Order <-> Customer
-          links.push({
-              source: custId,
-              target: group.baseOrderId,
-              value: 2
-          });
-          
-          // 3. Product Nodes
-          group.displayItems.forEach(item => {
-              const prodId = item.productId;
-              if (!nodes.has(prodId)) {
-                  nodes.set(prodId, {
-                      id: prodId,
-                      label: item.productName,
-                      group: 'product',
-                      radius: 8
-                  });
-              }
-              
-              // Link Order <-> Product
-              links.push({
-                  source: group.baseOrderId,
-                  target: prodId,
-                  value: 1
-              });
-          });
-      });
-      
-      return {
-          nodes: Array.from(nodes.values()),
-          links: links
-      };
-  }
 
   // --- Dynamic Viewport Zoom Control ---
   private toggleViewportZoom(enable: boolean) {
