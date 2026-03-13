@@ -77,18 +77,18 @@ export class SystemComponent {
   
   // Mock Schema History
   readonly schemaHistory = [
-      { id: 'v_current', label: '目前版本 (Current)', date: 'Now', description: '最新的編輯狀態', isDefault: false },
-      { id: 'v_auto_1', label: '自動備份 (Auto-Save)', date: '2024-05-23 10:00', description: '系統定期快照', isDefault: false },
-      { id: 'v_3days', label: '三天前的版本 (3 Days Ago)', date: '2024-05-20 09:15', description: '穩定版本 (Stable Snapshot)', isDefault: true },
-      { id: 'v_init', label: '系統預設值 (Factory Default)', date: 'Initial Setup', description: '原始安裝設定', isDefault: true }
+      { id: 'v_current', label: '???? (Current)', date: 'Now', description: '???????', isDefault: false },
+      { id: 'v_auto_1', label: '???? (Auto-Save)', date: '2024-05-23 10:00', description: '??????', isDefault: false },
+      { id: 'v_3days', label: '?????? (3 Days Ago)', date: '2024-05-20 09:15', description: '???? (Stable Snapshot)', isDefault: true },
+      { id: 'v_init', label: '????? (Factory Default)', date: 'Initial Setup', description: '??????', isDefault: true }
   ];
 
   // Mock Template History (NEW)
   readonly templateHistory = [
-      { id: 't_current', label: '目前設定 (Current)', date: 'Now', description: '最新狀態', isDefault: false },
-      { id: 't_backup_1', label: '昨日備份', date: 'Yesterday 18:00', description: '每日自動備份', isDefault: false },
-      { id: 't_3days', label: '三天前的版本 (3 Days Ago)', date: '2024-05-20 09:00', description: '系統快照 (Backup #1024)', isDefault: true },
-      { id: 't_default', label: '原廠預設值', date: 'Factory', description: '初始設定', isDefault: true }
+      { id: 't_current', label: '???? (Current)', date: 'Now', description: '????', isDefault: false },
+      { id: 't_backup_1', label: '????', date: 'Yesterday 18:00', description: '??????', isDefault: false },
+      { id: 't_3days', label: '?????? (3 Days Ago)', date: '2024-05-20 09:00', description: '???? (Backup #1024)', isDefault: true },
+      { id: 't_default', label: '?????', date: 'Factory', description: '????', isDefault: true }
   ];
   
   // AI Cost Logic
@@ -140,35 +140,35 @@ export class SystemComponent {
 
   readonly TEMPLATE_VARIABLES = {
       purchase: [
-          { key: 'poId', label: '採購單號' },
-          { key: 'purchaseDate', label: '採購日期' },
-          { key: 'supplierName', label: '供應商名稱' },
-          { key: 'items', label: '商品明細列表' },
-          { key: 'deliveryDate', label: '預計到貨日' },
-          { key: 'purchaser', label: '採購人員' },
-          { key: 'companyName', label: '我方公司名稱' },
-          { key: 'note', label: '備註' }
+          { key: 'poId', label: '????' },
+          { key: 'purchaseDate', label: '????' },
+          { key: 'supplierName', label: '?????' },
+          { key: 'items', label: '??????' },
+          { key: 'deliveryDate', label: '?????' },
+          { key: 'purchaser', label: '????' },
+          { key: 'companyName', label: '??????' },
+          { key: 'note', label: '??' }
       ],
       order: [
-          { key: 'orderId', label: '訂單編號' },
-          { key: 'customerName', label: '客戶名稱' },
-          { key: 'items', label: '商品明細列表' },
-          { key: 'totalAmount', label: '總金額' },
-          { key: 'codAmount', label: '到付金額' },
-          { key: 'receiverName', label: '收件人' },
-          { key: 'receiverPhone', label: '收件電話' },
-          { key: 'receiverAddress', label: '收件地址' },
-          { key: 'logistics', label: '物流公司' },
-          { key: 'trackingId', label: '貨運單號' },
-          { key: 'trackingUrl', label: '追蹤網址' },
-          { key: 'shippingDate', label: '出貨日期 (系統日)' },
-          { key: 'companyName', label: '我方公司名稱' },
-          { key: 'outstandingQuantity', label: '未出貨總數' },
-          { key: 'outstandingItems', label: '未出貨明細 (不含金額)' }
+          { key: 'orderId', label: '????' },
+          { key: 'customerName', label: '????' },
+          { key: 'items', label: '??????' },
+          { key: 'totalAmount', label: '???' },
+          { key: 'codAmount', label: '????' },
+          { key: 'receiverName', label: '???' },
+          { key: 'receiverPhone', label: '????' },
+          { key: 'receiverAddress', label: '????' },
+          { key: 'logistics', label: '????' },
+          { key: 'trackingId', label: '????' },
+          { key: 'trackingUrl', label: '????' },
+          { key: 'shippingDate', label: '???? (???)' },
+          { key: 'companyName', label: '??????' },
+          { key: 'outstandingQuantity', label: '?????' },
+          { key: 'outstandingItems', label: '????? (????)' }
       ]
     };
 
-  readonly logisticsOptions = ['黑貓', '大榮'];
+  readonly logisticsOptions = ['??', '??'];
 
   // Using schemas from DataService instead of hardcoded array
   schemas = computed(() => {
@@ -268,7 +268,7 @@ export class SystemComponent {
   }
   
   restoreVersion(versionId: string) {
-      if (!confirm('確定要還原至此版本嗎？這將覆蓋目前的資料結構定義。')) return;
+      if (!confirm('?????????????????????????')) return;
       
       this.isRestoringSchema.set(true);
       
@@ -277,9 +277,9 @@ export class SystemComponent {
           if (versionId === 'v_3days' || versionId === 'v_init') {
                // Restore to Default (Factory Reset logic)
                this.dataService.resetSchemasToDefault();
-               alert('已成功還原至指定版本！');
+               alert('???????????');
           } else {
-               alert('此版本為自動快照，暫不支援直接還原 (僅供檢視)。');
+               alert('????????????????? (????)?');
           }
           this.isRestoringSchema.set(false);
           this.closeHistoryModal();
@@ -296,7 +296,7 @@ export class SystemComponent {
   }
 
   restoreTemplateVersion(versionId: string) {
-      if (!confirm('確定要還原至此版本嗎？這將覆蓋目前的通訊與辨識範本。')) return;
+      if (!confirm('??????????????????????????')) return;
       
       this.isRestoringTemplates.set(true);
       
@@ -306,13 +306,13 @@ export class SystemComponent {
           // Here we just re-load initial mock data to simulate "restoring state"
           if (versionId === 't_3days') {
               this.dataService.loadMockData(); // Re-seeds mock data which acts as a restore
-              alert('成功還原至 3 天前的版本！');
+              alert('????? 3 ??????');
           } else if (versionId === 't_default') {
               // Clear current and reload mock
                this.dataService.loadMockData();
-               alert('已重置為原廠預設值。');
+               alert('??????????');
           } else {
-               alert('此備份檔暫無法讀取。');
+               alert('??????????');
           }
           this.isRestoringTemplates.set(false);
           this.closeTemplateHistoryModal();
@@ -341,7 +341,7 @@ export class SystemComponent {
   }
 
   clearAiLogs() {
-      if (confirm('確定要清除所有 AI 使用紀錄嗎？')) {
+      if (confirm('??????? AI ??????')) {
           this.dataService.clearAiUsageLogs();
       }
   }
@@ -355,25 +355,25 @@ export class SystemComponent {
           this.isCreatingSnapshot.set(false);
           if (success) {
               this.refreshSnapshots();
-              alert('快照已建立成功！');
+              alert('????????');
           }
       }, 500);
   }
 
   restoreSnapshot(snap: BackupSnapshot) {
-      if (confirm(`確定要還原快照「${snap.dateStr}」嗎？\n這將覆蓋目前的所有資料。`)) {
+      if (confirm(`????????${snap.dateStr}???\n????????????`)) {
           const success = this.dataService.restoreLocalSnapshot(snap.key);
           if (success) {
-              alert('還原成功！頁面將重新整理。');
+              alert('?????????????');
               window.location.reload();
           } else {
-              alert('還原失敗，請重試。');
+              alert('?????????');
           }
       }
   }
 
   deleteSnapshot(snap: BackupSnapshot) {
-      if (confirm('確定要刪除此快照嗎？')) {
+      if (confirm('??????????')) {
           this.dataService.deleteLocalSnapshot(snap.key);
           this.refreshSnapshots();
       }
@@ -398,8 +398,8 @@ export class SystemComponent {
   createNewTemplate() {
       const newTpl: ShippingTemplate = {
           id: `OCR-${Date.now()}`,
-          name: '新辨識範本',
-          logistics: '黑貓',
+          name: '?????',
+          logistics: '??',
           imageUrl: '',
           roi: { x: 10, y: 10, width: 30, height: 10 },
           lastUpdated: new Date().toISOString(),
@@ -435,7 +435,7 @@ export class SystemComponent {
   }
   
   deleteTemplate(id: string) {
-      if (confirm('確定要刪除此範本嗎？')) {
+      if (confirm('??????????')) {
           this.dataService.deleteShippingTemplate(id);
       }
   }
@@ -500,7 +500,7 @@ export class SystemComponent {
       const hasKey = await this.aiService.ensureApiKey();
       if (!hasKey) {
           if (!window.aistudio) {
-              alert('偵測到您可能是在獨立分頁開啟網址。使用 AI 功能請回到 AI Studio 的「預覽面板」中操作，系統才能正確提供金鑰設定工具。');
+              alert('??????????????????? AI ????? AI Studio ??????????????????????????');
           }
           return;
       }
@@ -511,21 +511,21 @@ export class SystemComponent {
           this.trainingResult.set(result);
           
           // --- NEW: Integration Demo ---
-          console.log('[AI ERP PIXEL] 辨識完成，準備串接 OrderService...', result);
+          console.log('[AI ERP PIXEL] ????????? OrderService...', result);
           
-          alert(`測試辨識成功！\n單號: ${result.trackingId}\n物流: ${result.provider}\n\n(此為測試模式，正式出貨請至出貨管理模組)`);
+          alert(`???????\n??: ${result.trackingId}\n??: ${result.provider}\n\n(???????????????????)`);
       } catch (error: any) {
           // If the error is about API key, prompt user to select one
           if (error.message && error.message.includes('API key must be set')) {
               if (window.aistudio) {
-                  if (confirm('Gemini API 尚未設定金鑰，是否現在開啟設定視窗？')) {
+                  if (confirm('Gemini API ??????????????????')) {
                       await window.aistudio.openSelectKey();
                   }
               } else {
-                  alert('Gemini API 金鑰尚未設定。請回到 AI Studio 預覽面板並使用金鑰選擇工具。');
+                  alert('Gemini API ?????????? AI Studio ??????????????');
               }
           } else {
-              alert('辨識失敗: ' + error.message);
+              alert('????: ' + error.message);
           }
       } finally {
           this.isTraining.set(false);
@@ -536,9 +536,10 @@ export class SystemComponent {
   createNewCommTemplate() {
       const newTpl: CommunicationTemplate = {
           id: `COMM-${Date.now()}`,
-          name: '新通知範本',
+          name: '?????',
           type: 'order',
-          content: '親愛的客戶 {{customerName}} 您好，您的訂單 {{orderId}} 已出貨。',
+          logistics: '',
+          content: '????? {{customerName}} ??????? {{orderId}} ????',
           isSystemDefault: false
       };
       this.currentCommTemplate.set(newTpl);
@@ -569,7 +570,7 @@ export class SystemComponent {
   }
   
   deleteCommTemplate(id: string) {
-      if (confirm('確定要刪除此通訊範本嗎？')) {
+      if (confirm('????????????')) {
           this.dataService.deleteCommunicationTemplate(id);
       }
   }
@@ -605,7 +606,7 @@ export class SystemComponent {
   async uploadBackup(event: Event) {
       const input = event.target as HTMLInputElement;
       if (!input.files || input.files.length === 0) return;
-      if (!confirm('警告：還原操作將會覆蓋目前的所有資料！確定要繼續嗎？')) {
+      if (!confirm('??????????????????????????')) {
           input.value = '';
           return;
       }
@@ -617,11 +618,11 @@ export class SystemComponent {
               const json = e.target?.result as string;
               const data = JSON.parse(json);
               await this.dataService.restoreFullBackup(data);
-              alert('資料還原成功！頁面將重新整理。');
+              alert('???????????????');
               window.location.reload();
           } catch (err) {
               console.error(err);
-              alert('資料還原失敗，請檢查檔案格式。');
+              alert('???????????????');
           } finally {
               this.isRestoring.set(false);
               input.value = '';
@@ -631,29 +632,29 @@ export class SystemComponent {
   }
   
   async triggerCloudSync() {
-      if (!confirm('您確定要將所有本機資料上傳到雲端 (Firebase) 嗎？\n這將會覆寫雲端上對應 ID 的資料。')) return;
+      if (!confirm('???????????????? (Firebase) ??\n?????????? ID ????')) return;
       this.isSyncing.set(true);
       try {
           await this.dataService.syncLocalToCloud();
-          alert('同步成功！本機資料已備份至雲端。');
+          alert('????????????????');
       } catch (err: any) {
           console.error(err);
-          alert('同步失敗: ' + (err.message || '未知錯誤'));
+          alert('????: ' + (err.message || '????'));
       } finally {
           this.isSyncing.set(false);
       }
   }
 
   async triggerCloudPull() {
-      if (!confirm('您確定要從雲端 (Firebase) 下載資料到本機嗎？\n這將會覆寫本機目前的所有資料。')) return;
+      if (!confirm('??????? (Firebase) ?????????\n???????????????')) return;
       this.isSyncing.set(true);
       try {
           await this.dataService.syncCloudToLocal();
-          alert('同步成功！已從雲端取回資料。');
+          alert('??????????????');
           this.refreshSnapshots();
       } catch (err: any) {
           console.error(err);
-          alert('同步失敗: ' + (err.message || '未知錯誤'));
+          alert('????: ' + (err.message || '????'));
       } finally {
           this.isSyncing.set(false);
       }
@@ -665,15 +666,15 @@ export class SystemComponent {
   saveManualKey() {
     const key = this.manualApiKey();
     if (!key.trim()) {
-        alert('請先輸入金鑰！');
+        alert('???????');
         return;
     }
     const success = this.aiService.saveKeyToStorage(key);
     if (success) {
       this.isKeySaved.set(true);
-      alert('金鑰已成功儲存至本機！現在您可以長駐使用 AI 功能了。');
+      alert('???????????????????? AI ????');
     } else {
-      alert('請輸入有效的金鑰。');
+      alert('?????????');
     }
   }
 
@@ -681,14 +682,14 @@ export class SystemComponent {
     this.aiService.clearStoredKey();
     this.manualApiKey.set('');
     this.isKeySaved.set(false);
-    alert('已清除本機儲存的金鑰。');
+    alert('???????????');
   }
 
   async openApiKeyDialog() {
       if (window.aistudio) {
           await window.aistudio.openSelectKey();
       } else {
-          alert('此環境不支援 API 金鑰選擇工具。\n\n請確保您是在 AI Studio 的「預覽面板」中操作應用程式，而不是直接在瀏覽器新分頁開啟網址。');
+          alert('?????? API ???????\n\n?????? AI Studio ????????????????????????????????');
       }
   }
   

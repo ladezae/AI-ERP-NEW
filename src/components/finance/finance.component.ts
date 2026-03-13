@@ -650,7 +650,7 @@ export class FinanceComponent {
                   const taxAmt = groupTotal - salesAmt;
                   
                   this.invoiceForm.patchValue({
-                      companyName: ord.customerName,
+                      companyName: this.dataService.customers().find(c => c.id === ord.customerId)?.fullName || ord.customerName,
                       salesAmount: salesAmt,
                       taxAmount: taxAmt,
                       totalAmount: groupTotal,
@@ -681,7 +681,7 @@ export class FinanceComponent {
           } else {
               const customer = this.dataService.customers().find(c => c.taxId === taxId);
               if (customer) {
-                   this.invoiceForm.patchValue({ companyName: customer.shortName }, { emitEvent: false });
+                   this.invoiceForm.patchValue({ companyName: customer.fullName || customer.shortName }, { emitEvent: false });
               }
           }
       });
@@ -1555,6 +1555,35 @@ export class FinanceComponent {
       this.showReportPreviewModal.set(true);
   }
 
+  async fixCustomerFullNames() {
+      const outputInvoices = this.invoices().filter(i => i.type === 'Output');
+      const customers = this.dataService.customers();
+      const toFix: Invoice[] = [];
+
+      outputInvoices.forEach(inv => {
+          if (!inv.taxId) return;
+          const customer = customers.find(c => c.taxId === inv.taxId);
+          if (!customer) return;
+          const correctName = customer.fullName || customer.shortName;
+          if (correctName && inv.companyName !== correctName) {
+              toFix.push({ ...inv, companyName: correctName });
+          }
+      });
+
+      if (toFix.length === 0) {
+          alert('所有銷項發票客戶全名均正確，無需修正。');
+          return;
+      }
+
+      if (!confirm(`發現 ${toFix.length} 筆發票客戶全名需要修正，是否執行？`)) return;
+
+      for (const inv of toFix) {
+          await this.dataService.updateInvoice(inv);
+      }
+
+      alert(`✅ 已成功修正 ${toFix.length} 筆發票的客戶全名。`);
+  }
+
   closeReportPreview() {
       this.showReportPreviewModal.set(false);
   }
@@ -1597,4 +1626,5 @@ export class FinanceComponent {
       const company = this.companies().find(c => c.id === companyId);
       return company ? company.name : '未知公司';
   }
+
 }

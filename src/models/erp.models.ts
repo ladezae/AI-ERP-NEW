@@ -61,6 +61,7 @@ export interface Order {
   productNote: string;
   priceBeforeTax: number;
   subtotal: number;
+  orderSubtotal: number;
   taxAmount: number;
   totalAmount: number;
   codAmount?: number; // Added: 到付金額 (Cash on Delivery Amount)
@@ -286,6 +287,7 @@ export interface CommunicationTemplate {
   id: string;
   name: string;
   type: 'purchase' | 'order'; // 採購通知 | 出貨通知
+  logistics?: '黑貓' | '大榮' | '';  // 物流商綁定，空白=不限
   content: string;
   isSystemDefault?: boolean;
 }

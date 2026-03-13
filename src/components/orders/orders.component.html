@@ -467,14 +467,31 @@
               @if (currentStep() === 'select-company') {
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto px-2 sm:px-4">
                       @for (comp of companies(); track comp.id) {
-                          <button (click)="selectCompany(comp)" class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:ring-2 hover:ring-sky-500 transition-all text-left shadow-sm flex items-center justify-between group">
+                          <button (click)="selectCompany(comp)"
+        class="p-6 bg-white dark:bg-slate-800 rounded-xl border-2 transition-all text-left shadow-sm flex items-center justify-between group"
+        [class.border-sky-500]="selectedCompany()?.id === comp.id"
+        [class.ring-2]="selectedCompany()?.id === comp.id"
+        [class.ring-sky-500]="selectedCompany()?.id === comp.id"
+        [class.bg-sky-50]="selectedCompany()?.id === comp.id"
+        [class.dark:bg-sky-900]="selectedCompany()?.id === comp.id"
+        [class.border-slate-200]="selectedCompany()?.id !== comp.id"
+        [class.dark:border-slate-700]="selectedCompany()?.id !== comp.id">
                               <div>
                                   <div class="font-bold text-lg text-slate-800 dark:text-white">{{ comp.name }}</div>
                                   <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ comp.taxId }}</div>
                               </div>
-                              <div class="text-sky-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                              </div>
+                              <div class="transition-all flex-shrink-0"
+                                     [class.text-sky-500]="selectedCompany()?.id === comp.id"
+                                     [class.opacity-100]="selectedCompany()?.id === comp.id"
+                                     [class.text-slate-300]="selectedCompany()?.id !== comp.id"
+                                     [class.opacity-0]="selectedCompany()?.id !== comp.id"
+                                     [class.group-hover:opacity-100]="selectedCompany()?.id !== comp.id">
+                                    @if (selectedCompany()?.id === comp.id) {
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                                    } @else {
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                    }
+                                </div>
                           </button>
                       }
                   </div>
@@ -493,7 +510,15 @@
 
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                           @for (cust of wizardFilteredCustomers(); track cust.id) {
-                              <button (click)="selectCustomer(cust)" class="text-left p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-sky-500 hover:ring-1 hover:ring-sky-500 transition-all shadow-sm">
+                              <button (click)="selectCustomer(cust)"
+        class="text-left p-4 bg-white dark:bg-slate-800 rounded-xl border-2 transition-all shadow-sm"
+        [class.border-sky-500]="selectedCustomer()?.id === cust.id"
+        [class.ring-2]="selectedCustomer()?.id === cust.id"
+        [class.ring-sky-500]="selectedCustomer()?.id === cust.id"
+        [class.bg-sky-50]="selectedCustomer()?.id === cust.id"
+        [class.dark:bg-sky-900]="selectedCustomer()?.id === cust.id"
+        [class.border-slate-200]="selectedCustomer()?.id !== cust.id"
+        [class.dark:border-slate-700]="selectedCustomer()?.id !== cust.id">
                                   <div class="flex justify-between items-start">
                                       <div>
                                           <div class="font-bold text-slate-800 dark:text-white">{{ cust.shortName }}</div>
@@ -1200,29 +1225,54 @@
            
            <!-- Fixed Footer -->
            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center items-center" *ngIf="currentStep() !== 'communication'">
-              <div class="max-w-4xl mx-auto w-full flex justify-between items-center px-4">
+              <div class="max-w-4xl mx-auto w-full grid grid-cols-3 items-center px-4">
                   <!-- Back Button -->
                   <button (click)="goBack()" 
-                          class="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors">
+                          class="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors justify-self-start">
                       上一步
                   </button>
 
+                  <!-- 中間：金額摘要（所有步驟顯示） -->
+                  <div class="flex flex-col items-center justify-center px-4 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 min-w-[160px] text-center justify-self-center"
+                       style="box-shadow: 0 0 0 2px #f59e0b40;">
+                      <div class="text-xs text-slate-500 dark:text-slate-400 mb-0.5">已選 {{ cart().length }} 項商品</div>
+                      <div class="flex items-center gap-3">
+                          <div class="flex flex-col items-center">
+                              <span class="text-[10px] text-slate-400">未稅</span>
+                              <span class="text-sm font-bold text-slate-700 dark:text-slate-200">${{ cartTotal().subtotal | number }}</span>
+                          </div>
+                          <div class="text-slate-300 text-sm">|</div>
+                          <div class="flex flex-col items-center">
+                              <span class="text-[10px] text-slate-400">含稅</span>
+                              <span class="text-lg font-extrabold text-amber-500">${{ cartTotal().total | number }}</span>
+                          </div>
+                      </div>
+                  </div>
+
                   <!-- Next Button logic -->
+                  <div class="justify-self-end flex justify-end">
                   @if (currentStep() === 'select-brand' && selectedBrand()) {
-                      <button (click)="goToCompany()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                      <button (click)="goToCompany()"
+                              class="px-8 py-3 bg-sky-500 text-white rounded-xl font-bold transition-all flex items-center"
+                              style="box-shadow: 0 0 0 3px #ef4444, 0 10px 15px -3px rgba(0,0,0,0.2);">
                           下一步 (選擇公司) &rarr;
                       </button>
                   }
                   @if (currentStep() === 'select-company' && selectedCompany()) {
-                      <button (click)="goToCustomer()" class="px-8 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 font-bold transition-all flex items-center">
+                      <button (click)="goToCustomer()"
+                              class="px-8 py-3 bg-sky-500 text-white rounded-xl font-bold transition-all flex items-center"
+                              style="box-shadow: 0 0 0 3px #ef4444, 0 10px 15px -3px rgba(0,0,0,0.2);">
                           下一步 (選擇客戶) &rarr;
                       </button>
                   }
+                  @if (currentStep() === 'select-customer' && selectedCustomer()) {
+                      <button (click)="goToProducts()"
+                              class="px-8 py-3 bg-sky-500 text-white rounded-xl font-bold transition-all flex items-center"
+                              style="box-shadow: 0 0 0 3px #ef4444, 0 10px 15px -3px rgba(0,0,0,0.2);">
+                          下一步 (選擇商品) &rarr;
+                      </button>
+                  }
                   @if (currentStep() === 'select-products') {
-                      <div class="text-right mr-4 flex flex-col items-end">
-                          <div class="text-xs text-slate-500">已選 {{ cart().length }} 項</div>
-                          <div class="text-xl font-bold text-sky-600 dark:text-sky-400">${{ cartTotal().total | number }}</div>
-                      </div>
                       <button (click)="goToManufacturing()" [disabled]="cart().length === 0" class="px-6 py-3 bg-sky-500 text-white rounded-xl shadow-lg hover:bg-sky-600 disabled:bg-slate-300 disabled:cursor-not-allowed font-bold transition-all flex items-center">
                           下一步 (代工選單) &rarr;
                       </button>
@@ -1247,6 +1297,7 @@
                           下一步 (總覽確認) &rarr;
                       </button>
                   }
+                  </div>
               </div>
           </div>
 

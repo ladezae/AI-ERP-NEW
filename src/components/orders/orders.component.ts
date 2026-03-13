@@ -1,4 +1,4 @@
-﻿
+
 import { ChangeDetectionStrategy, Component, computed, inject, signal, effect, ElementRef, ViewChild, output, OnDestroy } from '@angular/core';
 import { CommonModule, DecimalPipe, DOCUMENT } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
@@ -1173,7 +1173,11 @@ export class OrdersComponent implements OnDestroy {
                   totalAmount: header.orderTaxType ? Math.round((item.quantity || 0) * (item.priceBeforeTax || 0) * 1.05) : ((item.quantity || 0) * (item.priceBeforeTax || 0))
               };
           });
-          
+
+          // 補上整張訂單未稅合計
+          const orderSubtotal = updates.reduce((sum, o) => sum + (o.subtotal || 0), 0);
+          updates.forEach(o => { o.orderSubtotal = orderSubtotal; });
+
           await this.dataService.updateOrders(updates);
       }
       
@@ -1701,6 +1705,7 @@ export class OrdersComponent implements OnDestroy {
               packingQuantity: 0,
               priceBeforeTax: item.price,
               subtotal: lineTotal,
+              orderSubtotal: 0, // 稍後由整單合計覆寫
               taxAmount: 0, 
               totalAmount: lineTotal, 
               shipLogistics: formVal.shipLogistics,
@@ -1727,7 +1732,11 @@ export class OrdersComponent implements OnDestroy {
               isSampleOrder: formVal.isSampleOrder || false
           };
       });
-      
+
+      // 計算整張訂單未稅合計
+      const orderSubtotal = orderObjects.reduce((sum, o) => sum + o.subtotal, 0);
+      orderObjects.forEach(o => { o.orderSubtotal = orderSubtotal; });
+
       // Calc Totals
       if (this.isOrderTaxable()) {
           const ratio = 1.05;
