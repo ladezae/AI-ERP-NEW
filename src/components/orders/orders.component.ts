@@ -1,4 +1,4 @@
-
+﻿
 import { ChangeDetectionStrategy, Component, computed, inject, signal, effect, ElementRef, ViewChild, output, OnDestroy } from '@angular/core';
 import { CommonModule, DecimalPipe, DOCUMENT } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
@@ -259,9 +259,7 @@ export class OrdersComponent implements OnDestroy {
   // Forms
   orderForm!: FormGroup;
 
-  readonly logisticsOptions = [
-    '黑貓', '大榮', '宅配通', '新竹', '郵局', '自取', '自派黑貓'
-  ];
+  readonly logisticsOptions = ['黑貓', '大榮'];
 
   // Updated exclusion list
   readonly SHIPPING_FEE_IDS = ['FEE-DLV-HM', 'FEE-DLV-DR', 'FEE-DIS-DLV', 'FEE-DIS-Product'];
@@ -1967,3 +1965,5 @@ export class OrdersComponent implements OnDestroy {
       }
   }
 }
+
+

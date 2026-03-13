@@ -1,4 +1,4 @@
-
+﻿
 import { ChangeDetectionStrategy, Component, computed, inject, signal, HostListener, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
@@ -163,10 +163,7 @@ export class ShippingComponent implements AfterViewChecked {
   orderTemplates = computed(() => this.communicationTemplates().filter(t => t.type === 'order'));
 
   // STRICT LIST: Database level constraint for ShippingOrder
-  readonly logisticsOptions = [
-    '黑貓', 
-    '大榮'
-  ];
+  readonly logisticsOptions = ['黑貓', '大榮'];
 
   @ViewChild('pendingTable') pendingTableRef?: ElementRef<HTMLTableElement>;
   private tableLayoutApplied = false;
@@ -1664,3 +1661,4 @@ export class ShippingComponent implements AfterViewChecked {
       }
   }
 }
+

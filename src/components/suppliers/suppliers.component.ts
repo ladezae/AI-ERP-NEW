@@ -1,4 +1,4 @@
-
+﻿
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -40,15 +40,7 @@ export class SuppliersComponent {
   supplierForm!: FormGroup;
 
   // Suppliers keep the full range of logistics options
-  readonly logisticsOptions = [
-    '黑貓',
-    '大榮',
-    '宅配通',
-    '新竹',
-    '郵局',
-    '自取',
-    '自派黑貓'
-  ];
+  readonly logisticsOptions = ['黑貓', '大榮'];
 
   // Identical categories list to Products module
   readonly categories = [
@@ -338,3 +330,4 @@ export class SuppliersComponent {
     }
   }
 }
+

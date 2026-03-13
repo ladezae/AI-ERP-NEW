@@ -1,4 +1,4 @@
-
+﻿
 import { ChangeDetectionStrategy, Component, computed, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
@@ -180,9 +180,7 @@ export class PurchasesComponent {
   
   poHeaderForm!: FormGroup;
 
-  readonly logisticsOptions = [
-    '黑貓', '大榮', '宅配通', '新竹', '郵局', '自取', '自派黑貓'
-  ];
+  readonly logisticsOptions = ['黑貓', '大榮'];
 
   readonly statusOptions = [
     'AI建議', '員工確認', '審核通過(要下單)', '已下訂', '廠商確認', '部份到貨', '已結案', '取消'
@@ -1059,3 +1057,4 @@ export class PurchasesComponent {
     return `${prefix}${(maxSeq + 1).toString().padStart(3, '0')}`;
   }
 }
+
