@@ -8,6 +8,7 @@ import { db } from '../../firebase.config';
 import {
   Channel, ChannelType, ChannelProduct, ChannelOrderSummary, Product, ProductCodeMapping
 } from '../../models/erp.models';
+import { ImageService } from '../../services/image.service';
 
 type ChannelView = 'overview' | 'products' | 'orders' | 'settings';
 type TopView = 'channels' | 'codes';
@@ -23,6 +24,7 @@ type PriceAdjustMode = 'fixed' | 'percent';
 export class ChannelsComponent implements OnInit {
 
   private cdr = inject(ChangeDetectorRef);
+  private imageService = inject(ImageService);
 
   // ── 狀態 ──────────────────────────────────────────────────────────────────
   channels: Channel[] = [];
@@ -438,6 +440,7 @@ export class ChannelsComponent implements OnInit {
   showEditProductModal = false;
   editingProduct: ChannelProduct | null = null;
   savingEdit = false;
+  editIsUploading = false; // 圖片上傳 loading 狀態
 
   /** 編輯表單：通路專屬 + 可覆蓋的商品規格 */
   editForm: {
@@ -447,6 +450,8 @@ export class ChannelsComponent implements OnInit {
     visible: boolean;
     intro: string;
     description: string;
+    imageUrl: string;
+    nutritionLabelUrl: string;
     // 商品規格（可覆蓋 ERP 快照）
     category: string;
     unit: string;
@@ -458,6 +463,8 @@ export class ChannelsComponent implements OnInit {
     serviceStatus: string;
     controlStatus: boolean;
     isDiscontinued: boolean;
+    purchasingStatus: boolean;
+    isCalculable: boolean;
     keyProduct: string;
     // 說明文字
     highlightNote: string;
@@ -466,9 +473,12 @@ export class ChannelsComponent implements OnInit {
     notes: string;
   } = {
     name: '', price: 0, visible: false, intro: '', description: '',
+    imageUrl: '', nutritionLabelUrl: '',
     category: '', unit: '', origin: '', moq: 1, packageType: 1,
     sugar: false, shelfLife: '', serviceStatus: '正常供貨',
-    controlStatus: false, isDiscontinued: false, keyProduct: '',
+    controlStatus: false, isDiscontinued: false,
+    purchasingStatus: true, isCalculable: true,
+    keyProduct: '',
     highlightNote: '', expiryNote: '', productFeatures: '', notes: '',
   };
 
@@ -486,6 +496,8 @@ export class ChannelsComponent implements OnInit {
       visible: cp.visible,
       intro: cp.intro || '',
       description: cp.description || '',
+      imageUrl: cp.imageUrl || '',
+      nutritionLabelUrl: cp.nutritionLabelUrl || '',
       category: cp.category,
       unit: cp.unit,
       origin: cp.origin || '',
@@ -496,6 +508,8 @@ export class ChannelsComponent implements OnInit {
       serviceStatus: cp.serviceStatus || '正常供貨',
       controlStatus: cp.controlStatus || false,
       isDiscontinued: cp.isDiscontinued || false,
+      purchasingStatus: cp.purchasingStatus !== false,
+      isCalculable: cp.isCalculable !== false,
       keyProduct: cp.keyProduct || '',
       highlightNote: cp.highlightNote || '',
       expiryNote: cp.expiryNote || '',
@@ -503,6 +517,52 @@ export class ChannelsComponent implements OnInit {
       notes: cp.notes || '',
     };
     this.showEditProductModal = true;
+  }
+
+  /** 通路商品圖片上傳（壓縮後存為 base64） */
+  async onEditImageUpload(event: Event, field: 'imageUrl' | 'nutritionLabelUrl') {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) return;
+    this.editIsUploading = true;
+    try {
+      const limit = field === 'nutritionLabelUrl' ? 1200 : 800;
+      const base64 = await this.imageService.compressImage(file, limit, 0.8);
+      this.editForm[field] = base64;
+    } catch (e) {
+      console.error('圖片上傳失敗', e);
+      alert('圖片處理失敗');
+    } finally {
+      this.editIsUploading = false;
+      input.value = '';
+      this.cdr.markForCheck();
+    }
+  }
+
+  /** 營養標示貼上 Ctrl+V 支援 */
+  async onEditNutritionPaste(event: ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        event.preventDefault();
+        const file = items[i].getAsFile();
+        if (file) {
+          this.editIsUploading = true;
+          try {
+            const base64 = await this.imageService.compressImage(file, 1200, 0.8);
+            this.editForm.nutritionLabelUrl = base64;
+          } catch (e) {
+            alert('圖片貼上失敗');
+          } finally {
+            this.editIsUploading = false;
+            this.cdr.markForCheck();
+          }
+        }
+        break;
+      }
+    }
   }
 
   /** 儲存所有可編輯欄位到 Firestore */
@@ -517,6 +577,8 @@ export class ChannelsComponent implements OnInit {
         visible: this.editForm.visible,
         intro: this.editForm.intro.trim(),
         description: this.editForm.description.trim(),
+        imageUrl: this.editForm.imageUrl,
+        nutritionLabelUrl: this.editForm.nutritionLabelUrl,
         category: this.editForm.category,
         unit: this.editForm.unit,
         origin: this.editForm.origin,
@@ -527,6 +589,8 @@ export class ChannelsComponent implements OnInit {
         serviceStatus: this.editForm.serviceStatus as any,
         controlStatus: this.editForm.controlStatus,
         isDiscontinued: this.editForm.isDiscontinued,
+        purchasingStatus: this.editForm.purchasingStatus,
+        isCalculable: this.editForm.isCalculable,
         keyProduct: this.editForm.keyProduct as any,
         highlightNote: this.editForm.highlightNote,
         expiryNote: this.editForm.expiryNote,

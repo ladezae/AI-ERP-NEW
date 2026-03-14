@@ -1163,240 +1163,344 @@
 }
 
 <!-- ══════════════════════════════════════════════════════════
-     編輯通路商品 Modal（品名 + 商品簡介）
+     編輯通路商品 Modal（與 ERP 商品管理同等規格）
 ═══════════════════════════════════════════════════════════ -->
 @if (showEditProductModal && editingProduct) {
-  <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-    <div class="flex items-start justify-center min-h-screen pt-6 px-4 pb-10">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="showEditProductModal = false"></div>
-      <div class="relative bg-white dark:bg-slate-800 rounded-lg text-left shadow-xl w-full max-w-3xl">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500/75 transition-opacity" (click)="showEditProductModal = false"></div>
+    <div class="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 
-        <!-- Header -->
-        <div class="px-6 pt-5 pb-4 border-b border-slate-200 dark:border-slate-700 flex items-start justify-between sticky top-0 bg-white dark:bg-slate-800 rounded-t-lg z-10">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center flex-shrink-0">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">編輯通路商品</h3>
+          <p class="text-xs text-slate-400 mt-0.5">
+            <span class="font-mono">{{ editingProduct.id }}</span>
+            ・ERP 未稅 NT$ {{ editingProduct.priceBeforeTax | number }}
+            ・建議售價 NT$ {{ editingProduct.recommendedPrice | number }}
+            ・同步：{{ editingProduct.syncedAt | date:'MM/dd HH:mm' }}
+          </p>
+        </div>
+        <button (click)="showEditProductModal = false" class="text-slate-400 hover:text-slate-500">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <!-- Scrollable Body -->
+      <div class="p-6 overflow-y-auto space-y-6">
+
+        <!-- ── 1. 基本資訊 ── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- 商品編號（唯讀） -->
           <div>
-            <h3 class="text-base font-semibold text-slate-800 dark:text-white">✏️ 編輯通路商品</h3>
-            <p class="text-xs text-slate-400 mt-0.5">
-              <span class="font-mono text-slate-500 dark:text-slate-400">{{ editingProduct.id }}</span>
-              ・ERP 進價 NT$ {{ editingProduct.priceBeforeTax | number }}
-              ・建議售價 NT$ {{ editingProduct.recommendedPrice | number }}
-            </p>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品編號 (ID)</label>
+            <input type="text" [value]="editingProduct.id" disabled
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm sm:text-sm p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 cursor-not-allowed" />
           </div>
-          <button (click)="showEditProductModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors mt-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          <!-- 通路顯示品名 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">通路顯示品名 <span class="text-red-500">*</span></label>
+            <input type="text" [(ngModel)]="editForm.name"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="消費者看到的商品名稱" />
+          </div>
+          <!-- 分類 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">分類</label>
+            <select [(ngModel)]="editForm.category"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              @for (c of editCategories; track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+          </div>
+          <!-- 單位 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">單位</label>
+            <select [(ngModel)]="editForm.unit"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              @for (u of editUnits; track u) { <option [value]="u">{{ u }}</option> }
+            </select>
+          </div>
+          <!-- 重點分級 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">重點商品分級 (Key Product)</label>
+            <select [(ngModel)]="editForm.keyProduct"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              <option value="">一般商品</option>
+              <option value="A">A 級 (最重要)</option>
+              <option value="B">B 級 (次要)</option>
+              <option value="C">C 級 (普通)</option>
+            </select>
+          </div>
+          <!-- 服務狀態 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">服務狀態 (Service Status)</label>
+            <select [(ngModel)]="editForm.serviceStatus"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              @for (s of editServiceStatuses; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+          </div>
         </div>
 
-        <!-- Body -->
-        <div class="px-6 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
-
-          <!-- ── 區塊 1：通路設定 ── -->
-          <section>
-            <h4 class="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></svg>
-              通路設定
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- 通路顯示品名 -->
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">通路顯示品名 <span class="text-red-500">*</span></label>
-                <input type="text" [(ngModel)]="editForm.name"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="消費者看到的商品名稱（可與 ERP 主檔不同）" />
-              </div>
-              <!-- 通路售價 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">通路售價 (NT$)</label>
-                <input type="number" [(ngModel)]="editForm.price" min="0"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
-              </div>
-              <!-- 上架狀態 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">上架狀態</label>
-                <div class="flex items-center gap-3 mt-2">
-                  <button type="button" (click)="editForm.visible = !editForm.visible"
-                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
-                    [class]="editForm.visible ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'">
-                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
-                      [class]="editForm.visible ? 'translate-x-6' : 'translate-x-1'"></span>
-                  </button>
-                  <span class="text-sm font-medium" [class]="editForm.visible ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'">
-                    {{ editForm.visible ? '上架中' : '下架' }}
-                  </span>
-                </div>
-              </div>
-              <!-- 商品簡介 -->
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  商品簡介 <span class="ml-1 text-slate-400 font-normal">（搭配照片批次上傳）</span>
-                </label>
-                <textarea [(ngModel)]="editForm.intro" rows="2"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
-                  placeholder="一句話描述商品特色，例如：泰國天然芒果乾，酸甜濃郁..."></textarea>
-              </div>
-              <!-- 長文案 -->
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">商品長文案</label>
-                <textarea [(ngModel)]="editForm.description" rows="3"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
-                  placeholder="官網或銷售頁面用的完整商品文案..."></textarea>
-              </div>
+        <!-- ── 2. 通路圖片 ── -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品圖片 URL / 上傳</label>
+          <div class="flex space-x-2">
+            <input type="text" [(ngModel)]="editForm.imageUrl"
+              class="flex-1 rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="https://..." />
+            <button type="button" (click)="editImgInput.click()" [disabled]="editIsUploading"
+              class="px-3 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors disabled:opacity-50 text-sm whitespace-nowrap">
+              {{ editIsUploading ? '處理中...' : '上傳圖片' }}
+            </button>
+            <input #editImgInput type="file" hidden accept="image/*" (change)="onEditImageUpload($event, 'imageUrl')">
+          </div>
+          @if (editForm.imageUrl) {
+            <div class="mt-2 w-24 h-24 border border-slate-200 dark:border-slate-600 rounded bg-slate-100 dark:bg-slate-900 overflow-hidden flex items-center justify-center">
+              <img [src]="editForm.imageUrl" alt="預覽" class="max-w-full max-h-full object-contain" />
             </div>
-          </section>
-
-          <!-- ── 區塊 2：商品規格 ── -->
-          <section>
-            <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-              商品規格
-              <span class="text-slate-400 font-normal normal-case text-xs ml-1">（可覆蓋 ERP 快照，不影響主檔）</span>
-            </h4>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <!-- 分類 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">分類</label>
-                <select [(ngModel)]="editForm.category"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                  @for (c of editCategories; track c) { <option [value]="c">{{ c }}</option> }
-                </select>
-              </div>
-              <!-- 單位 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">單位</label>
-                <select [(ngModel)]="editForm.unit"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                  @for (u of editUnits; track u) { <option [value]="u">{{ u }}</option> }
-                </select>
-              </div>
-              <!-- 產地 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">產地</label>
-                <select [(ngModel)]="editForm.origin"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                  <option value="">— 未設定 —</option>
-                  @for (o of editOrigins; track o) { <option [value]="o">{{ o }}</option> }
-                </select>
-              </div>
-              <!-- 重點分級 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">重點分級</label>
-                <select [(ngModel)]="editForm.keyProduct"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                  <option value="">未設定</option>
-                  <option value="A">A 級</option>
-                  <option value="B">B 級</option>
-                  <option value="C">C 級</option>
-                </select>
-              </div>
-              <!-- MOQ -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">最小訂購量</label>
-                <input type="number" [(ngModel)]="editForm.moq" min="1"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
-              </div>
-              <!-- 包裝數 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">包裝數</label>
-                <input type="number" [(ngModel)]="editForm.packageType" min="1"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
-              </div>
-              <!-- 保存期限 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">保存期限</label>
-                <input type="text" [(ngModel)]="editForm.shelfLife"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="例：12個月" />
-              </div>
-              <!-- 服務狀態 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">服務狀態</label>
-                <select [(ngModel)]="editForm.serviceStatus"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                  @for (s of editServiceStatuses; track s) { <option [value]="s">{{ s }}</option> }
-                </select>
-              </div>
-              <!-- 有糖 -->
-              <div class="flex items-center gap-2 mt-4">
-                <input type="checkbox" [(ngModel)]="editForm.sugar" id="editSugar"
-                  class="rounded border-slate-300 text-sky-500 focus:ring-sky-500" />
-                <label for="editSugar" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">有糖</label>
-              </div>
-              <!-- 控管 -->
-              <div class="flex items-center gap-2 mt-4">
-                <input type="checkbox" [(ngModel)]="editForm.controlStatus" id="editControl"
-                  class="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
-                <label for="editControl" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">控管中</label>
-              </div>
-              <!-- 停售 -->
-              <div class="flex items-center gap-2 mt-4">
-                <input type="checkbox" [(ngModel)]="editForm.isDiscontinued" id="editDiscontinued"
-                  class="rounded border-slate-300 text-rose-500 focus:ring-rose-500" />
-                <label for="editDiscontinued" class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">停售</label>
-              </div>
-            </div>
-          </section>
-
-          <!-- ── 區塊 3：說明文字 ── -->
-          <section>
-            <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-              說明文字
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- 商品特色 -->
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">商品特色</label>
-                <input type="text" [(ngModel)]="editForm.productFeatures"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="例：天然無添加、低糖低熱量..." />
-              </div>
-              <!-- 亮點說明 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">亮點說明</label>
-                <input type="text" [(ngModel)]="editForm.highlightNote"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="例：嚴選泰國芒果..." />
-              </div>
-              <!-- 到期說明 -->
-              <div>
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">到期說明</label>
-                <input type="text" [(ngModel)]="editForm.expiryNote"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="例：距有效期限六個月以上..." />
-              </div>
-              <!-- 備註 -->
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">備註</label>
-                <textarea [(ngModel)]="editForm.notes" rows="2"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
-                  placeholder="內部管理備註..."></textarea>
-              </div>
-            </div>
-          </section>
-
+          }
         </div>
 
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center sticky bottom-0 bg-white dark:bg-slate-800 rounded-b-lg">
-          <div class="text-xs text-slate-400">
-            同步時間：{{ editingProduct.syncedAt | date:'yyyy/MM/dd HH:mm' }}
-          </div>
-          <div class="flex gap-3">
-            <button (click)="showEditProductModal = false"
-              class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-              取消
+        <!-- ── 3. 營養標示 ── -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">營養標示 (Nutrition Label)</label>
+          <div class="flex space-x-2">
+            <input type="text" [(ngModel)]="editForm.nutritionLabelUrl"
+              (paste)="onEditNutritionPaste($event)"
+              class="flex-1 rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="貼上圖片 (Ctrl+V) 或輸入 URL..." />
+            <button type="button" (click)="editNutInput.click()" [disabled]="editIsUploading"
+              class="px-3 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors disabled:opacity-50 text-sm whitespace-nowrap">
+              {{ editIsUploading ? '處理中...' : '上傳標示' }}
             </button>
-            <button (click)="saveChannelProductEdit()"
-              [disabled]="savingEdit || !editForm.name.trim()"
-              class="px-5 py-2 text-sm bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
-              @if (savingEdit) {
-                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              }
-              儲存
-            </button>
+            <input #editNutInput type="file" hidden accept="image/*" (change)="onEditImageUpload($event, 'nutritionLabelUrl')">
           </div>
+          <p class="text-xs text-slate-500 mt-1">提示：可直接截圖後在此欄位按 Ctrl+V 貼上圖片。</p>
+          @if (editForm.nutritionLabelUrl) {
+            <div class="mt-2 w-24 h-24 border border-slate-200 dark:border-slate-600 rounded bg-slate-100 dark:bg-slate-900 overflow-hidden flex items-center justify-center">
+              <img [src]="editForm.nutritionLabelUrl" alt="營養標示預覽" class="max-w-full max-h-full object-contain" />
+            </div>
+          }
+        </div>
+
+        <!-- ── 4. 通路售價 & 上架狀態 ── -->
+        <div class="bg-sky-50 dark:bg-sky-900/20 p-4 rounded-lg border border-sky-100 dark:border-sky-800">
+          <h4 class="text-sm font-bold text-sky-700 dark:text-sky-400 uppercase mb-3 border-b border-sky-200 dark:border-sky-700 pb-1">通路設定</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">通路售價 (NT$)</label>
+              <input type="number" [(ngModel)]="editForm.price" min="0"
+                class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-semibold" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">ERP 未稅售價（參考）</label>
+              <div class="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-sm">NT$ {{ editingProduct.priceBeforeTax | number }}</div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">建議售價（參考）</label>
+              <div class="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-sm">NT$ {{ editingProduct.recommendedPrice | number }}</div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">上架狀態</label>
+              <div class="flex items-center gap-3 mt-1">
+                <button type="button" (click)="editForm.visible = !editForm.visible"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+                  [class]="editForm.visible ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'">
+                  <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                    [class]="editForm.visible ? 'translate-x-6' : 'translate-x-1'"></span>
+                </button>
+                <span class="text-sm font-medium" [class]="editForm.visible ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'">
+                  {{ editForm.visible ? '上架中' : '下架' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 5. ERP 價格參考（唯讀） ── -->
+        <div class="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+          <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase mb-3 border-b border-slate-200 dark:border-slate-600 pb-1">ERP 價格參考（唯讀）</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">未稅售價</label>
+              <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.priceBeforeTax | number }}</div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">包裝入數</label>
+              <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.packageType }}</div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">含稅售價</label>
+              <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.priceAfterTax | number }}</div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">未稅成本</label>
+              <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.costBeforeTax | number }}</div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                <span class="text-sky-600 dark:text-sky-400">建議售價 (cost/0.9)</span>
+              </label>
+              <div class="px-3 py-2 rounded-md bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-sm border border-sky-200 dark:border-sky-700 font-semibold">{{ editingProduct.recommendedPrice | number }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 6. 庫存資訊（唯讀快照） ── -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">現有庫存</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.stock | number }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">已挑揀數量</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.qualityConfirmed | number }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">外庫數量</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.externalStock | number }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">安全庫存</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.safetyStock | number }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">訂單備貨（已鎖定）</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.totalPickingQuantity | number }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">在途數量（系統計算）</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.transitQuantity | number }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商代碼</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600 font-mono">{{ editingProduct.supplierCode || '—' }}</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商名稱</label>
+            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.supplierName || '—' }}</div>
+          </div>
+        </div>
+
+        <!-- ── 7. 商品規格 ── -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <!-- 產地 -->
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">產地</label>
+            <select [(ngModel)]="editForm.origin"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+              <option value="">— 未設定 —</option>
+              @for (o of editOrigins; track o) { <option [value]="o">{{ o }}</option> }
+            </select>
+          </div>
+          <!-- 最小訂購量 -->
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">最小訂購量 (MOQ)</label>
+            <input type="number" [(ngModel)]="editForm.moq" min="1"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+          </div>
+          <!-- 保存期限 -->
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">保存期限</label>
+            <input type="text" [(ngModel)]="editForm.shelfLife"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="例：12個月" />
+          </div>
+        </div>
+
+        <!-- ── 8. 說明文字 ── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- 商品簡介 -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品簡介</label>
+            <textarea [(ngModel)]="editForm.intro" rows="2"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+              placeholder="一句話描述商品特色，例如：泰國天然芒果乾，酸甜濃郁..."></textarea>
+          </div>
+          <!-- 商品長文案 -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品長文案</label>
+            <textarea [(ngModel)]="editForm.description" rows="3"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+              placeholder="官網或銷售頁面用的完整商品文案..."></textarea>
+          </div>
+          <!-- 商品特色 -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品特色</label>
+            <input type="text" [(ngModel)]="editForm.productFeatures"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="例：天然無添加、低糖低熱量..." />
+          </div>
+          <!-- 亮點說明 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">亮點說明 (highlightNote)</label>
+            <input type="text" [(ngModel)]="editForm.highlightNote"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="例：嚴選泰國芒果..." />
+          </div>
+          <!-- 到期說明 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">到期說明 (expiryNote)</label>
+            <input type="text" [(ngModel)]="editForm.expiryNote"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              placeholder="例：距有效期限六個月以上..." />
+          </div>
+          <!-- 詳細備註 -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">詳細備註</label>
+            <textarea [(ngModel)]="editForm.notes" rows="2"
+              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+              placeholder="內部管理備註..."></textarea>
+          </div>
+        </div>
+
+        <!-- ── 9. 旗標 Checkboxes ── -->
+        <div class="flex flex-wrap gap-6 pt-2 border-t border-slate-200 dark:border-slate-700">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="editForm.isDiscontinued"
+              class="rounded border-slate-300 text-rose-500 focus:ring-rose-500" />
+            <span class="text-sm text-slate-700 dark:text-slate-300">已停售</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="editForm.controlStatus"
+              class="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
+            <span class="text-sm text-slate-700 dark:text-slate-300">控貨中</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="editForm.purchasingStatus"
+              class="rounded border-slate-300 text-sky-500 focus:ring-sky-500" />
+            <span class="text-sm text-slate-700 dark:text-slate-300">正常採購</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="editForm.sugar"
+              class="rounded border-slate-300 text-amber-500 focus:ring-amber-500" />
+            <span class="text-sm text-slate-700 dark:text-slate-300">有糖</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="editForm.isCalculable"
+              class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" />
+            <span class="text-sm text-slate-700 dark:text-slate-300">應計算商品</span>
+          </label>
         </div>
 
       </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 flex-shrink-0 bg-white dark:bg-slate-800">
+        <button (click)="showEditProductModal = false"
+          class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+          取消
+        </button>
+        <button (click)="saveChannelProductEdit()"
+          [disabled]="savingEdit || !editForm.name.trim()"
+          class="px-5 py-2 text-sm bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+          @if (savingEdit) {
+            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          }
+          儲存
+        </button>
+      </div>
+
     </div>
   </div>
 }
