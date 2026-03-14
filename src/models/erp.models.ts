@@ -64,6 +64,21 @@ export interface ChannelOrderSummary {
   updatedAt: string;
 }
 
+export interface ProductCodeMapping {
+  id: string;                  // Firestore doc ID
+  channelId: string;           // 歸屬通路 ID（品號組歸屬的品牌通路）
+  channelName: string;         // 歸屬通路名稱快照
+  externalCode: string;        // 完整對外品號 e.g. "YJF-GR-001"
+  prefix: string;              // 前綴 3 碼 e.g. "YJF"
+  categoryCode: string;        // 分類 2 碼 e.g. "GR"
+  serial: number;              // 流水號（數字）e.g. 1
+  erpProductId: string;        // 對照的 ERP 品號
+  erpProductName: string;      // 商品名稱快照
+  note?: string;               // 備注
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface Product {

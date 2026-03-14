@@ -5,18 +5,47 @@
   ═══════════════════════════════════════════════════════════ -->
   @if (!selectedChannel) {
 
-    <header class="mb-6 flex justify-between items-end">
+    <header class="mb-4 flex justify-between items-end">
       <div>
         <h1 class="text-3xl font-bold text-slate-800 dark:text-white">🌐 通路管理中心</h1>
         <p class="text-slate-500 dark:text-slate-400 mt-1">統一管理所有衛星品牌與網站，將商品推送至各通路並追蹤銷售回流。</p>
       </div>
-      <button
-        (click)="showAddChannelModal = true"
-        class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-        <span>新增通路</span>
-      </button>
+      @if (topView === 'channels') {
+        <button
+          (click)="showAddChannelModal = true"
+          class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          <span>新增通路</span>
+        </button>
+      }
+      @if (topView === 'codes') {
+        <button
+          (click)="showAddMappingModal = true"
+          class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          <span>新增品號</span>
+        </button>
+      }
     </header>
+
+    <!-- 頂層 Tab -->
+    <div class="flex space-x-1 border-b border-slate-200 dark:border-slate-700 mb-6">
+      <button (click)="topView = 'channels'"
+        class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        [class]="topView === 'channels' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+        🌐 通路列表
+      </button>
+      <button (click)="topView = 'codes'"
+        class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        [class]="topView === 'codes' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+        🔖 品號對照表
+        @if (codeMappings.length > 0) {
+          <span class="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">{{ codeMappings.length }}</span>
+        }
+      </button>
+    </div>
+
+    @if (topView === 'channels') {
 
     @if (loading) {
       <div class="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500">
@@ -95,6 +124,108 @@
         }
       </div>
     }
+
+    } <!-- end topView === 'channels' -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         品號對照表
+    ═══════════════════════════════════════════════════════════ -->
+    @if (topView === 'codes') {
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+
+        <!-- 搜尋列 -->
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex flex-wrap items-center gap-3">
+          <!-- 關鍵字搜尋 -->
+          <div class="relative flex-1 min-w-[200px] max-w-sm">
+            <input type="text" [(ngModel)]="codeSearchQuery" placeholder="搜尋品號、商品名稱、通路..."
+              class="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+          </div>
+          <!-- 通路篩選 -->
+          <select [(ngModel)]="codeFilterChannelId"
+            class="py-2 pl-3 pr-8 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="">全部通路</option>
+            @for (ch of channels; track ch.id) {
+              <option [value]="ch.id">{{ ch.name }}</option>
+            }
+          </select>
+          <span class="text-xs text-slate-400 ml-auto">共 {{ filteredCodeMappings.length }} 筆</span>
+        </div>
+
+        <!-- 說明 -->
+        <div class="px-6 py-3 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/30 text-xs text-amber-700 dark:text-amber-400">
+          品號格式：<strong>前綴（3碼）- 分類碼（2碼）- 流水號（3碼）</strong>，例如 <code class="font-mono bg-amber-100 dark:bg-amber-800/50 px-1 rounded">YJF-GR-001</code>。流水號由系統配發，同前綴+分類碼組合下遞增不重複。
+        </div>
+
+        <!-- 表格 -->
+        @if (codeMappingLoading) {
+          <div class="flex items-center justify-center h-32 text-slate-400">
+            <svg class="animate-spin h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            載入中...
+          </div>
+        } @else if (filteredCodeMappings.length === 0) {
+          <div class="px-6 py-16 text-center text-slate-400 dark:text-slate-500">
+            <div class="text-4xl mb-3">🔖</div>
+            <p class="text-sm">{{ codeSearchQuery ? '找不到符合的品號' : '尚未建立任何品號對照' }}</p>
+            @if (!codeSearchQuery) {
+              <button (click)="showAddMappingModal = true"
+                class="mt-4 px-4 py-2 bg-sky-500 text-white text-sm rounded-md hover:bg-sky-600 transition-colors">
+                建立第一筆品號
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead class="bg-slate-50 dark:bg-slate-700">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">歸屬通路</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">對外品號</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">ERP 品號</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">商品名稱</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">備注</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">建立時間</th>
+                  <th class="px-6 py-3 w-16"></th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
+                @for (m of filteredCodeMappings; track m.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <!-- 歸屬通路 -->
+                    <td class="px-4 py-3">
+                      @if (m.channelName) {
+                        <span class="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium whitespace-nowrap">{{ m.channelName }}</span>
+                      } @else {
+                        <span class="text-xs text-slate-300 dark:text-slate-600">—</span>
+                      }
+                    </td>
+                    <td class="px-6 py-3">
+                      <code class="font-mono text-sm font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 px-2 py-0.5 rounded">{{ m.externalCode }}</code>
+                    </td>
+                    <td class="px-6 py-3">
+                      <code class="font-mono text-xs text-slate-500 dark:text-slate-400">{{ m.erpProductId }}</code>
+                    </td>
+                    <td class="px-6 py-3 text-sm text-slate-700 dark:text-slate-200">{{ m.erpProductName }}</td>
+                    <td class="px-6 py-3 text-xs text-slate-400 dark:text-slate-500">{{ m.note || '—' }}</td>
+                    <td class="px-6 py-3 text-xs text-slate-400 dark:text-slate-500">{{ m.createdAt | date:'yyyy/MM/dd' }}</td>
+                    <td class="px-6 py-3 text-right">
+                      <button (click)="deleteCodeMapping(m)"
+                        [disabled]="deletingMappingId === m.id"
+                        class="text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors disabled:opacity-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
   }
 
   <!-- ══════════════════════════════════════════════════════════
@@ -145,34 +276,114 @@
             圖文欄位初始空白，之後由 AI 工具產生。
           </p>
         </div>
-        <div class="px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-100 dark:border-slate-700">
-          <div class="relative w-full md:w-72">
-            <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋商品名稱或分類..."
-              class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 text-sm" />
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        <!-- ── 篩選工具列 ── -->
+        <div class="px-6 py-3 border-b border-slate-100 dark:border-slate-700 space-y-2">
+
+          <!-- 第一排：分類 chips -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs text-slate-400 dark:text-slate-500 mr-1 shrink-0">分類</span>
+            <button (click)="clearCategoryFilter()"
+              class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors"
+              [class]="isAllCategorySelected
+                ? 'bg-sky-500 text-white border-sky-500'
+                : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-sky-400'">
+              全部
+            </button>
+            @for (c of categoryOptions; track c) {
+              <button (click)="toggleFilterCategory(c)"
+                class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors"
+                [class]="filterCategories.has(c)
+                  ? 'bg-sky-500 text-white border-sky-500'
+                  : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-sky-400'">
+                {{ c }}
+              </button>
+            }
+            @if (!isAllCategorySelected && filterCategories.size !== PRESET_CATEGORIES.length) {
+              <button (click)="resetCategoryFilter()"
+                class="px-2 py-1 text-xs text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors underline underline-offset-2">
+                還原預設
+              </button>
+            }
+          </div>
+
+          <!-- 第二排：其他篩選 + 操作 -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- 關鍵字搜尋 -->
+            <div class="relative min-w-[160px] max-w-xs flex-1">
+              <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋..."
+                class="w-full pl-9 pr-8 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 text-sm" />
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+              @if (searchQuery) {
+                <button (click)="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              }
+            </div>
+            <!-- 排序 -->
+            <div class="flex items-center gap-1">
+              <select [(ngModel)]="sortField"
+                class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="default">預設排序</option>
+                <option value="name">名稱</option>
+                <option value="category">分類</option>
+                <option value="price">未稅進價</option>
+              </select>
+              <button (click)="sortAsc = !sortAsc"
+                class="p-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+                [title]="sortAsc ? '升冪' : '降冪'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" [class.rotate-180]="!sortAsc" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
+              </button>
+            </div>
+            <!-- 供應商 -->
+            <select [(ngModel)]="filterSupplier"
+              class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="">全部供應商</option>
+              @for (s of supplierOptions; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+            <!-- 控管 -->
+            <select [(ngModel)]="filterControl"
+              class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="">控管：全部</option>
+              <option value="true">控貨中</option>
+              <option value="false">正常</option>
+            </select>
+            <!-- 銷售狀態 -->
+            <select [(ngModel)]="filterSalesStatus"
+              class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="">全部</option>
+              <option value="selling">銷售中</option>
+              <option value="discontinued">停售</option>
+            </select>
+            <!-- 結果計數 + 按鈕 -->
+            <span class="text-xs text-slate-400 dark:text-slate-500 ml-1">
+              共 {{ filteredErpProducts.length }} 件
+              @if (selectedProductIds.size > 0) {
+                ・<span class="text-sky-600 dark:text-sky-400 font-medium">已選 {{ selectedProductIds.size }} 件</span>
+              }
+            </span>
+            <div class="flex items-center gap-2 ml-auto">
+              <button (click)="toggleSelectAll()"
+                class="px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                {{ selectedProductIds.size === filteredErpProducts.length && filteredErpProducts.length > 0 ? '取消全選' : '全選' }}
+              </button>
+              <button (click)="importSelected()"
+                [disabled]="selectedProductIds.size === 0 || importLoading"
+                class="px-4 py-1.5 bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 text-xs font-medium">
+                @if (importLoading) {
+                  <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  <span>匯入中 {{ importProgress }}%</span>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                  <span>匯入選取 {{ selectedProductIds.size > 0 ? selectedProductIds.size + ' 件' : '' }}</span>
+                }
+              </button>
             </div>
           </div>
-          <div class="flex items-center space-x-3">
-            @if (selectedProductIds.size > 0) {
-              <span class="text-sm text-sky-600 dark:text-sky-400 font-medium">已選 {{ selectedProductIds.size }} 件</span>
-            }
-            <button (click)="toggleSelectAll()"
-              class="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-              {{ selectedProductIds.size === filteredErpProducts.length && filteredErpProducts.length > 0 ? '取消全選' : '全選' }}
-            </button>
-            <button (click)="importSelected()"
-              [disabled]="selectedProductIds.size === 0 || importLoading"
-              class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm">
-              @if (importLoading) {
-                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <span>匯入中 {{ importProgress }}%</span>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                <span>匯入選取商品</span>
-              }
-            </button>
-          </div>
+
         </div>
         @if (importLoading) {
           <div class="px-6 py-2 bg-sky-50 dark:bg-sky-900/20">
@@ -185,14 +396,52 @@
           <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
             <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10">
               <tr>
-                <th class="px-4 py-3 w-10">
+                <th class="px-3 py-3 w-10">
                   <input type="checkbox" class="rounded border-slate-300 text-sky-500 focus:ring-sky-500"
                     [checked]="selectedProductIds.size === filteredErpProducts.length && filteredErpProducts.length > 0"
                     (change)="toggleSelectAll()" />
                 </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">商品</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">分類</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">建議售價</th>
+                <!-- 重點 -->
+                <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider w-12">重點</th>
+                <!-- 名稱/ID -->
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 select-none"
+                  (click)="toggleSort('name')">
+                  <div class="flex items-center gap-1">
+                    名稱 / ID
+                    @if (sortField === 'name') {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform" [class.rotate-180]="!sortAsc" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                    }
+                  </div>
+                </th>
+                <!-- 分類 -->
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 select-none"
+                  (click)="toggleSort('category')">
+                  <div class="flex items-center gap-1">
+                    分類
+                    @if (sortField === 'category') {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform" [class.rotate-180]="!sortAsc" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                    }
+                  </div>
+                </th>
+                <!-- 供應商 -->
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">供應商</th>
+                <!-- 未稅進價 -->
+                <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 select-none"
+                  (click)="toggleSort('price')">
+                  <div class="flex items-center justify-end gap-1">
+                    未稅進價
+                    @if (sortField === 'price') {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform" [class.rotate-180]="!sortAsc" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                    }
+                  </div>
+                </th>
+                <!-- 建議售價 -->
+                <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">建議售價</th>
+                <!-- 控管 -->
+                <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">控管</th>
+                <!-- 銷售狀態 -->
+                <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">銷售</th>
+                <!-- 通路狀態 -->
                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">通路狀態</th>
               </tr>
             </thead>
@@ -202,43 +451,82 @@
                   class="hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
                   [class.bg-sky-50]="selectedProductIds.has(product.id)"
                   [class.dark:bg-sky-900]="selectedProductIds.has(product.id)">
-                  <td class="px-4 py-3" (click)="$event.stopPropagation()">
+                  <!-- 勾選 -->
+                  <td class="px-3 py-3" (click)="$event.stopPropagation()">
                     <input type="checkbox" class="rounded border-slate-300 text-sky-500 focus:ring-sky-500"
                       [checked]="selectedProductIds.has(product.id)" (change)="toggleProduct(product.id)" />
                   </td>
+                  <!-- 重點 -->
+                  <td class="px-2 py-3 text-center">
+                    @if (product.keyProduct === 'A') {
+                      <span class="text-amber-500 font-bold text-xs">A</span>
+                    } @else if (product.keyProduct === 'B') {
+                      <span class="text-sky-500 font-bold text-xs">B</span>
+                    } @else if (product.keyProduct === 'C') {
+                      <span class="text-slate-400 font-bold text-xs">C</span>
+                    } @else {
+                      <span class="text-slate-200 dark:text-slate-600">—</span>
+                    }
+                  </td>
+                  <!-- 名稱/ID + 圖片 -->
                   <td class="px-4 py-3">
                     <div class="flex items-center space-x-3">
                       <img [src]="product.imageUrl || 'assets/placeholder.png'" [alt]="product.name"
-                        class="w-10 h-10 rounded-md object-cover bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
+                        class="w-9 h-9 rounded-md object-cover bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
                       <div>
-                        <div class="text-sm font-medium text-slate-800 dark:text-white">{{ product.name }}</div>
+                        <div class="text-sm font-medium text-slate-800 dark:text-white whitespace-nowrap">{{ product.name }}</div>
                         <div class="text-xs font-mono text-slate-400">{{ product.id }}</div>
                       </div>
                     </div>
                   </td>
+                  <!-- 分類 -->
                   <td class="px-4 py-3">
-                    <span class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full">{{ product.category }}</span>
+                    <span class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full whitespace-nowrap">{{ product.category }}</span>
                   </td>
-                  <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 font-medium">
-                    NT$ {{ product.recommendedPrice | number }}
+                  <!-- 供應商 -->
+                  <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ product.supplierName }}</td>
+                  <!-- 未稅進價 -->
+                  <td class="px-4 py-3 text-sm text-right font-mono text-slate-600 dark:text-slate-300">
+                    {{ product.priceBeforeTax | number }}
                   </td>
+                  <!-- 建議售價 -->
+                  <td class="px-4 py-3 text-sm text-right font-mono font-medium text-sky-700 dark:text-sky-400">
+                    {{ product.recommendedPrice | number }}
+                  </td>
+                  <!-- 控管 -->
+                  <td class="px-3 py-3 text-center">
+                    @if (product.controlStatus) {
+                      <span class="text-xs px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded font-medium">控貨</span>
+                    } @else {
+                      <span class="text-xs text-slate-300 dark:text-slate-600">—</span>
+                    }
+                  </td>
+                  <!-- 銷售狀態 -->
+                  <td class="px-3 py-3 text-center">
+                    @if (product.isDiscontinued) {
+                      <span class="text-xs px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">停售</span>
+                    } @else {
+                      <span class="text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded">銷售中</span>
+                    }
+                  </td>
+                  <!-- 通路狀態 -->
                   <td class="px-4 py-3">
                     @if (isProductInChannel(product.id)) {
-                      <div class="flex items-center space-x-2">
-                        <span class="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full font-medium">✓ 已匯入</span>
-                        <span class="text-xs px-2 py-1 rounded-full font-medium"
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full font-medium">✓ 已匯入</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium"
                           [class]="channelProducts.find(p => p.id === product.id)?.visible ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'">
                           {{ channelProducts.find(p => p.id === product.id)?.visible ? '上架中' : '待上架' }}
                         </span>
                       </div>
                     } @else {
-                      <span class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-full">未匯入</span>
+                      <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-full">未匯入</span>
                     }
                   </td>
                 </tr>
               }
               @if (filteredErpProducts.length === 0) {
-                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500"><div class="text-3xl mb-2">🔍</div><p>找不到符合的商品</p></td></tr>
+                <tr><td colspan="10" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500"><div class="text-3xl mb-2">🔍</div><p>找不到符合的商品</p></td></tr>
               }
             </tbody>
           </table>
@@ -343,15 +631,18 @@
           </div>
         </div>
 
-        <!-- ── 通路已匯入商品列表 ── -->
+        <!-- ── 通路已匯入商品列表（含分頁） ── -->
         <div class="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
-          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <h3 class="font-semibold text-slate-800 dark:text-white">通路已匯入商品
               <span class="ml-2 text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full">{{ channelProducts.length }} 件</span>
             </h3>
+            <span class="text-xs text-slate-400 dark:text-slate-500">
+              第 {{ channelProductPage }} / {{ channelProductTotalPages }} 頁
+            </span>
           </div>
           <div class="divide-y divide-slate-100 dark:divide-slate-700">
-            @for (cp of channelProducts; track cp.id) {
+            @for (cp of pagedChannelProducts; track cp.id) {
               <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                 <div class="flex items-center space-x-3">
                   <img [src]="cp.imageUrl || 'assets/placeholder.png'" [alt]="cp.name"
@@ -383,6 +674,47 @@
               </div>
             }
           </div>
+          <!-- 分頁控制 -->
+          @if (channelProductTotalPages > 1) {
+            <div class="px-6 py-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <span class="text-xs text-slate-400 dark:text-slate-500">
+                顯示第 {{ (channelProductPage - 1) * channelProductPageSize + 1 }} –
+                {{ channelProductPage * channelProductPageSize > channelProducts.length ? channelProducts.length : channelProductPage * channelProductPageSize }} 件，共 {{ channelProducts.length }} 件
+              </span>
+              <div class="flex items-center gap-1">
+                <!-- 第一頁 -->
+                <button (click)="channelProductPage = 1" [disabled]="channelProductPage === 1"
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  «
+                </button>
+                <!-- 上一頁 -->
+                <button (click)="channelProductPage = channelProductPage - 1" [disabled]="channelProductPage === 1"
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  ‹
+                </button>
+                <!-- 頁碼 -->
+                @for (p of channelProductPageRange(); track p) {
+                  <button (click)="channelProductPage = p"
+                    class="px-2.5 py-1 text-xs rounded border transition-colors"
+                    [class]="p === channelProductPage
+                      ? 'bg-sky-500 text-white border-sky-500'
+                      : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+                    {{ p }}
+                  </button>
+                }
+                <!-- 下一頁 -->
+                <button (click)="channelProductPage = channelProductPage + 1" [disabled]="channelProductPage === channelProductTotalPages"
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  ›
+                </button>
+                <!-- 最後頁 -->
+                <button (click)="channelProductPage = channelProductTotalPages" [disabled]="channelProductPage === channelProductTotalPages"
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  »
+                </button>
+              </div>
+            </div>
+          }
         </div>
       }
     }
@@ -439,6 +771,151 @@
     }
   }
 </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     新增品號 Modal
+═══════════════════════════════════════════════════════════ -->
+@if (showAddMappingModal) {
+  <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="showAddMappingModal = false"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="px-6 pt-6 pb-4">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800 dark:text-white">🔖 批次建立品號</h3>
+              <p class="text-xs text-slate-400 mt-0.5">選定分類後，一次為所有銷售中且尚未有品號的商品配發流水號</p>
+            </div>
+            <button (click)="showAddMappingModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+
+            <!-- 歸屬通路 -->
+            <div>
+              <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                歸屬品牌通路 <span class="text-red-500">*</span>
+              </label>
+              <select [(ngModel)]="batchForm.channelId"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="">選擇品牌通路...</option>
+                @for (ch of channels; track ch.id) {
+                  <option [value]="ch.id">{{ ch.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Step 1：前綴 + ERP 分類 + 分類碼 -->
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  前綴 <span class="text-red-500">*</span>
+                  <span class="text-slate-400 font-normal">3碼</span>
+                </label>
+                <input type="text" [(ngModel)]="batchForm.prefix" maxlength="3" placeholder="YJF"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white uppercase placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono tracking-widest text-center" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  ERP 分類 <span class="text-red-500">*</span>
+                </label>
+                <select [(ngModel)]="batchForm.erpCategory"
+                  class="w-full px-2 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                  <option value="">選分類</option>
+                  @for (c of categoryOptions; track c) {
+                    <option [value]="c">{{ c }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  分類碼 <span class="text-red-500">*</span>
+                  <span class="text-slate-400 font-normal">2碼</span>
+                </label>
+                <input type="text" [(ngModel)]="batchForm.categoryCode" maxlength="2" placeholder="GR"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white uppercase placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono tracking-widest text-center" />
+              </div>
+            </div>
+
+            <!-- 品號格式預覽 -->
+            @if (batchForm.prefix.length === 3 && batchForm.categoryCode.length === 2) {
+              <div class="flex items-center gap-2 px-4 py-2.5 bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-100 dark:border-sky-800">
+                <span class="text-xs text-sky-700 dark:text-sky-400">品號格式：</span>
+                <code class="font-mono font-bold text-sky-600 dark:text-sky-400">
+                  {{ batchForm.prefix.toUpperCase() }}-{{ batchForm.categoryCode.toUpperCase() }}-001 ～ {{ batchForm.prefix.toUpperCase() }}-{{ batchForm.categoryCode.toUpperCase() }}-{{ (getNextSerial(batchForm.prefix.toUpperCase(), batchForm.categoryCode.toUpperCase()) + batchPreviewProducts.length - 1).toString().padStart(3,'0') }}
+                </code>
+                <span class="text-xs text-sky-500 dark:text-sky-500 ml-auto">
+                  從 {{ getNextSerial(batchForm.prefix.toUpperCase(), batchForm.categoryCode.toUpperCase()) }} 號開始
+                </span>
+              </div>
+            }
+
+            <!-- 商品預覽清單 -->
+            @if (batchForm.erpCategory && batchForm.prefix.length === 3 && batchForm.categoryCode.length === 2) {
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    將配號的商品
+                  </span>
+                  <span class="text-xs font-medium"
+                    [class]="batchPreviewProducts.length > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
+                    {{ batchPreviewProducts.length > 0 ? batchPreviewProducts.length + ' 件待配號' : '此分類無待配號商品' }}
+                  </span>
+                </div>
+                @if (batchPreviewProducts.length > 0) {
+                  <div class="border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                    <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700 text-xs">
+                      <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0">
+                        <tr>
+                          <th class="px-3 py-2 text-left font-medium text-slate-500 dark:text-slate-300">商品名稱</th>
+                          <th class="px-3 py-2 text-left font-mono font-medium text-slate-500 dark:text-slate-300">ERP 品號</th>
+                          <th class="px-3 py-2 text-right font-medium text-sky-600 dark:text-sky-400">配發品號</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-50 dark:divide-slate-700/50">
+                        @for (pr of batchPreviewProducts; track pr.id; let i = $index) {
+                          <tr>
+                            <td class="px-3 py-2 text-slate-700 dark:text-slate-200">{{ pr.name }}</td>
+                            <td class="px-3 py-2 font-mono text-slate-400">{{ pr.id }}</td>
+                            <td class="px-3 py-2 text-right font-mono font-semibold text-sky-600 dark:text-sky-400">
+                              {{ batchForm.prefix.toUpperCase() }}-{{ batchForm.categoryCode.toUpperCase() }}-{{ (getNextSerial(batchForm.prefix.toUpperCase(), batchForm.categoryCode.toUpperCase()) + i).toString().padStart(3,'0') }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                } @else {
+                  <div class="px-4 py-6 text-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-dashed border-slate-200 dark:border-slate-600 text-xs">
+                    {{ batchForm.erpCategory }} 分類下的銷售中商品都已有品號對照
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="bg-slate-50 dark:bg-slate-700/50 px-6 py-4 flex justify-end space-x-3">
+          <button (click)="showAddMappingModal = false"
+            class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">取消</button>
+          <button (click)="createBatchCodeMappings()"
+            [disabled]="!batchForm.channelId || batchForm.prefix.length !== 3 || batchForm.categoryCode.length !== 2 || !batchForm.erpCategory || batchPreviewProducts.length === 0 || batchCreating"
+            class="px-4 py-2 text-sm bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+            @if (batchCreating) {
+              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              建立中...
+            } @else {
+              一次建立 {{ batchPreviewProducts.length }} 件品號
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- ══════════════════════════════════════════════════════════
      新增通路 Modal
