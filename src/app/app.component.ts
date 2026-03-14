@@ -37,6 +37,7 @@ import { Router, RouterOutlet } from '@angular/router';
 
 import { ExternalPortalComponent } from '../components/external-portal/external-portal.component';
 import { ChannelsComponent } from '../components/channels/channels.component';
+import { ContentGeneratorComponent } from '../components/content-generator/content-generator.component';
 
 @Component({
   selector: 'app-root',
@@ -74,7 +75,8 @@ import { ChannelsComponent } from '../components/channels/channels.component';
     LoginComponent,
     ExternalPortalComponent,
     MobileQuoteComponent,
-    ChannelsComponent
+    ChannelsComponent,
+    ContentGeneratorComponent
   ],
   styles: [`:host { display: block; height: 100%; }`],
   template: `
@@ -192,6 +194,9 @@ import { ChannelsComponent } from '../components/channels/channels.component';
                 }
                 @case ('mobile-quote') {
                   <app-mobile-quote></app-mobile-quote>
+                }
+                @case ('content-generator') {
+                  <app-content-generator class="block h-full overflow-y-auto"></app-content-generator>
                 }
               }
             </div>

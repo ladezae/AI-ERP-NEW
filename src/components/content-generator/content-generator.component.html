@@ -3,7 +3,7 @@
   <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-1">自動圖文工具</h1>
   <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">上傳圖片加工 + AI 文案生成 → 直接上傳到通路</p>
 
-  <!-- ===== 通路選擇（共用） ===== -->
+  <!-- ===== 通路選擇 ===== -->
   <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 mb-6">
     <h2 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">上傳目標</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -44,40 +44,22 @@
           圖文完成狀態
         </h2>
         <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-          <span class="flex items-center gap-1">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            完成 {{ statusStats().done }}
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-            部分 {{ statusStats().partial }}
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-slate-600"></span>
-            未完成 {{ statusStats().empty }}
-          </span>
-          <span class="font-medium text-gray-700 dark:text-gray-200 ml-2">
-            {{ statusStats().done }}/{{ channelProducts().length }}
-          </span>
-          <!-- 清空按鈕 -->
-          <button (click)="resetAllProductContent()"
-                  [disabled]="isResetting()"
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 完成 {{ statusStats().done }}</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> 部分 {{ statusStats().partial }}</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-slate-600"></span> 未完成 {{ statusStats().empty }}</span>
+          <span class="font-medium text-gray-700 dark:text-gray-200 ml-2">{{ statusStats().done }}/{{ channelProducts().length }}</span>
+          <button (click)="resetAllProductContent()" [disabled]="isResetting()"
                   class="ml-3 px-3 py-1 text-xs border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50">
             {{ isResetting() ? '清空中...' : '清空全部圖文' }}
           </button>
         </div>
       </div>
-
-      <!-- 進度條 -->
       <div class="w-full h-2 bg-gray-200 dark:bg-slate-700 rounded-full mb-4 overflow-hidden">
         <div class="h-full rounded-full transition-all duration-500"
              [style.width.%]="(statusStats().done / channelProducts().length) * 100"
              [class.bg-emerald-500]="statusStats().done > 0"
-             [class.bg-gray-300]="statusStats().done === 0">
-        </div>
+             [class.bg-gray-300]="statusStats().done === 0"></div>
       </div>
-
-      <!-- 狀態表格 -->
       <div class="overflow-x-auto max-h-64 overflow-y-auto">
         <table class="w-full text-xs">
           <thead class="sticky top-0 bg-gray-50 dark:bg-slate-700">
@@ -93,50 +75,19 @@
           <tbody>
             @for (cp of channelProducts(); track cp.id) {
               <tr class="border-t border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750"
-                  [class.bg-emerald-50]="getProductStatus(cp) === 'done'"
-                  [class.dark:bg-emerald-900/10]="getProductStatus(cp) === 'done'">
-                <td class="px-3 py-2 text-gray-800 dark:text-gray-200 font-medium">
-                  {{ cp.name }}
-                </td>
-                <td class="px-3 py-2 text-center">
-                  @if (cp.imageUrl) {
-                    <span class="text-emerald-600 dark:text-emerald-400" title="已有主圖">&#10003;</span>
-                  } @else {
-                    <span class="text-gray-300 dark:text-slate-600">—</span>
-                  }
-                </td>
-                <td class="px-3 py-2 text-center">
-                  @if (cp.images?.length) {
-                    <span class="text-emerald-600 dark:text-emerald-400">{{ cp.images.length }}張</span>
-                  } @else {
-                    <span class="text-gray-300 dark:text-slate-600">—</span>
-                  }
-                </td>
-                <td class="px-3 py-2 text-center">
-                  @if (cp.intro) {
-                    <span class="text-emerald-600 dark:text-emerald-400" title="{{ cp.intro }}">&#10003;</span>
-                  } @else {
-                    <span class="text-gray-300 dark:text-slate-600">—</span>
-                  }
-                </td>
-                <td class="px-3 py-2 text-center">
-                  @if (cp.description) {
-                    <span class="text-emerald-600 dark:text-emerald-400" title="{{ cp.description }}">&#10003;</span>
-                  } @else {
-                    <span class="text-gray-300 dark:text-slate-600">—</span>
-                  }
-                </td>
+                  [class.bg-emerald-50]="getProductStatus(cp) === 'done'" [class.dark:bg-emerald-900/10]="getProductStatus(cp) === 'done'"
+                  [class.ring-2]="batchCurrentProductId() === cp.id" [class.ring-indigo-400]="batchCurrentProductId() === cp.id"
+                  [class.bg-indigo-50]="batchCurrentProductId() === cp.id" [class.dark:bg-indigo-900/20]="batchCurrentProductId() === cp.id">
+                <td class="px-3 py-2 text-gray-800 dark:text-gray-200 font-medium">{{ cp.name }}</td>
+                <td class="px-3 py-2 text-center">@if (cp.imageUrl) { <span class="text-emerald-600 dark:text-emerald-400">&#10003;</span> } @else { <span class="text-gray-300 dark:text-slate-600">—</span> }</td>
+                <td class="px-3 py-2 text-center">@if (cp.images?.length) { <span class="text-emerald-600 dark:text-emerald-400">{{ cp.images.length }}張</span> } @else { <span class="text-gray-300 dark:text-slate-600">—</span> }</td>
+                <td class="px-3 py-2 text-center">@if (cp.intro) { <span class="text-emerald-600 dark:text-emerald-400" [title]="cp.intro">&#10003;</span> } @else { <span class="text-gray-300 dark:text-slate-600">—</span> }</td>
+                <td class="px-3 py-2 text-center">@if (cp.description) { <span class="text-emerald-600 dark:text-emerald-400" [title]="cp.description">&#10003;</span> } @else { <span class="text-gray-300 dark:text-slate-600">—</span> }</td>
                 <td class="px-3 py-2 text-center">
                   @switch (getProductStatus(cp)) {
-                    @case ('done') {
-                      <span class="inline-block w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] leading-5 text-center">&#10003;</span>
-                    }
-                    @case ('partial') {
-                      <span class="inline-block w-5 h-5 rounded-full bg-amber-400 text-white text-[10px] leading-5 text-center">½</span>
-                    }
-                    @default {
-                      <span class="inline-block w-5 h-5 rounded-full bg-gray-200 dark:bg-slate-600"></span>
-                    }
+                    @case ('done') { <span class="inline-block w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] leading-5 text-center">&#10003;</span> }
+                    @case ('partial') { <span class="inline-block w-5 h-5 rounded-full bg-amber-400 text-white text-[10px] leading-5 text-center">½</span> }
+                    @default { <span class="inline-block w-5 h-5 rounded-full bg-gray-200 dark:bg-slate-600"></span> }
                   }
                 </td>
               </tr>
@@ -147,56 +98,151 @@
     </div>
   }
 
+  <!-- ===== 批次處理控制台 ===== -->
+  @if (channelProducts().length) {
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 mb-6">
+      <!-- 步驟進度列 -->
+      <div class="flex items-center justify-center gap-2 mb-4">
+        <div class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+             [class.bg-blue-100]="batchPhase() === 'images'" [class.text-blue-700]="batchPhase() === 'images'"
+             [class.dark:bg-blue-900/30]="batchPhase() === 'images'" [class.dark:text-blue-300]="batchPhase() === 'images'"
+             [class.bg-emerald-100]="batchPhase() === 'texts' || batchPhase() === 'done'" [class.text-emerald-700]="batchPhase() === 'texts' || batchPhase() === 'done'"
+             [class.dark:bg-emerald-900/30]="batchPhase() === 'texts' || batchPhase() === 'done'" [class.dark:text-emerald-300]="batchPhase() === 'texts' || batchPhase() === 'done'"
+             [class.bg-gray-100]="batchPhase() === 'idle'" [class.text-gray-500]="batchPhase() === 'idle'"
+             [class.dark:bg-slate-700]="batchPhase() === 'idle'" [class.dark:text-gray-400]="batchPhase() === 'idle'">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                [class.bg-blue-500]="batchPhase() === 'images'" [class.text-white]="batchPhase() === 'images' || batchPhase() === 'texts' || batchPhase() === 'done'"
+                [class.bg-emerald-500]="batchPhase() === 'texts' || batchPhase() === 'done'"
+                [class.bg-gray-300]="batchPhase() === 'idle'" [class.dark:bg-slate-600]="batchPhase() === 'idle'">
+            @if (batchPhase() === 'texts' || batchPhase() === 'done') { ✓ } @else { ① }
+          </span>
+          批次圖片
+        </div>
+        <svg class="w-4 h-4 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        <div class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+             [class.bg-emerald-100]="batchPhase() === 'texts'" [class.text-emerald-700]="batchPhase() === 'texts'"
+             [class.dark:bg-emerald-900/30]="batchPhase() === 'texts'" [class.dark:text-emerald-300]="batchPhase() === 'texts'"
+             [class.bg-emerald-100]="batchPhase() === 'done'" [class.text-emerald-700]="batchPhase() === 'done'"
+             [class.bg-gray-100]="batchPhase() === 'idle' || batchPhase() === 'images'" [class.text-gray-500]="batchPhase() === 'idle' || batchPhase() === 'images'"
+             [class.dark:bg-slate-700]="batchPhase() === 'idle' || batchPhase() === 'images'" [class.dark:text-gray-400]="batchPhase() === 'idle' || batchPhase() === 'images'">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                [class.bg-emerald-500]="batchPhase() === 'texts' || batchPhase() === 'done'" [class.text-white]="batchPhase() === 'texts' || batchPhase() === 'done'"
+                [class.bg-gray-300]="batchPhase() === 'idle' || batchPhase() === 'images'" [class.dark:bg-slate-600]="batchPhase() === 'idle' || batchPhase() === 'images'">
+            @if (batchPhase() === 'done') { ✓ } @else { ② }
+          </span>
+          批次文案
+        </div>
+        <svg class="w-4 h-4 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        <div class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+             [class.bg-emerald-100]="batchPhase() === 'done'" [class.text-emerald-700]="batchPhase() === 'done'"
+             [class.dark:bg-emerald-900/30]="batchPhase() === 'done'" [class.dark:text-emerald-300]="batchPhase() === 'done'"
+             [class.bg-gray-100]="batchPhase() !== 'done'" [class.text-gray-500]="batchPhase() !== 'done'"
+             [class.dark:bg-slate-700]="batchPhase() !== 'done'" [class.dark:text-gray-400]="batchPhase() !== 'done'">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                [class.bg-emerald-500]="batchPhase() === 'done'" [class.text-white]="batchPhase() === 'done'"
+                [class.bg-gray-300]="batchPhase() !== 'done'" [class.dark:bg-slate-600]="batchPhase() !== 'done'">
+            ✓
+          </span>
+          完成
+        </div>
+      </div>
+
+      <!-- 批次進度條（執行中才顯示） -->
+      @if (batchRunning() || batchProcessed() > 0) {
+        <div class="mb-3">
+          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <span>
+              @if (batchPhase() === 'images') { 圖片處理中 }
+              @else if (batchPhase() === 'texts') { 文案生成中 }
+              @else if (batchPhase() === 'done') { 全部完成 }
+            </span>
+            <span>{{ batchProcessed() }} / {{ batchTotal() }}</span>
+          </div>
+          <div class="w-full h-2.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-300"
+                 [style.width.%]="batchTotal() ? (batchProcessed() / batchTotal()) * 100 : 0"
+                 [class.bg-blue-500]="batchPhase() === 'images'"
+                 [class.bg-emerald-500]="batchPhase() === 'texts' || batchPhase() === 'done'"
+                 [class.animate-pulse]="batchRunning()"></div>
+          </div>
+        </div>
+      }
+
+      <!-- 控制按鈕 -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- 開始批次圖片 -->
+        @if (batchPhase() === 'idle' || (batchPhase() === 'images' && !batchRunning())) {
+          <button (click)="startBatchImages()"
+                  [disabled]="batchRunning()"
+                  class="px-4 py-2 text-xs font-medium rounded-lg transition-colors bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white">
+            @if (batchPhase() === 'images' && !batchRunning()) { 繼續圖片批次 } @else { ① 開始批次圖片 }
+          </button>
+        }
+        <!-- 開始批次文案 -->
+        @if (batchPhase() === 'texts' && !batchRunning()) {
+          <button (click)="startBatchTexts()"
+                  class="px-4 py-2 text-xs font-medium rounded-lg transition-colors bg-emerald-600 hover:bg-emerald-700 text-white">
+            @if (batchProcessed() > 0) { 繼續文案批次 } @else { ② 開始批次文案 }
+          </button>
+        }
+        <!-- 暫停 -->
+        @if (batchRunning()) {
+          <button (click)="pauseBatch()"
+                  class="px-4 py-2 text-xs font-medium rounded-lg transition-colors bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            暫停
+          </button>
+        }
+        <!-- 重設 -->
+        @if (batchPhase() !== 'idle' && !batchRunning()) {
+          <button (click)="resetBatch()"
+                  class="px-3 py-2 text-xs font-medium rounded-lg transition-colors border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700">
+            重設批次
+          </button>
+        }
+        <!-- 完成狀態 -->
+        @if (batchPhase() === 'done') {
+          <span class="px-3 py-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            全部完成！
+          </span>
+        }
+      </div>
+
+      <!-- 批次日誌 -->
+      @if (batchLog().length) {
+        <div class="mt-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-3 max-h-40 overflow-y-auto">
+          <h4 class="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">執行日誌</h4>
+          @for (log of batchLog(); track $index) {
+            <p class="text-[11px] font-mono leading-relaxed"
+               [class.text-emerald-600]="log.startsWith('✓')" [class.dark:text-emerald-400]="log.startsWith('✓')"
+               [class.text-red-600]="log.startsWith('✗')" [class.dark:text-red-400]="log.startsWith('✗')"
+               [class.text-amber-600]="log.startsWith('⚠')" [class.dark:text-amber-400]="log.startsWith('⚠')"
+               [class.text-gray-600]="!log.startsWith('✓') && !log.startsWith('✗') && !log.startsWith('⚠')"
+               [class.dark:text-gray-400]="!log.startsWith('✓') && !log.startsWith('✗') && !log.startsWith('⚠')">
+              {{ log }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ===== 主要兩欄 ===== -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-    <!-- ===== 左欄：圖片加工 ===== -->
+    <!-- ===== 左欄：圖片上傳 + 預覽 ===== -->
     <div class="space-y-4">
       <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4">
-        <h2 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">圖片加工</h2>
-
-        <!-- 上傳區 -->
-        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-indigo-400 transition-colors mb-3">
-          <svg class="w-8 h-8 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h2 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">圖片上傳</h2>
+        <label class="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-indigo-400 transition-colors">
+          <svg class="w-7 h-7 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <span class="text-sm text-gray-500 dark:text-gray-400">點擊上傳商品圖片 (JPG/PNG)</span>
-          <span class="text-xs text-gray-400 mt-0.5">自動縮為 1000 x 1000</span>
+          <span class="text-xs text-gray-400 mt-0.5">輸出 1:1 (1000×1000)</span>
           <input type="file" accept="image/*" class="hidden" (change)="onImageUpload($event)" />
         </label>
-
-        <!-- 加工選項 -->
-        <div class="space-y-3">
-          <!-- 浮水印 -->
-          <div class="flex items-center gap-3">
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" [checked]="enableWatermark()" (change)="toggleWatermark()" class="sr-only peer" />
-              <div class="w-9 h-5 bg-gray-300 peer-checked:bg-indigo-500 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-            </label>
-            <span class="text-sm text-gray-700 dark:text-gray-300">浮水印押字</span>
-          </div>
-          @if (enableWatermark()) {
-            <input type="text"
-                   [value]="watermarkText()"
-                   (input)="onWatermarkTextChange($any($event.target).value)"
-                   placeholder="浮水印文字"
-                   class="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-800 dark:text-white" />
-          }
-
-          <!-- LOGO -->
-          <div class="flex items-center gap-3">
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" [checked]="enableLogo()" (change)="toggleLogo()" class="sr-only peer" />
-              <div class="w-9 h-5 bg-gray-300 peer-checked:bg-indigo-500 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-            </label>
-            <span class="text-sm text-gray-700 dark:text-gray-300">壓 LOGO</span>
-            @if (enableLogo()) {
-              <label class="text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer ml-auto">
-                {{ logoImage() ? '更換 LOGO' : '上傳 LOGO' }}
-                <input type="file" accept="image/*" class="hidden" (change)="onLogoUpload($event)" />
-              </label>
-            }
-          </div>
-        </div>
       </div>
 
       <!-- 圖片預覽 -->
@@ -209,122 +255,233 @@
             }
           </div>
           <img [src]="processedImage()" class="w-full rounded-lg border border-gray-200 dark:border-slate-600" />
-
-          <!-- 上傳圖片按鈕 -->
-          <div class="mt-3 flex items-center gap-2">
-            <select [value]="imageTargetField()"
-                    (change)="imageTargetField.set($any($event.target).value)"
-                    class="px-2 py-1.5 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300">
-              <option value="imageUrl">主圖 (imageUrl)</option>
-              <option value="images">附加圖 (images)</option>
-            </select>
+          <div class="mt-3">
             <button (click)="uploadImage()"
-                    [disabled]="isUploading() || !selectedProductId()"
-                    class="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors">
-              {{ isUploading() ? '上傳中...' : '上傳圖片到通路' }}
+                    [disabled]="isUploading() || !selectedProductId() || (!imageFields()['imageUrl'].enabled && !imageFields()['images'].enabled)"
+                    class="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors">
+              {{ isUploading() ? '上傳中...' : '上傳圖片' }}
             </button>
           </div>
         </div>
       }
+
+      <!-- 提示詞彙整 -->
+      <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 border border-dashed border-gray-300 dark:border-slate-600">
+        <label class="block text-[10px] font-medium text-gray-400 dark:text-gray-500 mb-1 uppercase tracking-wide">圖片提示詞</label>
+        <p class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{ imagePrompt() }}</p>
+      </div>
     </div>
 
-    <!-- ===== 右欄：文案生成 ===== -->
+    <!-- ===== 右欄：上傳對應欄位（全部整合） ===== -->
     <div class="space-y-4">
       <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="font-semibold text-gray-700 dark:text-gray-200">AI 文案生成</h2>
-          <!-- Ollama 狀態 -->
-          <span class="inline-flex items-center gap-1 text-xs">
-            <span class="w-2 h-2 rounded-full"
-                  [class.bg-green-500]="ollamaService.connectionStatus() === 'connected'"
-                  [class.bg-red-500]="ollamaService.connectionStatus() === 'error'"
-                  [class.bg-gray-400]="ollamaService.connectionStatus() === 'idle' || ollamaService.connectionStatus() === 'connecting'">
-            </span>
-            <span class="text-gray-500 dark:text-gray-400">
-              {{ ollamaService.connectionStatus() === 'connected' ? 'Ollama 已連線' : ollamaService.connectionStatus() === 'error' ? '未連線' : '...' }}
-            </span>
-            @if (ollamaService.connectionStatus() !== 'connected') {
-              <button (click)="ollamaService.checkConnection()" class="text-indigo-500 underline ml-1">重試</button>
-            }
-          </span>
+          <h2 class="font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            上傳對應欄位
+          </h2>
+          <span class="text-xs text-gray-400 dark:text-gray-500">已啟用 {{ activeFieldCount() }} 個</span>
         </div>
 
-        <!-- 商品名稱輸入 -->
-        <input type="text"
-               [value]="productName()"
-               (input)="productName.set($any($event.target).value)"
-               placeholder="輸入商品名稱，例：芒果乾（無加糖）"
-               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-800 dark:text-white mb-3" />
-
-        <!-- 字數選項 + 全部生成 -->
-        <div class="flex items-center gap-2 mb-4">
-          @for (opt of charOptions; track opt) {
-            <button (click)="charLimit.set(opt)"
-                    class="px-3 py-1 text-xs rounded-full border transition-colors"
-                    [class.border-indigo-500]="charLimit() === opt"
-                    [class.bg-indigo-50]="charLimit() === opt"
-                    [class.text-indigo-700]="charLimit() === opt"
-                    [class.dark:bg-indigo-900/30]="charLimit() === opt"
-                    [class.border-gray-300]="charLimit() !== opt"
-                    [class.dark:border-slate-600]="charLimit() !== opt"
-                    [class.text-gray-600]="charLimit() !== opt"
-                    [class.dark:text-gray-400]="charLimit() !== opt">
-              {{ opt }}字
-            </button>
-          }
-          <button (click)="generateAllCopies()"
-                  [disabled]="ollamaService.isGenerating() || ollamaService.connectionStatus() !== 'connected'"
-                  class="ml-auto px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-full transition-colors">
-            {{ ollamaService.isGenerating() ? '生成中...' : '全部生成' }}
-          </button>
-        </div>
-
-        <!-- 文案結果 -->
         <div class="space-y-3">
-          @for (opt of charOptions; track opt) {
-            <div class="border border-gray-200 dark:border-slate-600 rounded-lg p-3">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ opt }} 字版</span>
-                <div class="flex gap-1">
-                  @if (generatedCopies()[opt]) {
-                    <button (click)="copyCopyText(generatedCopies()[opt])"
-                            class="text-xs text-gray-400 hover:text-indigo-500" title="複製">
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                  }
-                  <button (click)="generateSingleCopy(opt)"
-                          [disabled]="ollamaService.isGenerating()"
-                          class="text-xs text-indigo-500 hover:text-indigo-700 disabled:text-gray-400" title="生成">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </button>
-                </div>
+          <!-- ══════ 圖片欄位 ══════ -->
+          @for (fd of imageFieldDefs; track fd.key) {
+            <div class="rounded-lg border transition-colors p-3"
+                 [class.border-blue-300]="imageFields()[fd.key].enabled" [class.dark:border-blue-700]="imageFields()[fd.key].enabled"
+                 [class.bg-blue-50/40]="imageFields()[fd.key].enabled" [class.dark:bg-blue-900/10]="imageFields()[fd.key].enabled"
+                 [class.border-gray-200]="!imageFields()[fd.key].enabled" [class.dark:border-slate-700]="!imageFields()[fd.key].enabled">
+              <!-- 主 toggle -->
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input type="checkbox" [checked]="imageFields()[fd.key].enabled" (change)="toggleImageField(fd.key)" class="sr-only peer" />
+                  <div class="w-8 h-[18px] bg-gray-300 peer-checked:bg-blue-500 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[14px] after:w-[14px] after:transition-all peer-checked:after:translate-x-[14px]"></div>
+                </label>
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ fd.label }}</span>
+                <span class="text-[10px] font-mono text-gray-400 dark:text-gray-500 px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded">{{ fd.key }}</span>
               </div>
-              @if (generatedCopies()[opt]) {
-                <p class="text-sm text-gray-800 dark:text-gray-200">{{ generatedCopies()[opt] }}</p>
-              } @else {
-                <p class="text-xs text-gray-400 italic">尚未生成</p>
+              <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1 ml-11">{{ fd.desc }}</p>
+
+              @if (imageFields()[fd.key].enabled) {
+                <div class="mt-2 ml-11 space-y-2">
+                  <!-- 浮水印 checkbox + 展開設定 -->
+                  <div>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" [checked]="imageFields()[fd.key].watermark"
+                             (change)="toggleImageFieldOption(fd.key, 'watermark')"
+                             class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-400" />
+                      <span class="text-xs text-gray-600 dark:text-gray-400">浮水印</span>
+                    </label>
+                    @if (imageFields()[fd.key].watermark) {
+                      <div class="mt-1.5 pl-5 space-y-1.5">
+                        <input type="text" [value]="watermarkText()"
+                               (input)="onWatermarkTextChange($any($event.target).value)"
+                               placeholder="浮水印文字" class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-800 dark:text-white" />
+                        <div class="flex items-center gap-3">
+                          <span class="text-[10px] text-gray-400 shrink-0">位置</span>
+                          <div class="grid grid-cols-3 gap-0.5 w-20">
+                            @for (pos of positionKeys; track pos) {
+                              <button (click)="onWatermarkPositionChange(pos)"
+                                      class="w-6 h-6 rounded text-[9px] leading-none border transition-colors flex items-center justify-center"
+                                      [class.bg-indigo-500]="watermarkPosition() === pos" [class.text-white]="watermarkPosition() === pos" [class.border-indigo-500]="watermarkPosition() === pos"
+                                      [class.bg-gray-100]="watermarkPosition() !== pos" [class.dark:bg-slate-700]="watermarkPosition() !== pos"
+                                      [class.border-gray-300]="watermarkPosition() !== pos" [class.dark:border-slate-600]="watermarkPosition() !== pos"
+                                      [class.text-gray-400]="watermarkPosition() !== pos"
+                                      [title]="positionLabels[pos]">
+                                @if (pos === 'center') { ✦ } @else { · }
+                              </button>
+                            }
+                          </div>
+                          <span class="text-[9px] text-gray-400">正中=滿版</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  <!-- LOGO checkbox + 展開設定 -->
+                  <div>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" [checked]="imageFields()[fd.key].logo"
+                             (change)="toggleImageFieldOption(fd.key, 'logo')"
+                             class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-400" />
+                      <span class="text-xs text-gray-600 dark:text-gray-400">LOGO</span>
+                    </label>
+                    @if (imageFields()[fd.key].logo) {
+                      <div class="mt-1.5 pl-5 space-y-1.5">
+                        <!-- LOGO 上傳 -->
+                        <div class="flex items-center gap-2">
+                          @if (logoImage()) {
+                            <img [src]="logoImage()" class="w-8 h-8 object-contain rounded border border-gray-200 dark:border-slate-600 bg-white" />
+                          }
+                          <label class="text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer">
+                            {{ logoImage() ? '更換' : '上傳 LOGO' }}
+                            <input type="file" accept="image/*" class="hidden" (change)="onLogoUpload($event)" />
+                          </label>
+                        </div>
+                        <!-- LOGO 尺寸 -->
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-[10px] text-gray-400 shrink-0">尺寸</span>
+                          @for (s of logoSizeOptions; track s) {
+                            <button (click)="onLogoSizeChange(s)"
+                                    class="px-1.5 py-0.5 text-[10px] rounded border transition-colors"
+                                    [class.bg-indigo-500]="logoSize() === s" [class.text-white]="logoSize() === s" [class.border-indigo-500]="logoSize() === s"
+                                    [class.border-gray-300]="logoSize() !== s" [class.dark:border-slate-600]="logoSize() !== s"
+                                    [class.text-gray-500]="logoSize() !== s" [class.dark:text-gray-400]="logoSize() !== s">
+                              {{ s }}
+                            </button>
+                          }
+                        </div>
+                        <!-- LOGO 位置 -->
+                        <div class="flex items-center gap-3">
+                          <span class="text-[10px] text-gray-400 shrink-0">位置</span>
+                          <div class="grid grid-cols-3 gap-0.5 w-20">
+                            @for (pos of positionKeys; track pos) {
+                              <button (click)="onLogoPositionChange(pos)"
+                                      class="w-6 h-6 rounded text-[9px] leading-none border transition-colors flex items-center justify-center"
+                                      [class.bg-indigo-500]="logoPosition() === pos" [class.text-white]="logoPosition() === pos" [class.border-indigo-500]="logoPosition() === pos"
+                                      [class.bg-gray-100]="logoPosition() !== pos" [class.dark:bg-slate-700]="logoPosition() !== pos"
+                                      [class.border-gray-300]="logoPosition() !== pos" [class.dark:border-slate-600]="logoPosition() !== pos"
+                                      [class.text-gray-400]="logoPosition() !== pos"
+                                      [title]="positionLabels[pos]">
+                                @if (logoPosition() === pos) { ✦ } @else { · }
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ══════ 文案欄位 ══════ -->
+          @for (fd of textFieldDefs; track fd.key) {
+            <div class="rounded-lg border transition-colors p-3"
+                 [class.border-emerald-300]="textFields()[fd.key].enabled" [class.dark:border-emerald-700]="textFields()[fd.key].enabled"
+                 [class.bg-emerald-50/40]="textFields()[fd.key].enabled" [class.dark:bg-emerald-900/10]="textFields()[fd.key].enabled"
+                 [class.border-gray-200]="!textFields()[fd.key].enabled" [class.dark:border-slate-700]="!textFields()[fd.key].enabled">
+              <!-- 主 toggle -->
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input type="checkbox" [checked]="textFields()[fd.key].enabled" (change)="toggleTextField(fd.key)" class="sr-only peer" />
+                  <div class="w-8 h-[18px] bg-gray-300 peer-checked:bg-emerald-500 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[14px] after:w-[14px] after:transition-all peer-checked:after:translate-x-[14px]"></div>
+                </label>
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ fd.label }}</span>
+                <span class="text-[10px] font-mono text-gray-400 dark:text-gray-500 px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded">{{ fd.key }}</span>
+                <!-- Ollama 狀態（只在第一個文案欄位顯示） -->
+                @if (fd.key === 'description') {
+                  <span class="ml-auto inline-flex items-center gap-1 text-[10px]">
+                    <span class="w-1.5 h-1.5 rounded-full"
+                          [class.bg-green-500]="ollamaService.connectionStatus() === 'connected'"
+                          [class.bg-red-500]="ollamaService.connectionStatus() === 'error'"
+                          [class.bg-gray-400]="ollamaService.connectionStatus() === 'idle' || ollamaService.connectionStatus() === 'connecting'"></span>
+                    <span class="text-gray-400">{{ ollamaService.connectionStatus() === 'connected' ? 'Ollama' : ollamaService.connectionStatus() === 'error' ? '未連線' : '...' }}</span>
+                    @if (ollamaService.connectionStatus() !== 'connected') {
+                      <button (click)="ollamaService.checkConnection()" class="text-indigo-500 underline">重試</button>
+                    }
+                  </span>
+                }
+              </div>
+              <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1 ml-11">{{ fd.desc }}</p>
+
+              @if (textFields()[fd.key].enabled) {
+                <div class="mt-2 ml-11 space-y-2">
+                  <!-- 字數選擇 -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 shrink-0">字數</span>
+                    @for (opt of charOptions; track opt) {
+                      <button (click)="setTextFieldCharLimit(fd.key, opt)"
+                              class="px-2 py-0.5 text-[11px] rounded-full border transition-colors"
+                              [class.bg-emerald-500]="textFields()[fd.key].charLimit === opt" [class.text-white]="textFields()[fd.key].charLimit === opt" [class.border-emerald-500]="textFields()[fd.key].charLimit === opt"
+                              [class.border-gray-300]="textFields()[fd.key].charLimit !== opt" [class.dark:border-slate-600]="textFields()[fd.key].charLimit !== opt"
+                              [class.text-gray-500]="textFields()[fd.key].charLimit !== opt" [class.dark:text-gray-400]="textFields()[fd.key].charLimit !== opt">
+                        {{ opt }}
+                      </button>
+                    }
+                    <!-- 生成按鈕 -->
+                    <button (click)="generateSingleCopy(textFields()[fd.key].charLimit)"
+                            [disabled]="ollamaService.isGenerating() || ollamaService.connectionStatus() !== 'connected' || !productName()"
+                            class="ml-auto px-2 py-0.5 text-[10px] bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded transition-colors">
+                      {{ ollamaService.isGenerating() ? '...' : '生成' }}
+                    </button>
+                  </div>
+                  <!-- 商品名稱 -->
+                  <input type="text" [value]="productName()" (input)="productName.set($any($event.target).value)"
+                         placeholder="商品名稱（例：芒果乾）"
+                         class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-800 dark:text-white" />
+                  <!-- 生成結果 -->
+                  @if (generatedCopies()[textFields()[fd.key].charLimit]) {
+                    <div class="flex items-start gap-2 bg-gray-50 dark:bg-slate-900 rounded p-2">
+                      <p class="text-xs text-gray-700 dark:text-gray-300 flex-1">{{ generatedCopies()[textFields()[fd.key].charLimit] }}</p>
+                      <button (click)="copyCopyText(generatedCopies()[textFields()[fd.key].charLimit])"
+                              class="text-gray-400 hover:text-indigo-500 shrink-0" title="複製">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  }
+                </div>
               }
             </div>
           }
         </div>
 
         <!-- 上傳文案按鈕 -->
-        @if (generatedCopies()[charLimit()]) {
-          <div class="mt-3 flex items-center gap-2">
-            <select [value]="copyTargetField()"
-                    (change)="copyTargetField.set($any($event.target).value)"
-                    class="px-2 py-1.5 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300">
-              <option value="description">長文案 (description)</option>
-              <option value="intro">短簡介 (intro)</option>
-            </select>
+        @if (textFields()['description'].enabled || textFields()['intro'].enabled) {
+          <div class="mt-3">
             <button (click)="uploadCopy()"
                     [disabled]="isUploading() || !selectedProductId()"
-                    class="flex-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors">
-              {{ isUploading() ? '上傳中...' : '上傳文案到通路' }}
+                    class="w-full px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors">
+              {{ isUploading() ? '上傳中...' : '上傳文案' }}
             </button>
           </div>
         }
@@ -335,14 +492,10 @@
   <!-- 上傳結果提示 -->
   @if (uploadMessage()) {
     <div class="mt-4 p-3 rounded-lg text-sm text-center"
-         [class.bg-green-50]="uploadMessage().includes('成功')"
-         [class.text-green-700]="uploadMessage().includes('成功')"
-         [class.dark:bg-green-900/20]="uploadMessage().includes('成功')"
-         [class.dark:text-green-400]="uploadMessage().includes('成功')"
-         [class.bg-red-50]="uploadMessage().includes('失敗')"
-         [class.text-red-700]="uploadMessage().includes('失敗')"
-         [class.dark:bg-red-900/20]="uploadMessage().includes('失敗')"
-         [class.dark:text-red-400]="uploadMessage().includes('失敗')">
+         [class.bg-green-50]="uploadMessage().includes('成功')" [class.text-green-700]="uploadMessage().includes('成功')"
+         [class.dark:bg-green-900/20]="uploadMessage().includes('成功')" [class.dark:text-green-400]="uploadMessage().includes('成功')"
+         [class.bg-red-50]="uploadMessage().includes('失敗')" [class.text-red-700]="uploadMessage().includes('失敗')"
+         [class.dark:bg-red-900/20]="uploadMessage().includes('失敗')" [class.dark:text-red-400]="uploadMessage().includes('失敗')">
       {{ uploadMessage() }}
     </div>
   }
