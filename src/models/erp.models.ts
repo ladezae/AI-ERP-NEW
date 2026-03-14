@@ -1,4 +1,71 @@
 
+// ─── 通路管理 ────────────────────────────────────────────────────────────────
+
+export type ChannelType = 'wholesale' | 'retail' | 'other';
+
+export interface Channel {
+  id: string;                        // 通路唯一識別碼 e.g. 'yiji'
+  name: string;                      // 通路名稱 e.g. '一吉水果乾批發零售'
+  types: ChannelType[];              // 可複選：批發、零售、其他
+  websiteUrl: string;                // 前台網址
+  productCollection: string;         // Firebase collection e.g. 'yiji_products'
+  orderCollection: string;           // Firebase collection e.g. 'yiji_orders'
+  inventoryCollection: string;       // Firebase collection e.g. 'yiji_inventory'
+  description?: string;              // 通路說明
+  logoUrl?: string;                  // 通路 Logo
+  visible: boolean;                  // 是否啟用
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChannelProduct {
+  id: string;                        // 同 ERP productId
+  productRef: string;                // 指向 ERP products/ 的 ID
+  channelId: string;                 // 所屬通路
+  // 通路專屬欄位
+  imageUrl: string;                  // 通路專屬圖片（初始空白）
+  images?: string[];                 // 多張圖片
+  description: string;               // 通路專屬文案（初始空白）
+  price: number;                     // 通路定價
+  visible: boolean;                  // 是否上架
+  // 從 ERP 複製過來的基本資料（快照）
+  name: string;
+  category: string;
+  origin: string;
+  unit: string;
+  moq: number;
+  sugar: boolean;
+  shelfLife: string;
+  highlightNote: string;
+  expiryNote: string;
+  nutritionLabelUrl?: string;
+  isDiscontinued: boolean;
+  // 管理欄位
+  syncedAt: string;                  // 最後從 ERP 同步的時間
+  createdAt: string;
+}
+
+export interface ChannelInventory {
+  productId: string;
+  channelId: string;
+  allocated: number;                 // 分配給此通路的庫存數量
+  sold: number;                      // 已賣出數量
+  pending: number;                   // 待出貨數量
+  updatedAt: string;
+}
+
+export interface ChannelOrderSummary {
+  channelId: string;
+  channelName: string;
+  totalOrders: number;
+  pendingOrders: number;
+  shippedOrders: number;
+  totalRevenue: number;
+  updatedAt: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface Product {
   id: string;
   keyProduct?: 'A' | 'B' | 'C' | ''; // Added: 重點商品分級
@@ -38,6 +105,8 @@ export interface Product {
   stockUpdatedAt?: string;
   stockUpdateSource?: 'S' | 'M';
   lastUpdated: string;
+  // 通路管理
+  channelRefs?: string[];            // 已上架到哪些通路 e.g. ['yiji', 'retail_site']
 }
 
 export interface Order {
@@ -627,5 +696,6 @@ export type ViewType =
   | 'reports' 
   | 'price-calculator' 
   | 'standalone-mobile' 
-  | 'external-portal' 
-  | 'mobile-quote';
+  | 'external-portal'
+  | 'mobile-quote'
+  | 'channels';        // 通路管理中心

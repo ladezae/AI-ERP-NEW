@@ -36,6 +36,7 @@ import { ViewType } from '../models/erp.models';
 import { Router, RouterOutlet } from '@angular/router';
 
 import { ExternalPortalComponent } from '../components/external-portal/external-portal.component';
+import { ChannelsComponent } from '../components/channels/channels.component';
 
 @Component({
   selector: 'app-root',
@@ -72,7 +73,8 @@ import { ExternalPortalComponent } from '../components/external-portal/external-
     PriceCalculatorComponent,
     LoginComponent,
     ExternalPortalComponent,
-    MobileQuoteComponent
+    MobileQuoteComponent,
+    ChannelsComponent
   ],
   styles: [`:host { display: block; height: 100%; }`],
   template: `
@@ -163,6 +165,9 @@ import { ExternalPortalComponent } from '../components/external-portal/external-
                 }
                 @case ('brand') {
                   <app-brand-management></app-brand-management>
+                }
+                @case ('channels') {
+                  <app-channels></app-channels>
                 }
                 @case ('system') {
                   <app-system></app-system>

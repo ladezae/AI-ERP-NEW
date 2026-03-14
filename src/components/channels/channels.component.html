@@ -1,0 +1,507 @@
+<div class="p-8 h-full overflow-y-auto">
+
+  <!-- ══════════════════════════════════════════════════════════
+       總覽模式：通路列表
+  ═══════════════════════════════════════════════════════════ -->
+  @if (!selectedChannel) {
+
+    <header class="mb-6 flex justify-between items-end">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white">🌐 通路管理中心</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">統一管理所有衛星品牌與網站，將商品推送至各通路並追蹤銷售回流。</p>
+      </div>
+      <button
+        (click)="showAddChannelModal = true"
+        class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center space-x-2 shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        <span>新增通路</span>
+      </button>
+    </header>
+
+    @if (loading) {
+      <div class="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+        <svg class="animate-spin h-8 w-8 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        載入通路資料...
+      </div>
+    }
+
+    @if (!loading && channels.length === 0) {
+      <div class="bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 p-16 text-center">
+        <div class="text-5xl mb-4">🌐</div>
+        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">尚未設定任何通路</h3>
+        <p class="text-slate-400 dark:text-slate-500 mb-6 text-sm">通路可以是品牌官網、電商平台、批發網站等，每個通路有獨立的商品與訂單 collection。</p>
+        <button (click)="showAddChannelModal = true"
+          class="px-6 py-2.5 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors inline-flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          <span>新增第一個通路</span>
+        </button>
+      </div>
+    }
+
+    @if (!loading && channels.length > 0) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (channel of channels; track channel.id) {
+          <div (click)="selectChannel(channel)"
+            class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-sky-400 dark:hover:border-sky-500 transition-all cursor-pointer group">
+            <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm flex-shrink-0">
+                  @if (channel.logoUrl) {
+                    <img [src]="channel.logoUrl" [alt]="channel.name" class="w-full h-full rounded-full object-cover">
+                  } @else {
+                    {{ channel.name[0] }}
+                  }
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-800 dark:text-white text-base leading-tight">{{ channel.name }}</h3>
+                  <span class="text-xs font-mono text-slate-400 dark:text-slate-500">ID: {{ channel.id }}</span>
+                </div>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full font-medium"
+                [class]="channel.visible ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'">
+                {{ channel.visible ? '啟用中' : '已停用' }}
+              </span>
+            </div>
+            <div class="p-5 space-y-3">
+              <div class="flex flex-wrap gap-1.5">
+                @for (t of channel.types; track t) {
+                  <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                    [class]="t === 'wholesale' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : t === 'retail' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
+                    {{ CHANNEL_TYPE_LABELS[t] }}
+                  </span>
+                }
+              </div>
+              <div class="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                <div class="flex items-center space-x-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                  <code class="font-mono text-sky-600 dark:text-sky-400">{{ channel.productCollection }}</code>
+                </div>
+                @if (channel.websiteUrl) {
+                  <div class="flex items-center space-x-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    <a [href]="channel.websiteUrl" target="_blank" (click)="$event.stopPropagation()"
+                      class="text-sky-600 dark:text-sky-400 hover:underline truncate max-w-[180px]">{{ channel.websiteUrl }}</a>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="px-5 py-3 bg-slate-50 dark:bg-slate-700/50 rounded-b-lg flex justify-end">
+              <span class="text-xs text-sky-600 dark:text-sky-400 font-medium group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors">進入管理 →</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ══════════════════════════════════════════════════════════
+       管理內頁
+  ═══════════════════════════════════════════════════════════ -->
+  @if (selectedChannel) {
+    <header class="mb-6">
+      <div class="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400 mb-3">
+        <button (click)="backToOverview()"
+          class="hover:text-sky-600 dark:hover:text-sky-400 transition-colors flex items-center space-x-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          <span>通路列表</span>
+        </button>
+        <span>/</span>
+        <span class="text-slate-700 dark:text-slate-200 font-medium">{{ selectedChannel.name }}</span>
+      </div>
+      <h1 class="text-3xl font-bold text-slate-800 dark:text-white">{{ selectedChannel.name }}</h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+        商品集合：<code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.productCollection }}</code>
+        ・訂單集合：<code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.orderCollection }}</code>
+      </p>
+    </header>
+
+    <div class="flex space-x-1 border-b border-slate-200 dark:border-slate-700 mb-6">
+      <button (click)="activeView = 'products'"
+        class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        [class]="activeView === 'products' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+        📦 商品管理
+      </button>
+      <button (click)="activeView = 'orders'"
+        class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        [class]="activeView === 'orders' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+        📋 訂單匯總
+      </button>
+      <button (click)="activeView = 'settings'"
+        class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        [class]="activeView === 'settings' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+        ⚙️ 通路設定
+      </button>
+    </div>
+
+    @if (activeView === 'products') {
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-sky-50 dark:bg-sky-900/20 rounded-t-lg">
+          <p class="text-sm text-sky-800 dark:text-sky-300">
+            從 ERP 選取商品後點「匯入」，資料複製到
+            <code class="font-mono bg-sky-100 dark:bg-sky-800 px-1 rounded">{{ selectedChannel.productCollection }}</code>。
+            圖文欄位初始空白，之後由 AI 工具產生。
+          </p>
+        </div>
+        <div class="px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-100 dark:border-slate-700">
+          <div class="relative w-full md:w-72">
+            <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋商品名稱或分類..."
+              class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 text-sm" />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            @if (selectedProductIds.size > 0) {
+              <span class="text-sm text-sky-600 dark:text-sky-400 font-medium">已選 {{ selectedProductIds.size }} 件</span>
+            }
+            <button (click)="toggleSelectAll()"
+              class="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+              {{ selectedProductIds.size === filteredErpProducts.length && filteredErpProducts.length > 0 ? '取消全選' : '全選' }}
+            </button>
+            <button (click)="importSelected()"
+              [disabled]="selectedProductIds.size === 0 || importLoading"
+              class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm">
+              @if (importLoading) {
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span>匯入中 {{ importProgress }}%</span>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                <span>匯入選取商品</span>
+              }
+            </button>
+          </div>
+        </div>
+        @if (importLoading) {
+          <div class="px-6 py-2 bg-sky-50 dark:bg-sky-900/20">
+            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div class="bg-sky-500 h-2 rounded-full transition-all duration-300" [style.width.%]="importProgress"></div>
+            </div>
+          </div>
+        }
+        <div class="overflow-x-auto max-h-[55vh]">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10">
+              <tr>
+                <th class="px-4 py-3 w-10">
+                  <input type="checkbox" class="rounded border-slate-300 text-sky-500 focus:ring-sky-500"
+                    [checked]="selectedProductIds.size === filteredErpProducts.length && filteredErpProducts.length > 0"
+                    (change)="toggleSelectAll()" />
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">商品</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">分類</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">建議售價</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">通路狀態</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
+              @for (product of filteredErpProducts; track product.id) {
+                <tr (click)="toggleProduct(product.id)"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
+                  [class.bg-sky-50]="selectedProductIds.has(product.id)"
+                  [class.dark:bg-sky-900]="selectedProductIds.has(product.id)">
+                  <td class="px-4 py-3" (click)="$event.stopPropagation()">
+                    <input type="checkbox" class="rounded border-slate-300 text-sky-500 focus:ring-sky-500"
+                      [checked]="selectedProductIds.has(product.id)" (change)="toggleProduct(product.id)" />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center space-x-3">
+                      <img [src]="product.imageUrl || 'assets/placeholder.png'" [alt]="product.name"
+                        class="w-10 h-10 rounded-md object-cover bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
+                      <div>
+                        <div class="text-sm font-medium text-slate-800 dark:text-white">{{ product.name }}</div>
+                        <div class="text-xs font-mono text-slate-400">{{ product.id }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full">{{ product.category }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 font-medium">
+                    NT$ {{ product.recommendedPrice | number }}
+                  </td>
+                  <td class="px-4 py-3">
+                    @if (isProductInChannel(product.id)) {
+                      <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full font-medium">✓ 已匯入</span>
+                        <span class="text-xs px-2 py-1 rounded-full font-medium"
+                          [class]="channelProducts.find(p => p.id === product.id)?.visible ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'">
+                          {{ channelProducts.find(p => p.id === product.id)?.visible ? '上架中' : '待上架' }}
+                        </span>
+                      </div>
+                    } @else {
+                      <span class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-full">未匯入</span>
+                    }
+                  </td>
+                </tr>
+              }
+              @if (filteredErpProducts.length === 0) {
+                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500"><div class="text-3xl mb-2">🔍</div><p>找不到符合的商品</p></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      @if (channelProducts.length > 0) {
+
+        <!-- ── 價格調整面板 ── -->
+        <div class="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-slate-800 dark:text-white">💰 批次調整通路售價</h3>
+              <p class="text-xs text-slate-400 mt-0.5">以 ERP 未稅進價為基礎，統一設定通路售價</p>
+            </div>
+          </div>
+          <div class="px-6 py-5 space-y-4">
+
+            <!-- 調價模式選擇 -->
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="priceMode" value="fixed"
+                  [(ngModel)]="priceAdjustMode"
+                  class="text-sky-500 focus:ring-sky-500" />
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">固定金額加減</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="priceMode" value="percent"
+                  [(ngModel)]="priceAdjustMode"
+                  class="text-sky-500 focus:ring-sky-500" />
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">百分比調整（四捨五入到十位數）</span>
+              </label>
+            </div>
+
+            <!-- 調整數值輸入 + 套用 -->
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center border border-slate-300 dark:border-slate-600 rounded-md overflow-hidden bg-white dark:bg-slate-700 w-52">
+                <span class="px-3 py-2 bg-slate-50 dark:bg-slate-600 text-slate-500 dark:text-slate-300 text-sm border-r border-slate-300 dark:border-slate-600 select-none">
+                  {{ priceAdjustMode === 'fixed' ? 'NT$' : '%' }}
+                </span>
+                <input type="number" [(ngModel)]="priceAdjustValue"
+                  [placeholder]="priceAdjustMode === 'fixed' ? '例：50 或 -30' : '例：20 或 -10'"
+                  class="flex-1 px-3 py-2 text-sm bg-transparent text-slate-900 dark:text-white focus:outline-none" />
+              </div>
+              <span class="text-xs text-slate-400">
+                {{ priceAdjustMode === 'fixed' ? '正數加價、負數降價' : '正數加成、負數折扣' }}
+              </span>
+              <button (click)="applyPriceAdjustment()"
+                [disabled]="priceAdjusting || channelProducts.length === 0"
+                class="ml-auto px-4 py-2 bg-emerald-500 text-white text-sm rounded-md hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2">
+                @if (priceAdjusting) {
+                  <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  <span>套用中...</span>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                  <span>套用到全部 {{ channelProducts.length }} 件</span>
+                }
+              </button>
+            </div>
+
+            <!-- 預覽表格 -->
+            @if (priceAdjustValue !== 0) {
+              <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-600">
+                <table class="min-w-full text-sm divide-y divide-slate-200 dark:divide-slate-700">
+                  <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                      <th class="px-4 py-2.5 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">商品</th>
+                      <th class="px-4 py-2.5 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">ERP 未稅進價</th>
+                      <th class="px-4 py-2.5 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">現行通路售價</th>
+                      <th class="px-4 py-2.5 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">調整後售價</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
+                    @for (cp of channelProducts; track cp.id) {
+                      <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td class="px-4 py-2.5 text-slate-700 dark:text-slate-200">{{ cp.name }}</td>
+                        <td class="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400 font-mono">
+                          NT$ {{ getErpPrice(cp) | number }}
+                        </td>
+                        <td class="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400 font-mono">
+                          NT$ {{ cp.price | number }}
+                        </td>
+                        <td class="px-4 py-2.5 text-right font-mono font-semibold"
+                          [class]="calcAdjustedPrice(getErpPrice(cp)) > cp.price
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : calcAdjustedPrice(getErpPrice(cp)) < cp.price
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-slate-500 dark:text-slate-400'">
+                          NT$ {{ calcAdjustedPrice(getErpPrice(cp)) | number }}
+                          @if (calcAdjustedPrice(getErpPrice(cp)) !== cp.price) {
+                            <span class="text-xs ml-1">
+                              ({{ calcAdjustedPrice(getErpPrice(cp)) > cp.price ? '+' : '' }}{{ (calcAdjustedPrice(getErpPrice(cp)) - cp.price) | number }})
+                            </span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ── 通路已匯入商品列表 ── -->
+        <div class="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="font-semibold text-slate-800 dark:text-white">通路已匯入商品
+              <span class="ml-2 text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full">{{ channelProducts.length }} 件</span>
+            </h3>
+          </div>
+          <div class="divide-y divide-slate-100 dark:divide-slate-700">
+            @for (cp of channelProducts; track cp.id) {
+              <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                <div class="flex items-center space-x-3">
+                  <img [src]="cp.imageUrl || 'assets/placeholder.png'" [alt]="cp.name"
+                    class="w-10 h-10 rounded-md object-cover bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
+                  <div>
+                    <div class="text-sm font-medium text-slate-800 dark:text-white">{{ cp.name }}</div>
+                    <div class="flex items-center space-x-2 mt-0.5">
+                      <span class="text-xs text-slate-400">{{ cp.category }}</span>
+                      <span class="text-xs text-slate-400">·</span>
+                      <span class="text-xs text-slate-400">進價 NT$ {{ getErpPrice(cp) | number }}</span>
+                      <span class="text-xs text-slate-400">→</span>
+                      <span class="text-xs font-semibold text-sky-600 dark:text-sky-400">售價 NT$ {{ cp.price | number }}</span>
+                      <span class="text-xs text-slate-400">·</span>
+                      <span class="text-xs text-slate-400">同步 {{ cp.syncedAt | date:'MM/dd HH:mm' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                  <span class="text-xs" [class]="cp.imageUrl ? 'text-emerald-500' : 'text-amber-500'">{{ cp.imageUrl ? '✓ 有圖' : '⚠ 待圖' }}</span>
+                  <span class="text-xs" [class]="cp.description ? 'text-emerald-500' : 'text-amber-500'">{{ cp.description ? '✓ 有文案' : '⚠ 待文案' }}</span>
+                  <button (click)="toggleChannelProductVisibility(cp)"
+                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+                    [class]="cp.visible ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                      [class]="cp.visible ? 'translate-x-6' : 'translate-x-1'"></span>
+                  </button>
+                  <span class="text-xs font-medium w-10" [class]="cp.visible ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400'">{{ cp.visible ? '上架' : '下架' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+
+    @if (activeView === 'orders') {
+      @if (orderSummaries.length > 0) {
+        @for (summary of orderSummaries; track summary.channelId) {
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-5 text-center">
+              <div class="text-3xl font-bold text-slate-800 dark:text-white">{{ summary.totalOrders }}</div>
+              <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">總訂單數</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-amber-200 dark:border-amber-800 p-5 text-center">
+              <div class="text-3xl font-bold text-amber-600 dark:text-amber-400">{{ summary.pendingOrders }}</div>
+              <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">待處理</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-emerald-200 dark:border-emerald-800 p-5 text-center">
+              <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{{ summary.shippedOrders }}</div>
+              <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">已出貨</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-sky-200 dark:border-sky-800 p-5 text-center">
+              <div class="text-2xl font-bold text-sky-600 dark:text-sky-400">NT$ {{ summary.totalRevenue | number }}</div>
+              <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">總銷售額</div>
+            </div>
+          </div>
+        }
+      } @else {
+        <div class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-16 text-center">
+          <div class="text-5xl mb-4">📭</div>
+          <p class="text-slate-400 dark:text-slate-500">尚無訂單資料</p>
+        </div>
+      }
+    }
+
+    @if (activeView === 'settings') {
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4">通路基本資訊</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">通路 ID</div><code class="font-mono text-slate-700 dark:text-slate-200">{{ selectedChannel.id }}</code></div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">商品 Collection</div><code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.productCollection }}</code></div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">訂單 Collection</div><code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.orderCollection }}</code></div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">庫存 Collection</div><code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.inventoryCollection }}</code></div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+            <div class="text-xs text-slate-400 mb-1">網址</div>
+            @if (selectedChannel.websiteUrl) {
+              <a [href]="selectedChannel.websiteUrl" target="_blank" class="text-sky-600 dark:text-sky-400 hover:underline text-sm">{{ selectedChannel.websiteUrl }}</a>
+            } @else {
+              <span class="text-slate-400 text-sm">未設定</span>
+            }
+          </div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">建立時間</div><span class="text-sm text-slate-700 dark:text-slate-200">{{ selectedChannel.createdAt | date:'yyyy/MM/dd HH:mm' }}</span></div>
+        </div>
+      </div>
+    }
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     新增通路 Modal
+═══════════════════════════════════════════════════════════ -->
+@if (showAddChannelModal) {
+  <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="showAddChannelModal = false"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-white dark:bg-slate-800 px-6 pt-6 pb-4">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-semibold text-slate-800 dark:text-white">新增通路</h3>
+            <button (click)="showAddChannelModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">通路 ID <span class="text-red-500">*</span></label>
+              <input type="text" [(ngModel)]="newChannel.id" placeholder="e.g. yiji（英文小寫）"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm placeholder-slate-400" />
+              @if (newChannel.id) {
+                <p class="mt-1 text-xs text-slate-400">將建立：<code class="text-sky-600 dark:text-sky-400">{{ newChannel.id }}_products</code>、<code class="text-sky-600 dark:text-sky-400">{{ newChannel.id }}_orders</code></p>
+              }
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">通路名稱 <span class="text-red-500">*</span></label>
+              <input type="text" [(ngModel)]="newChannel.name" placeholder="e.g. 一吉水果乾批發零售"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm placeholder-slate-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">通路性質（可複選）</label>
+              <div class="flex space-x-4">
+                @for (t of ['wholesale', 'retail', 'other']; track t) {
+                  <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" class="rounded border-slate-300 text-sky-500 focus:ring-sky-500"
+                      [checked]="newChannel.types?.includes($any(t))"
+                      (change)="toggleNewChannelType($any(t))" />
+                    <span class="text-sm text-slate-700 dark:text-slate-300">{{ CHANNEL_TYPE_LABELS[$any(t)] }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">網站網址</label>
+              <input type="text" [(ngModel)]="newChannel.websiteUrl" placeholder="https://your-site.com"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm placeholder-slate-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">說明（選填）</label>
+              <textarea [(ngModel)]="newChannel.description" placeholder="通路說明..." rows="2"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm placeholder-slate-400 resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-700/50 px-6 py-4 flex justify-end space-x-3">
+          <button (click)="showAddChannelModal = false"
+            class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">取消</button>
+          <button (click)="createChannel()" [disabled]="!newChannel.name || !newChannel.id"
+            class="px-4 py-2 text-sm bg-sky-500 text-white rounded-md hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">建立通路</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
