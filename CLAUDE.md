@@ -119,3 +119,28 @@ products, orders, shippingOrders, purchaseOrders, customers, suppliers, employee
 - 價格計算支援兩種模式：`fixed_weight` 和 `fixed_price`
 - 發票管理支援多公司主體 (`ownerCompanyId`)
 - 零用金經手人為固定名單：Gerald / Sandy / 梓楹
+
+## 已完成功能記錄
+
+### yiji-website 前台 (yiji-website/)
+- **部署平台**: Vercel，網址 `yiji-website.vercel.app`
+- **連動**: 連結 GitHub，`git push` 自動觸發 Vercel 重新部署
+- **框架**: Next.js 14 (App Router)，共用同一個 Firebase Firestore
+- 已解決問題：
+  - `.next` 快取誤入 git → `.gitignore` 處理
+  - TypeScript 型別錯誤 → `next.config.js` 設定 `ignoreBuildErrors: true`
+  - 商品詳情頁靜態預渲染失敗 → 移除 `generateStaticParams`，改用 `export const dynamic = 'force-dynamic'`
+  - 商品列表頁 `useSearchParams` 缺少 Suspense boundary → 加上 `<Suspense>` 包裝
+
+### 通路管理 (channels.component)
+- 通路商品改為單一表格 + 篩選（合併原本分頁顯示）
+- 通路商品編輯 Modal 升級：支援圖片上傳、價格參考、所有 checkbox 欄位
+- `Channel` model 新增 `adminUrl?: string`（後台管理網址）
+- 通路設定 tab 新增可內嵌編輯的「前台網址」與「後台管理網址」，填入後顯示為可點擊超連結
+
+### ERP 商品管理 (products.component)
+- 商品表格新增分頁功能（預設 10 筆/頁）
+
+### App 層級修正 (app.component)
+- 修正登入後頁面自動捲動至底部的問題（iOS Safari keyboard dismiss scroll 殘留）
+  → 偵測 currentUser 切換時，在下一個 tick 重設所有捲動容器位置
