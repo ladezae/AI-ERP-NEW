@@ -685,96 +685,200 @@
           </div>
         </div>
 
-        <!-- ── 通路已匯入商品列表（含分頁） ── -->
+        <!-- ── 通路已匯入商品（完整管理表格） ── -->
         <div class="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
-          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-            <h3 class="font-semibold text-slate-800 dark:text-white">通路已匯入商品
+          <!-- 標題列 + 搜尋 -->
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-3">
+            <h3 class="font-semibold text-slate-800 dark:text-white shrink-0">📦 通路商品管理
               <span class="ml-2 text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full">{{ channelProducts.length }} 件</span>
+              @if (cpSearchQuery) {
+                <span class="ml-1 text-xs text-sky-500">篩選後 {{ filteredChannelProducts.length }} 件</span>
+              }
             </h3>
-            <span class="text-xs text-slate-400 dark:text-slate-500">
-              第 {{ channelProductPage }} / {{ channelProductTotalPages }} 頁
-            </span>
+            <!-- 搜尋框 -->
+            <div class="relative flex-1 min-w-48">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0" /></svg>
+              <input type="text" [(ngModel)]="cpSearchQuery" (ngModelChange)="channelProductPage = 1"
+                placeholder="搜尋品名、分類、ID..."
+                class="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            </div>
+            <span class="text-xs text-slate-400 ml-auto">第 {{ channelProductPage }} / {{ channelProductTotalPages }} 頁</span>
           </div>
-          <div class="divide-y divide-slate-100 dark:divide-slate-700">
-            @for (cp of pagedChannelProducts; track cp.id) {
-              <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                <div class="flex items-center space-x-3">
-                  <img [src]="cp.imageUrl || 'assets/placeholder.png'" [alt]="cp.name"
-                    class="w-10 h-10 rounded-md object-cover bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
-                  <div>
-                    <div class="text-sm font-medium text-slate-800 dark:text-white">{{ cp.name }}</div>
-                    @if (cp.intro) {
-                      <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-xs truncate">{{ cp.intro }}</div>
-                    }
-                    <div class="flex items-center space-x-2 mt-0.5">
-                      <span class="text-xs text-slate-400">{{ cp.category }}</span>
-                      <span class="text-xs text-slate-400">·</span>
-                      <span class="text-xs text-slate-400">進價 NT$ {{ getErpPrice(cp) | number }}</span>
-                      <span class="text-xs text-slate-400">→</span>
-                      <span class="text-xs font-semibold text-sky-600 dark:text-sky-400">售價 NT$ {{ cp.price | number }}</span>
-                      <span class="text-xs text-slate-400">·</span>
-                      <span class="text-xs text-slate-400">同步 {{ cp.syncedAt | date:'MM/dd HH:mm' }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="flex items-center space-x-3 flex-shrink-0">
-                  <span class="text-xs" [class]="cp.imageUrl ? 'text-emerald-500' : 'text-amber-500'">{{ cp.imageUrl ? '✓ 有圖' : '⚠ 待圖' }}</span>
-                  <span class="text-xs" [class]="cp.intro ? 'text-emerald-500' : 'text-amber-500'">{{ cp.intro ? '✓ 有簡介' : '⚠ 待簡介' }}</span>
-                  <!-- 編輯按鈕 -->
-                  <button (click)="openEditProduct(cp)"
-                    class="p-1.5 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
-                    title="編輯品名與簡介">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                  </button>
-                  <button (click)="toggleChannelProductVisibility(cp)"
-                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
-                    [class]="cp.visible ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'">
-                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
-                      [class]="cp.visible ? 'translate-x-6' : 'translate-x-1'"></span>
-                  </button>
-                  <span class="text-xs font-medium w-10" [class]="cp.visible ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400'">{{ cp.visible ? '上架' : '下架' }}</span>
-                </div>
-              </div>
-            }
+
+          <!-- 表格 -->
+          <div class="overflow-x-auto max-h-[60vh]">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10">
+                <tr>
+                  <!-- 重點 -->
+                  <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase w-10 cursor-pointer select-none hover:text-sky-600"
+                    (click)="toggleCpSort('keyProduct')">
+                    重點
+                    @if (cpSortField === 'keyProduct') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
+                  </th>
+                  <!-- 圖 -->
+                  <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase w-10">圖</th>
+                  <!-- 品名 -->
+                  <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                    (click)="toggleCpSort('name')">
+                    品名 / 簡介
+                    @if (cpSortField === 'name') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
+                  </th>
+                  <!-- 分類 -->
+                  <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                    (click)="toggleCpSort('category')">
+                    分類
+                    @if (cpSortField === 'category') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
+                  </th>
+                  <!-- 產地 -->
+                  <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">產地</th>
+                  <!-- 單位 -->
+                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">單位</th>
+                  <!-- ERP進價 -->
+                  <th class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">ERP進價</th>
+                  <!-- 通路售價 -->
+                  <th class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                    (click)="toggleCpSort('price')">
+                    通路售價
+                    @if (cpSortField === 'price') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
+                  </th>
+                  <!-- 狀態 -->
+                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">狀態</th>
+                  <!-- 備料 -->
+                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">備料</th>
+                  <!-- 上架 -->
+                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                    (click)="toggleCpSort('visible')">
+                    上架
+                    @if (cpSortField === 'visible') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
+                  </th>
+                  <!-- 操作 -->
+                  <th class="px-3 py-3 w-10"></th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
+                @for (cp of pagedChannelProducts; track cp.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                    [class]="cp.visible ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''">
+                    <!-- 重點 -->
+                    <td class="px-2 py-2.5 text-center">
+                      @if (cp.keyProduct === 'A') { <span class="text-amber-500 font-bold text-xs">A</span> }
+                      @else if (cp.keyProduct === 'B') { <span class="text-sky-500 font-bold text-xs">B</span> }
+                      @else if (cp.keyProduct === 'C') { <span class="text-slate-400 font-bold text-xs">C</span> }
+                      @else { <span class="text-slate-200 dark:text-slate-700">—</span> }
+                    </td>
+                    <!-- 圖片狀態 -->
+                    <td class="px-2 py-2.5 text-center">
+                      @if (cp.imageUrl) {
+                        <img [src]="cp.imageUrl" [alt]="cp.name" class="w-8 h-8 rounded object-cover mx-auto" />
+                      } @else {
+                        <span class="text-amber-400 text-sm" title="待圖">⚠</span>
+                      }
+                    </td>
+                    <!-- 品名 / 簡介 -->
+                    <td class="px-4 py-2.5 max-w-[220px]">
+                      <div class="text-sm font-medium text-slate-800 dark:text-white truncate">{{ cp.name }}</div>
+                      @if (cp.intro) {
+                        <div class="text-xs text-slate-400 truncate mt-0.5">{{ cp.intro }}</div>
+                      } @else {
+                        <div class="text-xs text-amber-400 mt-0.5">⚠ 待簡介</div>
+                      }
+                      <div class="text-xs font-mono text-slate-300 dark:text-slate-600">{{ cp.id }}</div>
+                    </td>
+                    <!-- 分類 -->
+                    <td class="px-3 py-2.5">
+                      <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full whitespace-nowrap">{{ cp.category }}</span>
+                    </td>
+                    <!-- 產地 -->
+                    <td class="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ cp.origin || '—' }}</td>
+                    <!-- 單位 -->
+                    <td class="px-3 py-2.5 text-center text-xs text-slate-500 dark:text-slate-400">{{ cp.unit }}</td>
+                    <!-- ERP進價（唯讀參考） -->
+                    <td class="px-3 py-2.5 text-right text-xs font-mono text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                      {{ getErpPrice(cp) | number }}
+                    </td>
+                    <!-- 通路售價（inline 編輯） -->
+                    <td class="px-3 py-2.5 text-right">
+                      <input type="number" [value]="cp.price" min="0"
+                        (change)="onCpPriceUpdate(cp, $event)"
+                        class="w-24 px-2 py-1 text-right text-sm font-mono font-semibold text-sky-700 dark:text-sky-400 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-sky-400 rounded bg-transparent focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition-colors" />
+                    </td>
+                    <!-- 狀態 badges -->
+                    <td class="px-3 py-2.5 text-center">
+                      <div class="flex flex-col gap-0.5 items-center">
+                        @if (cp.controlStatus) {
+                          <span class="text-xs px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded leading-tight">控貨</span>
+                        }
+                        @if (cp.isDiscontinued) {
+                          <span class="text-xs px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded leading-tight">停售</span>
+                        }
+                        @if (cp.serviceStatus && cp.serviceStatus !== '正常供貨') {
+                          <span class="text-xs px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded leading-tight whitespace-nowrap">{{ cp.serviceStatus }}</span>
+                        }
+                        @if (!cp.controlStatus && !cp.isDiscontinued && (!cp.serviceStatus || cp.serviceStatus === '正常供貨')) {
+                          <span class="text-xs text-slate-300 dark:text-slate-600">—</span>
+                        }
+                      </div>
+                    </td>
+                    <!-- 備料（圖/簡介） -->
+                    <td class="px-3 py-2.5 text-center">
+                      <div class="flex flex-col gap-0.5 items-center text-xs">
+                        <span [class]="cp.imageUrl ? 'text-emerald-500' : 'text-amber-400'">{{ cp.imageUrl ? '✓圖' : '待圖' }}</span>
+                        <span [class]="cp.intro ? 'text-emerald-500' : 'text-amber-400'">{{ cp.intro ? '✓介' : '待介' }}</span>
+                      </div>
+                    </td>
+                    <!-- 上架 toggle -->
+                    <td class="px-3 py-2.5 text-center">
+                      <button (click)="toggleChannelProductVisibility(cp)"
+                        class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none"
+                        [class]="cp.visible ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'"
+                        [title]="cp.visible ? '點擊下架' : '點擊上架'">
+                        <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform"
+                          [class]="cp.visible ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                      </button>
+                    </td>
+                    <!-- 編輯 -->
+                    <td class="px-3 py-2.5 text-center">
+                      <button (click)="openEditProduct(cp)"
+                        class="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        title="編輯商品">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+                @if (filteredChannelProducts.length === 0) {
+                  <tr><td colspan="12" class="px-6 py-12 text-center text-slate-400">
+                    <div class="text-3xl mb-2">🔍</div><p>找不到符合的商品</p>
+                  </td></tr>
+                }
+              </tbody>
+            </table>
           </div>
+
           <!-- 分頁控制 -->
           @if (channelProductTotalPages > 1) {
             <div class="px-6 py-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <span class="text-xs text-slate-400 dark:text-slate-500">
                 顯示第 {{ (channelProductPage - 1) * channelProductPageSize + 1 }} –
-                {{ channelProductPage * channelProductPageSize > channelProducts.length ? channelProducts.length : channelProductPage * channelProductPageSize }} 件，共 {{ channelProducts.length }} 件
+                {{ channelProductPage * channelProductPageSize > filteredChannelProducts.length ? filteredChannelProducts.length : channelProductPage * channelProductPageSize }} 件，共 {{ filteredChannelProducts.length }} 件
               </span>
               <div class="flex items-center gap-1">
-                <!-- 第一頁 -->
                 <button (click)="channelProductPage = 1" [disabled]="channelProductPage === 1"
-                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                  «
-                </button>
-                <!-- 上一頁 -->
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">«</button>
                 <button (click)="channelProductPage = channelProductPage - 1" [disabled]="channelProductPage === 1"
-                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                  ‹
-                </button>
-                <!-- 頁碼 -->
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">‹</button>
                 @for (p of channelProductPageRange(); track p) {
                   <button (click)="channelProductPage = p"
                     class="px-2.5 py-1 text-xs rounded border transition-colors"
-                    [class]="p === channelProductPage
-                      ? 'bg-sky-500 text-white border-sky-500'
-                      : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+                    [class]="p === channelProductPage ? 'bg-sky-500 text-white border-sky-500' : 'border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'">
                     {{ p }}
                   </button>
                 }
-                <!-- 下一頁 -->
                 <button (click)="channelProductPage = channelProductPage + 1" [disabled]="channelProductPage === channelProductTotalPages"
-                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                  ›
-                </button>
-                <!-- 最後頁 -->
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">›</button>
                 <button (click)="channelProductPage = channelProductTotalPages" [disabled]="channelProductPage === channelProductTotalPages"
-                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                  »
-                </button>
+                  class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">»</button>
               </div>
             </div>
           }

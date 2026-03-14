@@ -84,23 +84,76 @@ export class ChannelsComponent implements OnInit {
   importLoading = false;
   importProgress = 0;
 
-  // 通路已匯入商品分頁
+  // ── 通路已匯入商品：搜尋 / 排序 / 分頁 ──────────────────────────────────
+  cpSearchQuery = '';
+  cpSortField: 'name' | 'category' | 'price' | 'visible' | 'keyProduct' | '' = '';
+  cpSortAsc = true;
+
+  /** 篩選 + 排序後的通路商品清單 */
+  get filteredChannelProducts(): ChannelProduct[] {
+    let list = [...this.channelProducts];
+
+    // 關鍵字搜尋
+    if (this.cpSearchQuery) {
+      const q = this.cpSearchQuery.toLowerCase();
+      list = list.filter(cp =>
+        cp.name.toLowerCase().includes(q) ||
+        cp.category.toLowerCase().includes(q) ||
+        cp.id.toLowerCase().includes(q) ||
+        (cp.intro || '').toLowerCase().includes(q)
+      );
+    }
+
+    // 排序
+    if (this.cpSortField) {
+      list.sort((a, b) => {
+        let cmp = 0;
+        if (this.cpSortField === 'name') cmp = a.name.localeCompare(b.name, 'zh-Hant');
+        else if (this.cpSortField === 'category') cmp = a.category.localeCompare(b.category, 'zh-Hant');
+        else if (this.cpSortField === 'price') cmp = (a.price || 0) - (b.price || 0);
+        else if (this.cpSortField === 'visible') cmp = (b.visible ? 1 : 0) - (a.visible ? 1 : 0);
+        else if (this.cpSortField === 'keyProduct') {
+          const score = (k: string | undefined) => k === 'A' ? 3 : k === 'B' ? 2 : k === 'C' ? 1 : 0;
+          cmp = score(b.keyProduct) - score(a.keyProduct);
+        }
+        return this.cpSortAsc ? cmp : -cmp;
+      });
+    }
+
+    return list;
+  }
+
+  toggleCpSort(field: typeof this.cpSortField) {
+    if (this.cpSortField === field) this.cpSortAsc = !this.cpSortAsc;
+    else { this.cpSortField = field; this.cpSortAsc = true; }
+  }
+
+  /** 即時更新通路售價（inline 編輯） */
+  async onCpPriceUpdate(cp: ChannelProduct, event: Event) {
+    if (!this.selectedChannel) return;
+    const val = parseFloat((event.target as HTMLInputElement).value);
+    if (isNaN(val) || val < 0 || val === cp.price) return;
+    const ref = doc(db, this.selectedChannel.productCollection, cp.id);
+    await updateDoc(ref, { price: val });
+    cp.price = val;
+    this.cdr.markForCheck();
+  }
+
   channelProductPage = 1;
-  readonly channelProductPageSize = 10;
+  readonly channelProductPageSize = 20;
 
   get channelProductTotalPages(): number {
-    return Math.ceil(this.channelProducts.length / this.channelProductPageSize);
+    return Math.ceil(this.filteredChannelProducts.length / this.channelProductPageSize);
   }
 
   get pagedChannelProducts(): ChannelProduct[] {
     const start = (this.channelProductPage - 1) * this.channelProductPageSize;
-    return this.channelProducts.slice(start, start + this.channelProductPageSize);
+    return this.filteredChannelProducts.slice(start, start + this.channelProductPageSize);
   }
 
   channelProductPageRange(): number[] {
     const total = this.channelProductTotalPages;
     const cur = this.channelProductPage;
-    // 顯示最多 5 個頁碼，當前頁居中
     const range: number[] = [];
     let start = Math.max(1, cur - 2);
     let end = Math.min(total, start + 4);
