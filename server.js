@@ -55,6 +55,120 @@ app.get('/api/erp/test', (req, res) => {
   });
 });
 
+// ═══ 產出商品資料夾 ═══
+app.use(express.json());
+
+app.post('/api/scaffold-folders', (req, res) => {
+  const { channelName, products } = req.body;
+  // products: [{ id: string, name: string }]
+
+  if (!channelName || !Array.isArray(products) || !products.length) {
+    return res.status(400).json({ error: '需要 channelName 與 products 陣列' });
+  }
+
+  const basePath = process.env.AI_PRODUCTS_PATH || 'D:\\AI_Products';
+  const channelDir = join(basePath, channelName);
+
+  try {
+    // 建立通路根目錄
+    fs.mkdirSync(channelDir, { recursive: true });
+
+    const mapping = {};
+    const created = [];
+    const skipped = [];
+
+    for (const p of products) {
+      // 清理檔名（移除 Windows 不允許的字元）
+      const safeName = p.name.replace(/[<>:"/\\|?*]/g, '_').trim();
+      if (!safeName) continue;
+
+      const productDir = join(channelDir, safeName);
+      mapping[safeName] = p.id;
+
+      if (fs.existsSync(productDir)) {
+        skipped.push(safeName);
+      } else {
+        fs.mkdirSync(productDir, { recursive: true });
+        created.push(safeName);
+      }
+    }
+
+    // 寫入 _mapping.json（商品名 → Firestore docId）
+    const mappingPath = join(channelDir, '_mapping.json');
+    fs.writeFileSync(mappingPath, JSON.stringify(mapping, null, 2), 'utf-8');
+
+    // 寫入 _scaffold_log.json（產出紀錄）
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      channelName,
+      totalProducts: products.length,
+      created: created.length,
+      skipped: skipped.length,
+      createdFolders: created,
+      skippedFolders: skipped
+    };
+
+    const logPath = join(channelDir, '_scaffold_log.json');
+    let logs = [];
+    if (fs.existsSync(logPath)) {
+      try { logs = JSON.parse(fs.readFileSync(logPath, 'utf-8')); } catch { logs = []; }
+    }
+    logs.push(logEntry);
+    fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf-8');
+
+    res.json({
+      success: true,
+      basePath: channelDir,
+      mappingPath,
+      created,
+      skipped,
+      totalProducts: products.length
+    });
+  } catch (err) {
+    console.error('產出資料夾失敗:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 查詢資料夾狀態（哪些商品已有圖片）
+app.get('/api/folder-status/:channelName', (req, res) => {
+  const basePath = process.env.AI_PRODUCTS_PATH || 'D:\\AI_Products';
+  const channelDir = join(basePath, req.params.channelName);
+
+  if (!fs.existsSync(channelDir)) {
+    return res.json({ exists: false, folders: [] });
+  }
+
+  try {
+    const entries = fs.readdirSync(channelDir, { withFileTypes: true });
+    const folders = entries
+      .filter(e => e.isDirectory())
+      .map(e => {
+        const files = fs.readdirSync(join(channelDir, e.name));
+        const images = files.filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
+        return { name: e.name, imageCount: images.length, files: images };
+      });
+
+    // 讀取 mapping
+    const mappingPath = join(channelDir, '_mapping.json');
+    let mapping = {};
+    if (fs.existsSync(mappingPath)) {
+      try { mapping = JSON.parse(fs.readFileSync(mappingPath, 'utf-8')); } catch { /* ignore */ }
+    }
+
+    // 讀取 log
+    const logPath = join(channelDir, '_scaffold_log.json');
+    let logs = [];
+    if (fs.existsSync(logPath)) {
+      try { logs = JSON.parse(fs.readFileSync(logPath, 'utf-8')); } catch { /* ignore */ }
+    }
+
+    res.json({ exists: true, folders, mapping, logs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 【修正 2】：萬用路由，將所有前端路由導回 index.html
 app.get('/{*path}', (req, res) => {
   const indexPath = join(distPath, 'index.html');

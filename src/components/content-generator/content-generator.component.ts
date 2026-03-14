@@ -123,6 +123,21 @@ export class ContentGeneratorComponent implements OnInit {
   /** 清空中 */
   isResetting = signal(false);
 
+  // ─── 資料夾產出 ───
+  /** 資料夾產出中 */
+  isScaffolding = signal(false);
+  /** 資料夾產出結果 */
+  scaffoldResult = signal<{
+    success: boolean;
+    basePath: string;
+    created: string[];
+    skipped: string[];
+    totalProducts: number;
+    timestamp?: string;
+  } | null>(null);
+  /** 資料夾狀態（各商品有幾張圖） */
+  folderStatus = signal<{ name: string; imageCount: number; files: string[] }[]>([]);
+
   // ─── 批次進度管理 ───
   /** 批次階段 */
   batchPhase = signal<'idle' | 'images' | 'texts' | 'done'>('idle');
@@ -436,6 +451,8 @@ export class ContentGeneratorComponent implements OnInit {
       const snap = await getDocs(collection(db, channel.productCollection));
       const products = snap.docs.map((d: any) => ({ ...d.data(), id: d.id } as ChannelProduct));
       this.channelProducts.set(products.filter(p => p.visible !== false));
+      // 同步載入本機資料夾狀態
+      await this.loadFolderStatus();
     } catch (err) {
       console.error('載入通路商品失敗:', err);
     }
@@ -638,6 +655,70 @@ export class ContentGeneratorComponent implements OnInit {
       this.uploadMessage.set('清空失敗：' + (err.message || '未知錯誤'));
     } finally {
       this.isResetting.set(false);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  //  資料夾產出
+  // ══════════════════════════════════════════
+
+  /** 產出商品資料夾 + _mapping.json */
+  async scaffoldFolders(): Promise<void> {
+    const channel = this.selectedChannel();
+    const products = this.channelProducts();
+    if (!channel || !products.length) {
+      alert('請先選擇通路');
+      return;
+    }
+
+    this.isScaffolding.set(true);
+    this.scaffoldResult.set(null);
+
+    try {
+      const res = await fetch('/api/scaffold-folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channelName: channel.name,
+          products: products.map(p => ({ id: p.id, name: p.name }))
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '伺服器錯誤');
+      }
+
+      const data = await res.json();
+      this.scaffoldResult.set({
+        ...data,
+        timestamp: new Date().toISOString()
+      });
+
+      // 產出完畢後載入資料夾狀態
+      await this.loadFolderStatus();
+    } catch (err: any) {
+      alert('產出資料夾失敗：' + (err.message || '未知錯誤'));
+    } finally {
+      this.isScaffolding.set(false);
+    }
+  }
+
+  /** 從 server 取得資料夾狀態 */
+  async loadFolderStatus(): Promise<void> {
+    const channel = this.selectedChannel();
+    if (!channel) return;
+
+    try {
+      const res = await fetch(`/api/folder-status/${encodeURIComponent(channel.name)}`);
+      const data = await res.json();
+      if (data.exists) {
+        this.folderStatus.set(data.folders || []);
+      } else {
+        this.folderStatus.set([]);
+      }
+    } catch {
+      this.folderStatus.set([]);
     }
   }
 

@@ -98,6 +98,96 @@
     </div>
   }
 
+  <!-- ===== 商品資料夾產出 ===== -->
+  @if (channelProducts().length) {
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+          商品資料夾
+        </h2>
+        <div class="flex items-center gap-2">
+          @if (folderStatus().length) {
+            <span class="text-xs text-gray-400 dark:text-gray-500">
+              {{ folderStatus().length }} 個資料夾，{{ folderStatus().filter(f => f.imageCount > 0).length }} 個已有圖片
+            </span>
+          }
+          <button (click)="scaffoldFolders()" [disabled]="isScaffolding()"
+                  class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            {{ isScaffolding() ? '產出中...' : '產出資料夾' }}
+          </button>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-gray-400 dark:text-gray-500 mb-2">
+        路徑：<span class="font-mono">D:\AI_Products\{{ selectedChannel()?.name || '...' }}\{商品名}\</span>
+        ─ 請將各商品圖片放入對應資料夾，批次圖片會自動讀取
+      </p>
+
+      <!-- 產出結果 -->
+      @if (scaffoldResult()) {
+        <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-2">
+          <div class="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300 mb-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span class="font-medium">產出完成</span>
+            <span class="text-amber-500 dark:text-amber-400 text-[10px]">{{ scaffoldResult()!.timestamp | date:'MM/dd HH:mm' }}</span>
+          </div>
+          <div class="text-[11px] text-gray-600 dark:text-gray-400 space-y-0.5">
+            <p>路徑：<span class="font-mono">{{ scaffoldResult()!.basePath }}</span></p>
+            <p>新建 <span class="font-medium text-emerald-600">{{ scaffoldResult()!.created.length }}</span> 個
+               ／已存在 <span class="font-medium text-gray-500">{{ scaffoldResult()!.skipped.length }}</span> 個
+               ／共 {{ scaffoldResult()!.totalProducts }} 個商品</p>
+            @if (scaffoldResult()!.created.length) {
+              <details class="mt-1">
+                <summary class="cursor-pointer text-amber-600 dark:text-amber-400 hover:underline">新建資料夾清單</summary>
+                <div class="mt-1 pl-3 font-mono text-[10px] text-gray-500 max-h-24 overflow-y-auto">
+                  @for (name of scaffoldResult()!.created; track name) {
+                    <div>📁 {{ name }}</div>
+                  }
+                </div>
+              </details>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 資料夾圖片狀態 -->
+      @if (folderStatus().length) {
+        <div class="overflow-x-auto max-h-40 overflow-y-auto">
+          <table class="w-full text-xs">
+            <thead class="sticky top-0 bg-gray-50 dark:bg-slate-700">
+              <tr class="text-left text-gray-500 dark:text-gray-400">
+                <th class="px-3 py-1.5 font-medium">資料夾名稱</th>
+                <th class="px-3 py-1.5 font-medium text-center w-20">圖片數</th>
+                <th class="px-3 py-1.5 font-medium">檔案</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of folderStatus(); track f.name) {
+                <tr class="border-t border-gray-100 dark:border-slate-700">
+                  <td class="px-3 py-1.5 text-gray-700 dark:text-gray-300 font-medium">{{ f.name }}</td>
+                  <td class="px-3 py-1.5 text-center">
+                    @if (f.imageCount > 0) {
+                      <span class="text-emerald-600 dark:text-emerald-400 font-medium">{{ f.imageCount }}</span>
+                    } @else {
+                      <span class="text-gray-300 dark:text-slate-600">0</span>
+                    }
+                  </td>
+                  <td class="px-3 py-1.5 text-[10px] text-gray-400 font-mono truncate max-w-xs">{{ f.files.join(', ') || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
   <!-- ===== 批次處理控制台 ===== -->
   @if (channelProducts().length) {
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 mb-6">
