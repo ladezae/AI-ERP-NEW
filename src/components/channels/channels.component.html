@@ -954,22 +954,52 @@
 
     @if (activeView === 'settings') {
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-6">
-        <h3 class="font-semibold text-slate-800 dark:text-white mb-4">通路基本資訊</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-slate-800 dark:text-white">通路基本資訊</h3>
+          @if (!editingChannelUrls) {
+            <button (click)="startEditChannelUrls()" class="text-xs px-3 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors">✏️ 編輯網址</button>
+          }
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">通路 ID</div><code class="font-mono text-slate-700 dark:text-slate-200">{{ selectedChannel.id }}</code></div>
           <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">商品 Collection</div><code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.productCollection }}</code></div>
           <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">訂單 Collection</div><code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.orderCollection }}</code></div>
           <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">庫存 Collection</div><code class="font-mono text-sky-600 dark:text-sky-400">{{ selectedChannel.inventoryCollection }}</code></div>
+
+          <!-- 前台網址 -->
           <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-            <div class="text-xs text-slate-400 mb-1">網址</div>
-            @if (selectedChannel.websiteUrl) {
-              <a [href]="selectedChannel.websiteUrl" target="_blank" class="text-sky-600 dark:text-sky-400 hover:underline text-sm">{{ selectedChannel.websiteUrl }}</a>
+            <div class="text-xs text-slate-400 mb-1">前台網址</div>
+            @if (editingChannelUrls) {
+              <input type="url" [(ngModel)]="channelUrlForm.websiteUrl" placeholder="https://..." class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            } @else if (selectedChannel.websiteUrl) {
+              <a [href]="selectedChannel.websiteUrl" target="_blank" class="text-sky-600 dark:text-sky-400 hover:underline text-sm break-all">{{ selectedChannel.websiteUrl }}</a>
             } @else {
               <span class="text-slate-400 text-sm">未設定</span>
             }
           </div>
+
+          <!-- 後台管理網址 -->
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+            <div class="text-xs text-slate-400 mb-1">後台管理網址</div>
+            @if (editingChannelUrls) {
+              <input type="url" [(ngModel)]="channelUrlForm.adminUrl" placeholder="https://..." class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            } @else if (selectedChannel.adminUrl) {
+              <a [href]="selectedChannel.adminUrl" target="_blank" class="text-sky-600 dark:text-sky-400 hover:underline text-sm break-all">{{ selectedChannel.adminUrl }}</a>
+            } @else {
+              <span class="text-slate-400 text-sm">未設定</span>
+            }
+          </div>
+
           <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div class="text-xs text-slate-400 mb-1">建立時間</div><span class="text-sm text-slate-700 dark:text-slate-200">{{ selectedChannel.createdAt | date:'yyyy/MM/dd HH:mm' }}</span></div>
         </div>
+
+        <!-- 編輯模式下的儲存/取消按鈕 -->
+        @if (editingChannelUrls) {
+          <div class="flex gap-3 mt-5">
+            <button (click)="saveChannelUrls()" class="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors">💾 儲存</button>
+            <button (click)="cancelEditChannelUrls()" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors">取消</button>
+          </div>
+        }
       </div>
     }
   }

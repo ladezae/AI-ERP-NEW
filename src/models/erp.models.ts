@@ -8,6 +8,7 @@ export interface Channel {
   name: string;                      // 通路名稱 e.g. '一吉水果乾批發零售'
   types: ChannelType[];              // 可複選：批發、零售、其他
   websiteUrl: string;                // 前台網址
+  adminUrl?: string;                 // 後台管理網址
   productCollection: string;         // Firebase collection e.g. 'yiji_products'
   orderCollection: string;           // Firebase collection e.g. 'yiji_orders'
   inventoryCollection: string;       // Firebase collection e.g. 'yiji_inventory'

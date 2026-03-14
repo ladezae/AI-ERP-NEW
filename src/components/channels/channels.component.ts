@@ -195,6 +195,39 @@ export class ChannelsComponent implements OnInit {
     visible: true,
   };
 
+  // ── 通路設定：URL 欄位編輯 ─────────────────────────────────────────────────
+  editingChannelUrls = false;
+  channelUrlForm: { websiteUrl: string; adminUrl: string } = { websiteUrl: '', adminUrl: '' };
+
+  /** 開始編輯通路 URL */
+  startEditChannelUrls() {
+    if (!this.selectedChannel) return;
+    this.channelUrlForm = {
+      websiteUrl: this.selectedChannel.websiteUrl || '',
+      adminUrl: this.selectedChannel.adminUrl || '',
+    };
+    this.editingChannelUrls = true;
+  }
+
+  /** 儲存通路 URL 到 Firestore */
+  async saveChannelUrls() {
+    if (!this.selectedChannel) return;
+    const ref = doc(db, 'channels', this.selectedChannel.id);
+    await updateDoc(ref, {
+      websiteUrl: this.channelUrlForm.websiteUrl.trim(),
+      adminUrl: this.channelUrlForm.adminUrl.trim(),
+    });
+    this.selectedChannel.websiteUrl = this.channelUrlForm.websiteUrl.trim();
+    this.selectedChannel.adminUrl = this.channelUrlForm.adminUrl.trim();
+    this.editingChannelUrls = false;
+    this.cdr.markForCheck();
+  }
+
+  /** 取消編輯 URL */
+  cancelEditChannelUrls() {
+    this.editingChannelUrls = false;
+  }
+
   // 訂單匯總
   orderSummaries: ChannelOrderSummary[] = [];
 

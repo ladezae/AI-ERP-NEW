@@ -285,6 +285,26 @@ export class AppComponent {
         console.error('Hash routing error', e);
     }
 
+    // 登入後重設捲動位置（修正 iOS / 瀏覽器 scroll restoration 問題）
+    let wasLoggedOut = !this.dataService.currentUser();
+    effect(() => {
+        const user = this.dataService.currentUser();
+        if (user && wasLoggedOut) {
+            wasLoggedOut = false;
+            // 延遲一個 tick，確保 DOM 已渲染完成
+            setTimeout(() => {
+                // 重設 body / html（避免 iOS Safari 捲動殘留）
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+                // 找到主要內容區的捲動容器並重設
+                const scrollable = document.querySelector('main div') as HTMLElement | null;
+                if (scrollable) scrollable.scrollTop = 0;
+            }, 0);
+        } else if (!user) {
+            wasLoggedOut = true;
+        }
+    });
+
     // 2. Global Theme & Font Size Effect
     effect(() => {
         const settings = this.dataService.systemSettings();
