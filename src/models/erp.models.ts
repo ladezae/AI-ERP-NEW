@@ -738,4 +738,5 @@ export type ViewType =
   | 'standalone-mobile' 
   | 'external-portal'
   | 'mobile-quote'
-  | 'channels';        // 通路管理中心
+  | 'channels'         // 通路管理中心
+  | 'content-generator'; // 自動圖文工具
