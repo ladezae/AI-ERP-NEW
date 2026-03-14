@@ -35,8 +35,15 @@ export class ChannelsComponent implements OnInit {
   channelProducts: ChannelProduct[] = [];
 
   // ── 價格調整 ──────────────────────────────────────────────────────────────
-  priceAdjustMode: PriceAdjustMode = 'fixed';
+  /** 從 localStorage 還原上次選擇的調價模式，預設為固定金額 */
+  priceAdjustMode: PriceAdjustMode =
+    (localStorage.getItem('channelPriceAdjustMode') as PriceAdjustMode) || 'fixed';
   priceAdjustValue: number = 0;
+
+  /** 切換調價模式時，將選擇記錄到 localStorage */
+  savePriceAdjustMode() {
+    localStorage.setItem('channelPriceAdjustMode', this.priceAdjustMode);
+  }
   priceAdjusting = false;
 
   /** 根據 ERP priceBeforeTax 計算調整後售價 */
@@ -119,7 +126,9 @@ export class ChannelsComponent implements OnInit {
   filterSupplier = '';
   filterControl: '' | 'true' | 'false' = '';
   filterSalesStatus: 'selling' | 'discontinued' | '' = 'selling'; // 預設：銷售中
-  sortField: 'default' | 'name' | 'category' | 'price' = 'default';
+  filterChannelVisible: '' | 'visible' | 'hidden' | 'imported' | 'notImported' = '';
+  filterKeyProduct: '' | 'A' | 'B' | 'C' | 'none' = '';
+  sortField: 'default' | 'name' | 'category' | 'price' | 'visible' = 'default';
   sortAsc = true;
 
   /** 預設顯示的商品分類（進入管理頁即自動套用） */
@@ -152,9 +161,21 @@ export class ChannelsComponent implements OnInit {
     return this.filterCategories.size === 0;
   }
 
-  /** 動態供應商選項（從 ERP 商品取得唯一值） */
-  get supplierOptions(): string[] {
-    return [...new Set(this.erpProducts.map(p => p.supplierName).filter(Boolean))].sort();
+  /** 動態供應商選項（從 ERP 商品取得唯一值，格式：code - name） */
+  get supplierOptions(): { code: string; name: string }[] {
+    const seen = new Set<string>();
+    const result: { code: string; name: string }[] = [];
+    for (const p of this.erpProducts) {
+      if (!p.supplierName || seen.has(p.supplierName)) continue;
+      seen.add(p.supplierName);
+      result.push({ code: p.supplierCode || '', name: p.supplierName });
+    }
+    return result.sort((a, b) => {
+      // 有 code 的排前面，再按 code 字母排序
+      if (a.code && !b.code) return -1;
+      if (!a.code && b.code) return 1;
+      return (a.code || a.name).localeCompare(b.code || b.name);
+    });
   }
 
   /** 動態分類選項（從 ERP 商品取得唯一值，合併預設 + 其他） */
@@ -190,15 +211,45 @@ export class ChannelsComponent implements OnInit {
   // 品號對照表 — 通路篩選
   codeFilterChannelId = '';
 
-  /** 批次建立時：該分類下銷售中的商品（不含已有品號的） */
+  // 批次配號用：選定通路的已上架商品快照
+  batchChannelProducts: ChannelProduct[] = [];
+  batchChannelProductsLoading = false;
+
+  /** 切換批次配號的歸屬通路時，重新載入該通路的已上架商品 */
+  async onBatchChannelIdChange() {
+    this.batchChannelProducts = [];
+    const chId = this.batchForm.channelId;
+    if (!chId) return;
+    const channel = this.channels.find(ch => ch.id === chId);
+    if (!channel) return;
+    this.batchChannelProductsLoading = true;
+    try {
+      const snap = await getDocs(collection(db, channel.productCollection));
+      this.batchChannelProducts = snap.docs.map(d => ({ id: d.id, ...d.data() } as ChannelProduct));
+    } catch (e) {
+      this.batchChannelProducts = [];
+    } finally {
+      this.batchChannelProductsLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  /** 批次建立時：該分類下已在通路上架（visible=true）且尚未配號的商品 */
   get batchPreviewProducts(): Product[] {
     const p = this.batchForm.prefix.toUpperCase().slice(0, 3);
     const c = this.batchForm.categoryCode.toUpperCase().slice(0, 2);
-    if (!p || p.length < 3 || !c || c.length < 2 || !this.batchForm.erpCategory) return [];
+    if (!p || !c || !this.batchForm.erpCategory || !this.batchForm.channelId) return [];
 
-    // 取得該分類銷售中的商品
+    // 只允許已在該通路上架（visible=true）的商品參與配號
+    const visibleIds = new Set(
+      this.batchChannelProducts.filter(cp => cp.visible).map(cp => cp.id)
+    );
+
+    // 取得該分類銷售中且已上架的商品
     const inCategory = this.erpProducts.filter(
-      pr => pr.category === this.batchForm.erpCategory && !pr.isDiscontinued
+      pr => pr.category === this.batchForm.erpCategory &&
+            !pr.isDiscontinued &&
+            visibleIds.has(pr.id)
     );
 
     // 排除已有 prefix+categoryCode 對應記錄的（用 erpProductId 比對）
@@ -209,6 +260,29 @@ export class ChannelsComponent implements OnInit {
     );
 
     return inCategory.filter(pr => !alreadyMapped.has(pr.id));
+  }
+
+  /** 取得當前通路中某分類已上架的商品數量 */
+  getVisibleCountForCategory(cat: string): number {
+    return this.channelProducts.filter(cp => cp.visible && cp.category === cat).length;
+  }
+
+  /** 當前通路中各分類的上架總數（用於 category chip 顯示） */
+  get totalVisibleInChannel(): number {
+    return this.channelProducts.filter(cp => cp.visible).length;
+  }
+
+  /** 取得 ERP 商品對應的通路商品（若已匯入） */
+  getChannelProduct(productId: string): ChannelProduct | undefined {
+    return this.channelProducts.find(cp => cp.id === productId);
+  }
+
+  /** 商品列表列的背景 class（已上架→翠綠；已選取→天藍；其他→預設） */
+  getRowClass(productId: string): string {
+    if (this.selectedProductIds.has(productId)) return 'bg-sky-50 dark:bg-sky-900/30';
+    const cp = this.getChannelProduct(productId);
+    if (cp?.visible) return 'bg-emerald-50 dark:bg-emerald-900/20';
+    return '';
   }
 
   /** 計算下一個可用流水號（同前綴+分類碼下最大值+1，已用過的不再重複） */
@@ -303,6 +377,95 @@ export class ChannelsComponent implements OnInit {
       console.error('批次建立品號失敗', e);
     } finally {
       this.batchCreating = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  // ── 單筆編輯通路商品（品名 + 商品簡介） ──────────────────────────────────
+  showEditProductModal = false;
+  editingProduct: ChannelProduct | null = null;
+  editForm: { name: string; intro: string } = { name: '', intro: '' };
+  savingEdit = false;
+
+  /** 開啟編輯 Modal */
+  openEditProduct(cp: ChannelProduct) {
+    this.editingProduct = cp;
+    this.editForm = { name: cp.name, intro: cp.intro || '' };
+    this.showEditProductModal = true;
+  }
+
+  /** 儲存品名 + 商品簡介到 Firestore */
+  async saveChannelProductEdit() {
+    if (!this.selectedChannel || !this.editingProduct) return;
+    this.savingEdit = true;
+    try {
+      const ref = doc(db, this.selectedChannel.productCollection, this.editingProduct.id);
+      await updateDoc(ref, {
+        name: this.editForm.name.trim(),
+        intro: this.editForm.intro.trim(),
+      });
+      // 同步更新本地物件
+      this.editingProduct.name = this.editForm.name.trim();
+      this.editingProduct.intro = this.editForm.intro.trim();
+      this.showEditProductModal = false;
+      this.editingProduct = null;
+    } catch (e) {
+      console.error('儲存通路商品編輯失敗', e);
+    } finally {
+      this.savingEdit = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  // ── 全通路同步（將 ERP 主檔快照欄位同步到所有通路） ──────────────────────
+  syncingAll = false;
+  syncAllResult: { done: number; total: number } | null = null;
+
+  /**
+   * 全通路同步：掃描所有通路的商品 collection，
+   * 凡與 ERP 主檔對應的商品，更新其快照欄位（名稱/分類/規格/狀態等）。
+   * 不覆蓋通路專屬欄位：imageUrl / images / intro / description / price / visible
+   */
+  async syncAllChannels() {
+    if (!confirm('將把 ERP 商品主檔的最新資料同步到所有通路，確定執行？')) return;
+    this.syncingAll = true;
+    this.syncAllResult = null;
+    let done = 0;
+    let total = 0;
+    const now = new Date().toISOString();
+
+    try {
+      for (const channel of this.channels) {
+        const snap = await getDocs(collection(db, channel.productCollection));
+        for (const d of snap.docs) {
+          const erp = this.erpProducts.find(p => p.id === d.id);
+          if (!erp) continue;
+          total++;
+          await updateDoc(doc(db, channel.productCollection, d.id), {
+            name: erp.name,
+            category: erp.category,
+            origin: erp.origin || '',
+            unit: erp.unit,
+            moq: erp.moq || 1,
+            sugar: (erp as any).sugar || false,
+            shelfLife: (erp as any).shelfLife || '',
+            highlightNote: (erp as any).highlightNote || '',
+            expiryNote: (erp as any).expiryNote || '',
+            isDiscontinued: erp.isDiscontinued,
+            syncedAt: now,
+          });
+          done++;
+        }
+      }
+      this.syncAllResult = { done, total };
+      // 若目前有選取通路，重新載入
+      if (this.selectedChannel) {
+        await this.loadChannelProducts(this.selectedChannel);
+      }
+    } catch (e) {
+      console.error('全通路同步失敗', e);
+    } finally {
+      this.syncingAll = false;
       this.cdr.markForCheck();
     }
   }
@@ -546,10 +709,31 @@ export class ChannelsComponent implements OnInit {
       products = products.filter(p => this.filterCategories.has(p.category));
     }
 
+    // 重點商品分級
+    if (this.filterKeyProduct === 'none') {
+      products = products.filter(p => !p.keyProduct);
+    } else if (this.filterKeyProduct) {
+      products = products.filter(p => p.keyProduct === this.filterKeyProduct);
+    }
+
     // 控管狀態
     if (this.filterControl !== '') {
       const ctrl = this.filterControl === 'true';
       products = products.filter(p => p.controlStatus === ctrl);
+    }
+
+    // 通路上架狀態篩選
+    if (this.filterChannelVisible === 'visible') {
+      products = products.filter(p => !!this.getChannelProduct(p.id)?.visible);
+    } else if (this.filterChannelVisible === 'hidden') {
+      products = products.filter(p => {
+        const cp = this.getChannelProduct(p.id);
+        return cp && !cp.visible;
+      });
+    } else if (this.filterChannelVisible === 'imported') {
+      products = products.filter(p => !!this.getChannelProduct(p.id));
+    } else if (this.filterChannelVisible === 'notImported') {
+      products = products.filter(p => !this.getChannelProduct(p.id));
     }
 
     // 關鍵字搜尋（名稱 / ID）
@@ -570,6 +754,16 @@ export class ChannelsComponent implements OnInit {
       if (this.sortField === 'name') cmp = a.name.localeCompare(b.name, 'zh-Hant');
       else if (this.sortField === 'category') cmp = a.category.localeCompare(b.category, 'zh-Hant');
       else if (this.sortField === 'price') cmp = (a.priceBeforeTax || 0) - (b.priceBeforeTax || 0);
+      else if (this.sortField === 'visible') {
+        // 上架中 > 已匯入未上架 > 未匯入
+        const score = (id: string) => {
+          const cp = this.getChannelProduct(id);
+          if (cp?.visible) return 2;
+          if (cp) return 1;
+          return 0;
+        };
+        cmp = score(b.id) - score(a.id); // 分數高的排前
+      }
       else cmp = a.name.localeCompare(b.name, 'zh-Hant'); // 預設排序
       return this.sortAsc ? cmp : -cmp;
     });

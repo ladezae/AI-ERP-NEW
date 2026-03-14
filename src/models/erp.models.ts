@@ -26,6 +26,7 @@ export interface ChannelProduct {
   imageUrl: string;                  // 通路專屬圖片（初始空白）
   images?: string[];                 // 多張圖片
   description: string;               // 通路專屬文案（初始空白）
+  intro?: string;                    // 商品簡介（短版，用於照片批次上傳配對）
   price: number;                     // 通路定價
   visible: boolean;                  // 是否上架
   // 從 ERP 複製過來的基本資料（快照）
