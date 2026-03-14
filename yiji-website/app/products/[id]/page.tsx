@@ -1,15 +1,9 @@
-import { getProduct, getVisibleProducts } from '@/lib/firebase';
+import { getProduct } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
-export async function generateStaticParams() {
-  try {
-    const products = await getVisibleProducts();
-    return products.map(p => ({ id: p.id }));
-  } catch {
-    return [];
-  }
-}
+// 強制動態渲染，避免 build 時 Firestore 連線失敗
+export const dynamic = 'force-dynamic';
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   let product = null;

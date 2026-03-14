@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getVisibleProducts } from '@/lib/firebase';
 import { ChannelProduct as Product } from '@/lib/types';
@@ -8,7 +8,7 @@ import ProductCard from '@/components/ProductCard';
 
 const ALL = '全部';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category') || ALL;
   const typeParam = searchParams.get('type'); // 'sample' 表示樣品模式
@@ -119,5 +119,14 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// 用 Suspense 包住以支援 useSearchParams()
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-20 text-center text-earth-400">載入中...</div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
