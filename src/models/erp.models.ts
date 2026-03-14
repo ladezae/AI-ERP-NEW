@@ -19,31 +19,54 @@ export interface Channel {
 }
 
 export interface ChannelProduct {
+  // ─── 通路管理專屬 ───────────────────────────────────────────────────────
   id: string;                        // 同 ERP productId
   productRef: string;                // 指向 ERP products/ 的 ID
   channelId: string;                 // 所屬通路
-  // 通路專屬欄位
-  imageUrl: string;                  // 通路專屬圖片（初始空白）
+  imageUrl: string;                  // 通路專屬圖片（初始空白，等另行上傳）
   images?: string[];                 // 多張圖片
-  description: string;               // 通路專屬文案（初始空白）
-  intro?: string;                    // 商品簡介（短版，用於照片批次上傳配對）
+  description: string;               // 通路專屬長文案
+  intro?: string;                    // 商品簡介（短版，搭配照片批次上傳）
   price: number;                     // 通路定價
   visible: boolean;                  // 是否上架
-  // 從 ERP 複製過來的基本資料（快照）
-  name: string;
-  category: string;
-  origin: string;
-  unit: string;
-  moq: number;
-  sugar: boolean;
-  shelfLife: string;
-  highlightNote: string;
-  expiryNote: string;
-  nutritionLabelUrl?: string;
-  isDiscontinued: boolean;
-  // 管理欄位
   syncedAt: string;                  // 最後從 ERP 同步的時間
   createdAt: string;
+
+  // ─── ERP 商品主檔快照（全欄位複製，保持與 Product 一致） ───────────────
+  name: string;
+  keyProduct?: 'A' | 'B' | 'C' | '';
+  stock: number;
+  safetyStock: number;
+  allocatedStock: number;
+  externalStock: number;
+  transitQuantity: number;
+  totalPickingQuantity: number;
+  qualityConfirmed: number;
+  category: string;
+  unit: string;
+  priceBeforeTax: number;
+  priceAfterTax: number;
+  costBeforeTax: number;
+  costAfterTax: number;
+  recommendedPrice: number;
+  supplierCode: string;
+  supplierName: string;
+  controlStatus: boolean;
+  purchasingStatus: boolean;
+  moq: number;
+  packageType: number;
+  isDiscontinued: boolean;
+  isCalculable: boolean;
+  origin: string;
+  sugar: boolean;
+  shelfLife: string;
+  expiryNote: string;
+  highlightNote: string;
+  productFeatures?: string;
+  notes: string;
+  nutritionLabelUrl?: string;
+  serviceStatus?: '正常供貨' | '缺貨等復供' | '滿箱代訂' | '限量配貨' | '付款順序供貨' | '';
+  channelRefs?: string[];
 }
 
 export interface ChannelInventory {

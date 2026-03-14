@@ -441,17 +441,11 @@ export class ChannelsComponent implements OnInit {
           const erp = this.erpProducts.find(p => p.id === d.id);
           if (!erp) continue;
           total++;
+          // 同步所有 ERP 主檔欄位，排除通路專屬欄位（圖片/文案/簡介/售價/上架狀態）
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { imageUrl: _img, channelRefs: _refs, ...erpSnapshot } = erp;
           await updateDoc(doc(db, channel.productCollection, d.id), {
-            name: erp.name,
-            category: erp.category,
-            origin: erp.origin || '',
-            unit: erp.unit,
-            moq: erp.moq || 1,
-            sugar: (erp as any).sugar || false,
-            shelfLife: (erp as any).shelfLife || '',
-            highlightNote: (erp as any).highlightNote || '',
-            expiryNote: (erp as any).expiryNote || '',
-            isDiscontinued: erp.isDiscontinued,
+            ...erpSnapshot,    // ERP 最新所有欄位（不含 imageUrl/channelRefs）
             syncedAt: now,
           });
           done++;
@@ -596,28 +590,18 @@ export class ChannelsComponent implements OnInit {
     let done = 0;
 
     for (const product of selected) {
+      // 先複製所有 ERP 主檔欄位，再覆蓋通路專屬欄位
       const channelProduct: ChannelProduct = {
-        id: product.id,
+        ...product,                       // ERP 所有欄位全部帶入
         productRef: product.id,
         channelId: this.selectedChannel.id,
-        // 通路專屬（初始空白，等 AI 工具產生）
-        imageUrl: product.imageUrl || '',
+        // ── 通路專屬欄位（覆蓋 ERP 原值）──
+        imageUrl: '',                     // 通路圖片初始空白，等另行上傳
         images: [],
-        description: '',
-        price: (product as any).recommendedPrice || (product as any).priceAfterTax || 0,
-        visible: false,                  // 預設不上架，等圖文準備好再開啟
-        // 從 ERP 複製的快照
-        name: product.name,
-        category: product.category,
-        origin: product.origin || '',
-        unit: product.unit,
-        moq: product.moq || 1,
-        sugar: (product as any).sugar || false,
-        shelfLife: (product as any).shelfLife || '',
-        highlightNote: (product as any).highlightNote || '',
-        expiryNote: (product as any).expiryNote || '',
-        nutritionLabelUrl: (product as any).nutritionLabelUrl || '',
-        isDiscontinued: product.isDiscontinued,
+        description: '',                  // 通路文案初始空白
+        intro: '',                        // 商品簡介初始空白
+        price: product.recommendedPrice || product.priceAfterTax || 0,
+        visible: false,                   // 預設不上架，等圖文準備好再開啟
         syncedAt: now,
         createdAt: now,
       };
