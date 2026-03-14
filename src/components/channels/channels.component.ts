@@ -381,32 +381,108 @@ export class ChannelsComponent implements OnInit {
     }
   }
 
-  // ── 單筆編輯通路商品（品名 + 商品簡介） ──────────────────────────────────
+  // ── 單筆編輯通路商品（全欄位） ───────────────────────────────────────────
   showEditProductModal = false;
   editingProduct: ChannelProduct | null = null;
-  editForm: { name: string; intro: string } = { name: '', intro: '' };
   savingEdit = false;
 
-  /** 開啟編輯 Modal */
+  /** 編輯表單：通路專屬 + 可覆蓋的商品規格 */
+  editForm: {
+    // 通路專屬
+    name: string;
+    price: number;
+    visible: boolean;
+    intro: string;
+    description: string;
+    // 商品規格（可覆蓋 ERP 快照）
+    category: string;
+    unit: string;
+    origin: string;
+    moq: number;
+    packageType: number;
+    sugar: boolean;
+    shelfLife: string;
+    serviceStatus: string;
+    controlStatus: boolean;
+    isDiscontinued: boolean;
+    keyProduct: string;
+    // 說明文字
+    highlightNote: string;
+    expiryNote: string;
+    productFeatures: string;
+    notes: string;
+  } = {
+    name: '', price: 0, visible: false, intro: '', description: '',
+    category: '', unit: '', origin: '', moq: 1, packageType: 1,
+    sugar: false, shelfLife: '', serviceStatus: '正常供貨',
+    controlStatus: false, isDiscontinued: false, keyProduct: '',
+    highlightNote: '', expiryNote: '', productFeatures: '', notes: '',
+  };
+
+  readonly editCategories = ['水果乾', '水果凍乾', '沖泡類', '蔬果脆片', '蜜餞', '零食', '堅果', '鮮果', '包材', '其他'];
+  readonly editUnits = ['台斤', '公斤', '箱', '包', 'g', '個'];
+  readonly editOrigins = ['台灣', '越南', '泰國', '中國', '土耳其', '美國', '智利', '伊朗', '馬來西亞'];
+  readonly editServiceStatuses = ['正常供貨', '缺貨等復供', '滿箱代訂', '限量配貨', '付款順序供貨'];
+
+  /** 開啟商品編輯 Modal */
   openEditProduct(cp: ChannelProduct) {
     this.editingProduct = cp;
-    this.editForm = { name: cp.name, intro: cp.intro || '' };
+    this.editForm = {
+      name: cp.name,
+      price: cp.price,
+      visible: cp.visible,
+      intro: cp.intro || '',
+      description: cp.description || '',
+      category: cp.category,
+      unit: cp.unit,
+      origin: cp.origin || '',
+      moq: cp.moq || 1,
+      packageType: cp.packageType || 1,
+      sugar: cp.sugar || false,
+      shelfLife: cp.shelfLife || '',
+      serviceStatus: cp.serviceStatus || '正常供貨',
+      controlStatus: cp.controlStatus || false,
+      isDiscontinued: cp.isDiscontinued || false,
+      keyProduct: cp.keyProduct || '',
+      highlightNote: cp.highlightNote || '',
+      expiryNote: cp.expiryNote || '',
+      productFeatures: cp.productFeatures || '',
+      notes: cp.notes || '',
+    };
     this.showEditProductModal = true;
   }
 
-  /** 儲存品名 + 商品簡介到 Firestore */
+  /** 儲存所有可編輯欄位到 Firestore */
   async saveChannelProductEdit() {
     if (!this.selectedChannel || !this.editingProduct) return;
     this.savingEdit = true;
     try {
       const ref = doc(db, this.selectedChannel.productCollection, this.editingProduct.id);
-      await updateDoc(ref, {
+      const updates: Partial<ChannelProduct> = {
         name: this.editForm.name.trim(),
+        price: this.editForm.price,
+        visible: this.editForm.visible,
         intro: this.editForm.intro.trim(),
-      });
+        description: this.editForm.description.trim(),
+        category: this.editForm.category,
+        unit: this.editForm.unit,
+        origin: this.editForm.origin,
+        moq: this.editForm.moq,
+        packageType: this.editForm.packageType,
+        sugar: this.editForm.sugar,
+        shelfLife: this.editForm.shelfLife,
+        serviceStatus: this.editForm.serviceStatus as any,
+        controlStatus: this.editForm.controlStatus,
+        isDiscontinued: this.editForm.isDiscontinued,
+        keyProduct: this.editForm.keyProduct as any,
+        highlightNote: this.editForm.highlightNote,
+        expiryNote: this.editForm.expiryNote,
+        productFeatures: this.editForm.productFeatures,
+        notes: this.editForm.notes,
+      };
+      await updateDoc(ref, updates as any);
       // 同步更新本地物件
-      this.editingProduct.name = this.editForm.name.trim();
-      this.editingProduct.intro = this.editForm.intro.trim();
+      Object.assign(this.editingProduct, updates);
       this.showEditProductModal = false;
       this.editingProduct = null;
     } catch (e) {
