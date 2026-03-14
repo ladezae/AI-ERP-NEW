@@ -71,7 +71,7 @@ export default function AdminPage() {
 
   const handleToggleVisibility = async (productId: string, current: boolean) => {
     await updateProductVisibility(productId, !current);
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, visible_01: !current } : p));
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, visible: !current } : p));
   };
 
   // ── 登入頁 ──
@@ -189,7 +189,7 @@ export default function AdminPage() {
                   {order.items.map((item, i) => (
                     <div key={i} className="flex justify-between text-sm py-1">
                       <span className="text-earth-700">{item.product.name} × {item.quantity}</span>
-                      <span className="text-earth-500">NT$ {(item.product.recommendedPrice * item.quantity).toLocaleString()}</span>
+                      <span className="text-earth-500">NT$ {(item.product.price * item.quantity).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -252,17 +252,17 @@ export default function AdminPage() {
                       <span className="badge bg-leaf-100 text-leaf-700">{p.category}</span>
                     </td>
                     <td className="px-5 py-3 hidden md:table-cell text-sm text-earth-700">
-                      NT$ {p.recommendedPrice.toLocaleString()}
+                      NT$ {p.price.toLocaleString()}
                     </td>
                     <td className="px-5 py-3 text-center">
                       <button
-                        onClick={() => handleToggleVisibility(p.id, p.visible_01)}
+                        onClick={() => handleToggleVisibility(p.id, p.visible)}
                         className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
-                          p.visible_01 ? 'bg-leaf-500' : 'bg-brand-200'
+                          p.visible ? 'bg-leaf-500' : 'bg-brand-200'
                         }`}
                       >
                         <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform mt-0.5 ${
-                          p.visible_01 ? 'translate-x-5' : 'translate-x-0.5'
+                          p.visible ? 'translate-x-5' : 'translate-x-0.5'
                         }`} />
                       </button>
                     </td>

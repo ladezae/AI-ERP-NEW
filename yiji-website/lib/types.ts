@@ -6,10 +6,11 @@ export interface ChannelProduct {
   productRef: string;           // 指向 ERP products/ 的 ID
   channelId: string;            // 所屬通路 e.g. 'yiji'
   // 通路專屬欄位
-  imageUrl: string;             // 通路專屬圖片
-  images?: string[];            // 多張圖片
+  imageUrl: string;             // 通路專屬圖片（主圖）
+  images?: string[];            // 多張圖片（含主圖）
   description: string;          // 通路專屬文案
-  price: number;                // 通路定價（建議售價）
+  price: number;                // 通路定價（建議售價，含稅）
+  priceBeforeTax?: number;      // 批發參考價（未稅）
   visible: boolean;             // 是否上架
   // 從 ERP 複製的快照
   name: string;
@@ -23,6 +24,13 @@ export interface ChannelProduct {
   expiryNote: string;
   nutritionLabelUrl?: string;
   isDiscontinued: boolean;
+  // 商品詳細資訊（選填，可從 ERP 同步或後台填寫）
+  storageMethod?: string;       // 保存方式 e.g. "請置於陰涼乾燥處，開封後請密封保存"
+  usageSuggestion?: string;     // 使用建議 e.g. "搭配茶飲、甜點裝飾或直接食用"
+  ingredients?: string;         // 成分 e.g. "芒果、砂糖"
+  weight?: string;              // 淨重/規格 e.g. "300g/包"
+  certifications?: string[];    // 認證標章 e.g. ["ISO22000", "HACCP"]
+  faq?: { q: string; a: string }[];  // 常見問題
   // 管理欄位
   syncedAt: string;
   createdAt: string;

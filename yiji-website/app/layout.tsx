@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CartProvider } from '@/components/CartContext';
+import ToastContainer from '@/components/ToastContainer';
 
 export const metadata: Metadata = {
   title: '一吉水果乾批發零售 | 天然健康・台灣品質',
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
+          <ToastContainer />
         </CartProvider>
       </body>
     </html>

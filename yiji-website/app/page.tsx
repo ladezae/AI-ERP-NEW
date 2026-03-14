@@ -36,7 +36,7 @@ const FEATURES = [
 ];
 
 export default async function HomePage() {
-  let featuredProducts = [];
+  let featuredProducts: Awaited<ReturnType<typeof getVisibleProducts>> = [];
   try {
     const all = await getVisibleProducts();
     featuredProducts = all.slice(0, 8);

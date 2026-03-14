@@ -12,23 +12,27 @@ interface ProductCardProps {
 export default function ProductCard({ product, showAddToCart = true }: ProductCardProps) {
   const { addItem } = useCart();
 
+  // 批發參考價
+  const wholesalePrice = product.priceBeforeTax ?? Math.round(product.price * 0.95);
+
   return (
-    <div className="card group">
+    <div className="card group flex flex-col">
       {/* 商品圖片 */}
       <Link href={`/products/${product.id}`}>
         <div className="relative overflow-hidden aspect-square bg-brand-50">
           <img
             src={product.imageUrl || '/placeholder.jpg'}
             alt={product.name}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           {/* 分類標籤 */}
-          <span className="absolute top-2 left-2 badge bg-leaf-100 text-leaf-700">
+          <span className="absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-leaf-100 text-leaf-700">
             {product.category}
           </span>
           {/* 無糖標示 */}
           {!product.sugar && (
-            <span className="absolute top-2 right-2 badge bg-brand-100 text-brand-700">
+            <span className="absolute top-2 right-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700">
               無糖
             </span>
           )}
@@ -36,7 +40,7 @@ export default function ProductCard({ product, showAddToCart = true }: ProductCa
       </Link>
 
       {/* 商品資訊 */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <Link href={`/products/${product.id}`}>
           <h3 className="font-medium text-earth-800 text-sm leading-snug mb-1 hover:text-leaf-600 transition-colors line-clamp-2">
             {product.name}
@@ -44,35 +48,50 @@ export default function ProductCard({ product, showAddToCart = true }: ProductCa
         </Link>
 
         {/* 產地 */}
-        <p className="text-xs text-earth-500 mb-3">
-          🌿 產地：{product.origin}
-        </p>
+        {product.origin && (
+          <p className="text-xs text-earth-500 mb-2">
+            產地：{product.origin}
+          </p>
+        )}
+
+        {/* 規格（如有） */}
+        {product.weight && (
+          <p className="text-xs text-earth-400 mb-2">{product.weight}</p>
+        )}
 
         {/* 價格 */}
-        <div className="flex items-end gap-2 mb-3">
-          <span className="text-lg font-bold text-earth-800">
-            NT$ {product.price.toLocaleString()}
-          </span>
-          <span className="text-xs text-earth-400 mb-0.5">/ {product.unit}</span>
-        </div>
-
-        {/* 行動按鈕 */}
-        {showAddToCart && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => addItem(product, 1, 'sample')}
-              className="flex-1 text-xs btn-outline py-2 px-3"
-            >
-              加入樣品
-            </button>
-            <button
-              onClick={() => addItem(product, product.moq, 'order')}
-              className="flex-1 text-xs btn-primary py-2 px-3"
-            >
-              訂購
-            </button>
+        <div className="mt-auto">
+          <div className="flex items-end gap-1.5 mb-3">
+            <span className="text-lg font-bold text-earth-800">
+              NT$ {wholesalePrice.toLocaleString()}
+            </span>
+            <span className="text-xs text-earth-400 mb-0.5">/ {product.unit}</span>
           </div>
-        )}
+
+          {/* 行動按鈕 */}
+          {showAddToCart && (
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  addItem(product, 1, 'sample');
+                }}
+                className="flex-1 text-xs border-2 border-leaf-500 text-leaf-600 hover:bg-leaf-50 font-medium py-2 px-2 rounded-lg transition-colors duration-200 active:scale-95"
+              >
+                加入樣品
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  addItem(product, product.moq, 'order');
+                }}
+                className="flex-1 text-xs bg-leaf-500 hover:bg-leaf-600 text-white font-medium py-2 px-2 rounded-lg transition-colors duration-200 shadow-sm active:scale-95"
+              >
+                訂購
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
