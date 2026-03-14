@@ -491,7 +491,7 @@
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
-              @for (product of filteredErpProducts; track product.id) {
+              @for (product of pagedErpProducts; track product.id) {
                 <tr (click)="toggleProduct(product.id)"
                   class="cursor-pointer transition-colors"
                   [ngClass]="getRowClass(product.id)">
@@ -595,6 +595,29 @@
               }
             </tbody>
           </table>
+        </div>
+        <!-- ── 分頁控制 ── -->
+        <div class="px-6 py-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <span class="text-xs text-slate-400 dark:text-slate-500">
+            第 {{ (erpPage - 1) * erpPageSize + 1 }} – {{ erpPage * erpPageSize > filteredErpProducts.length ? filteredErpProducts.length : erpPage * erpPageSize }} 件，共 {{ filteredErpProducts.length }} 件
+          </span>
+          <div class="flex items-center gap-1">
+            <button (click)="erpPage = 1" [disabled]="erpPage === 1"
+              class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">«</button>
+            <button (click)="erpPage = erpPage - 1" [disabled]="erpPage === 1"
+              class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">‹</button>
+            @for (p of erpPageRange(); track p) {
+              <button (click)="erpPage = p"
+                class="px-2.5 py-1 text-xs rounded border transition-colors"
+                [class]="p === erpPage ? 'bg-sky-500 text-white border-sky-500' : 'border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'">
+                {{ p }}
+              </button>
+            }
+            <button (click)="erpPage = erpPage + 1" [disabled]="erpPage === erpTotalPages"
+              class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">›</button>
+            <button (click)="erpPage = erpTotalPages" [disabled]="erpPage === erpTotalPages"
+              class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">»</button>
+          </div>
         </div>
       </div>
 

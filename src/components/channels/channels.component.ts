@@ -144,6 +144,30 @@ export class ChannelsComponent implements OnInit {
   channelProductPage = 1;
   readonly channelProductPageSize = 20;
 
+  // ── ERP 商品主表格分頁（每頁 10 筆） ─────────────────────────────────────
+  erpPage = 1;
+  readonly erpPageSize = 10;
+
+  get erpTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredErpProducts.length / this.erpPageSize));
+  }
+
+  get pagedErpProducts(): Product[] {
+    const start = (this.erpPage - 1) * this.erpPageSize;
+    return this.filteredErpProducts.slice(start, start + this.erpPageSize);
+  }
+
+  erpPageRange(): number[] {
+    const total = this.erpTotalPages;
+    const cur = this.erpPage;
+    const range: number[] = [];
+    let start = Math.max(1, cur - 2);
+    const end = Math.min(total, start + 4);
+    if (end - start < 4) start = Math.max(1, end - 4);
+    for (let i = start; i <= end; i++) range.push(i);
+    return range;
+  }
+
   get channelProductTotalPages(): number {
     return Math.ceil(this.filteredChannelProducts.length / this.channelProductPageSize);
   }
@@ -945,6 +969,7 @@ export class ChannelsComponent implements OnInit {
       return this.sortAsc ? cmp : -cmp;
     });
 
+    this.erpPage = 1; // 篩選條件改變時重設至第一頁
     return sorted;
   }
 
