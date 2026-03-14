@@ -486,8 +486,8 @@
                 <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">控管</th>
                 <!-- 銷售狀態 -->
                 <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">銷售</th>
-                <!-- 通路狀態 -->
-                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">通路狀態</th>
+                <!-- 通路狀態 + 操作 -->
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">通路狀態 / 售價 / 操作</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
@@ -553,23 +553,36 @@
                       <span class="text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded">銷售中</span>
                     }
                   </td>
-                  <!-- 通路狀態 + 上架開關 -->
-                  <td class="px-4 py-3" (click)="$event.stopPropagation()">
+                  <!-- 通路狀態 + 售價 + 操作 -->
+                  <td class="px-4 py-3 min-w-[260px]" (click)="$event.stopPropagation()">
                     @if (getChannelProduct(product.id); as cp) {
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded font-medium whitespace-nowrap">✓ 已匯入</span>
+                      <div class="flex items-center gap-2 flex-wrap">
                         <!-- 上架 toggle -->
                         <button (click)="toggleChannelProductVisibility(cp)"
-                          class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-400"
+                          class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none"
                           [class]="cp.visible ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'"
                           [title]="cp.visible ? '點擊下架' : '點擊上架'">
                           <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform"
                             [class]="cp.visible ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
                         </button>
-                        <span class="text-xs font-medium w-8 shrink-0"
+                        <span class="text-xs font-medium w-6 shrink-0"
                           [class]="cp.visible ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
                           {{ cp.visible ? '上架' : '下架' }}
                         </span>
+                        <!-- 通路售價 inline 編輯 -->
+                        <div class="flex items-center gap-0.5">
+                          <span class="text-xs text-slate-400">$</span>
+                          <input type="number" [value]="cp.price" min="0"
+                            (change)="onCpPriceUpdate(cp, $event)"
+                            class="w-20 px-1 py-0.5 text-sm font-semibold text-right border-b border-transparent hover:border-slate-300 dark:hover:border-slate-500 focus:border-sky-500 focus:ring-0 bg-transparent text-slate-800 dark:text-white transition-colors"
+                            title="通路售價（點擊編輯）" />
+                        </div>
+                        <!-- 編輯按鈕 -->
+                        <button (click)="openEditProduct(cp)"
+                          class="p-1 text-slate-400 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded transition-colors"
+                          title="編輯商品完整資料">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
                       </div>
                     } @else {
                       <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 rounded-full">未匯入</span>
@@ -685,8 +698,8 @@
           </div>
         </div>
 
-        <!-- ── 通路已匯入商品（完整管理表格） ── -->
-        <div class="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+        <!-- 通路商品管理已整合至上方主表格的「通路狀態 / 售價 / 操作」欄 -->
+        <div class="hidden">
           <!-- 標題列 + 搜尋 -->
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-3">
             <h3 class="font-semibold text-slate-800 dark:text-white shrink-0">📦 通路商品管理
