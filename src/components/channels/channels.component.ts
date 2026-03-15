@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc
+  collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
+  writeBatch, arrayUnion
 } from 'firebase/firestore';
 import { db } from '../../firebase.config';
 import {
@@ -859,58 +860,66 @@ export class ChannelsComponent implements OnInit {
 
     const selected = this.erpProducts.filter(p => this.selectedProductIds.has(p.id));
     const now = new Date().toISOString();
+    const channelId = this.selectedChannel.id;
+    const productCollection = this.selectedChannel.productCollection;
+
+    // Firestore writeBatch 上限 500 筆，超過時分批送出
+    const BATCH_SIZE = 400;
     let done = 0;
 
-    for (const product of selected) {
-      // 只匯入精簡後的欄位（不再全部展開 ERP 欄位）
-      const channelProduct: ChannelProduct = {
-        // 基本識別
-        id: product.id,
-        productRef: product.id,
-        channelId: this.selectedChannel.id,
-        // 通路專屬欄位（初始空白）
-        imageUrl: '',
-        images: [],
-        description: '',
-        intro: '',
-        price: product.recommendedPrice || product.priceAfterTax || 0,
-        visible: false,
-        syncedAt: now,
-        createdAt: now,
-        // ERP 快照（精簡版）
-        name: product.name,
-        keyProduct: product.keyProduct || '',
-        category: product.category,
-        unit: product.unit,
-        priceBeforeTax: product.priceBeforeTax,
-        priceAfterTax: product.priceAfterTax,
-        recommendedPrice: product.recommendedPrice,
-        supplierCode: product.supplierCode,
-        supplierName: product.supplierName,
-        purchasingStatus: product.purchasingStatus,
-        isDiscontinued: product.isDiscontinued,
-        isCalculable: product.isCalculable,
-        origin: product.origin,
-        sugar: product.sugar,
-        shelfLife: product.shelfLife,
-        serviceStatus: (product as any).serviceStatus || '',
-      };
+    for (let i = 0; i < selected.length; i += BATCH_SIZE) {
+      const chunk = selected.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
 
-      // 寫入通路專屬 collection
-      await setDoc(
-        doc(db, this.selectedChannel.productCollection, product.id),
-        channelProduct
-      );
+      for (const product of chunk) {
+        // 若已匯入過，保留通路專屬欄位（imageUrl/description/intro/price/visible）
+        const existing = this.getChannelProduct(product.id);
 
-      // 同步更新 ERP product 的 channelRefs
-      const erpRef = doc(db, 'products', product.id);
-      const existing = (await getDoc(erpRef)).data() as Product | undefined;
-      const refs = new Set((existing as any)?.channelRefs || []);
-      refs.add(this.selectedChannel.id);
-      await updateDoc(erpRef, { channelRefs: Array.from(refs) });
+        const channelProduct: ChannelProduct = {
+          id: product.id,
+          productRef: product.id,
+          channelId,
+          // 通路專屬欄位：已有值則保留，首次匯入才設預設值
+          imageUrl: existing?.imageUrl ?? '',
+          images: existing?.images ?? [],
+          description: existing?.description ?? '',
+          intro: existing?.intro ?? '',
+          price: existing?.price ?? (product.recommendedPrice || product.priceAfterTax || 0),
+          visible: existing?.visible ?? false,
+          createdAt: existing?.createdAt ?? now,
+          syncedAt: now,
+          // ERP 快照（每次匯入都更新為最新值）
+          name: product.name,
+          keyProduct: product.keyProduct || '',
+          category: product.category,
+          unit: product.unit,
+          priceBeforeTax: product.priceBeforeTax,
+          priceAfterTax: product.priceAfterTax,
+          recommendedPrice: product.recommendedPrice,
+          supplierCode: product.supplierCode,
+          supplierName: product.supplierName,
+          purchasingStatus: product.purchasingStatus,
+          isDiscontinued: product.isDiscontinued,
+          isCalculable: product.isCalculable,
+          origin: product.origin,
+          sugar: product.sugar,
+          shelfLife: product.shelfLife,
+          serviceStatus: (product as any).serviceStatus || '',
+        };
 
-      done++;
+        // 批次寫入通路商品
+        batch.set(doc(db, productCollection, product.id), channelProduct);
+
+        // 用 arrayUnion 更新 ERP product 的 channelRefs（不需先 getDoc）
+        batch.update(doc(db, 'products', product.id), {
+          channelRefs: arrayUnion(channelId)
+        });
+      }
+
+      await batch.commit();
+      done += chunk.length;
       this.importProgress = Math.round((done / selected.length) * 100);
+      this.cdr.markForCheck();
     }
 
     await this.loadChannelProducts(this.selectedChannel);
