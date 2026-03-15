@@ -98,6 +98,7 @@ export class ContentGeneratorComponent implements OnInit {
       if (f.removeBg) ops.push('去背');
       if (f.addBg) ops.push(`去背 + 加背景「${f.bgPrompt || '(未填)'}」`);
       if (f.purePrompt) ops.push(`純提示詞「${f.purePromptText || '(未填)'}」`);
+      if (f.autoBrightness) ops.push('自動亮度調整');
       if (f.watermark) ops.push(`浮水印「${this.watermarkText()}」→ ${this.positionLabels[this.watermarkPosition()]}`);
       if (f.logo) ops.push(`LOGO ${this.logoSize()}px → ${this.positionLabels[this.logoPosition()]}`);
       lines.push(`【${fd.label}】${ops.join(' → ')}`);
@@ -141,14 +142,15 @@ export class ContentGeneratorComponent implements OnInit {
     enabled: boolean;
     watermark: boolean;
     logo: boolean;
+    autoBrightness: boolean;  // 自動調整亮度
     removeBg: boolean;        // 去背
     addBg: boolean;           // 去背 + 加上 AI 背景
     bgPrompt: string;         // 背景提示詞（addBg 用）
     purePrompt: boolean;      // 純提示詞（不需原圖，AI 生成）
     purePromptText: string;   // 純提示詞文字
   }>>({
-    imageUrl: { enabled: true, watermark: false, logo: false, removeBg: false, addBg: false, bgPrompt: '', purePrompt: false, purePromptText: '' },
-    images:   { enabled: false, watermark: false, logo: false, removeBg: false, addBg: false, bgPrompt: '', purePrompt: false, purePromptText: '' }
+    imageUrl: { enabled: true, watermark: false, logo: false, autoBrightness: false, removeBg: false, addBg: false, bgPrompt: '', purePrompt: false, purePromptText: '' },
+    images:   { enabled: false, watermark: false, logo: false, autoBrightness: false, removeBg: false, addBg: false, bgPrompt: '', purePrompt: false, purePromptText: '' }
   });
   /** 文案欄位設定（各自帶字數選擇） */
   textFields = signal<Record<string, { enabled: boolean; charLimit: number }>>({
@@ -399,7 +401,7 @@ export class ContentGeneratorComponent implements OnInit {
     }));
   }
   /** 切換圖片欄位子選項（watermark / logo / removeBg / addBg / purePrompt） */
-  toggleImageFieldOption(key: string, option: 'watermark' | 'logo' | 'removeBg' | 'addBg' | 'purePrompt'): void {
+  toggleImageFieldOption(key: string, option: 'watermark' | 'logo' | 'autoBrightness' | 'removeBg' | 'addBg' | 'purePrompt'): void {
     this.imageFields.update(prev => {
       const field = { ...prev[key], [option]: !prev[key][option] };
       // 互斥：去背/加背景/純提示詞三擇一
@@ -570,7 +572,7 @@ export class ContentGeneratorComponent implements OnInit {
   }
 
   /** 依設定產生加工後圖片 */
-  private async buildImage(src: string, applyWatermark: boolean, applyLogo: boolean): Promise<string> {
+  private async buildImage(src: string, applyWatermark: boolean, applyLogo: boolean, applyAutoBrightness = false): Promise<string> {
     const img = await this.loadImage(src);
     const canvas = document.createElement('canvas');
     const SIZE = 1000;
@@ -585,6 +587,33 @@ export class ContentGeneratorComponent implements OnInit {
     const sw = SIZE / scale, sh = SIZE / scale;
     const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, SIZE, SIZE);
+
+    // 自動調整亮度：分析平均亮度後校正到目標值
+    if (applyAutoBrightness) {
+      const imageData = ctx.getImageData(0, 0, SIZE, SIZE);
+      const data = imageData.data;
+      // 計算平均亮度（使用感知亮度公式）
+      let totalBrightness = 0;
+      const pixelCount = SIZE * SIZE;
+      for (let i = 0; i < data.length; i += 4) {
+        totalBrightness += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+      }
+      const avgBrightness = totalBrightness / pixelCount;
+      // 目標亮度 140（略偏亮，適合商品圖展示）
+      const targetBrightness = 140;
+      // 僅在偏差超過 15 時才校正，避免已合適的圖被過度處理
+      if (Math.abs(avgBrightness - targetBrightness) > 15) {
+        const adjustment = targetBrightness - avgBrightness;
+        // 限制校正幅度，避免過曝或過暗（最多 ±60）
+        const clampedAdj = Math.max(-60, Math.min(60, adjustment));
+        for (let i = 0; i < data.length; i += 4) {
+          data[i]     = Math.max(0, Math.min(255, data[i] + clampedAdj));
+          data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + clampedAdj));
+          data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + clampedAdj));
+        }
+        ctx.putImageData(imageData, 0, 0);
+      }
+    }
 
     if (applyWatermark) {
       const text = this.watermarkText() || '一吉水果乾';
@@ -632,7 +661,7 @@ export class ContentGeneratorComponent implements OnInit {
    * 支援：去背 → 加背景 → 純提示詞 → 浮水印 → LOGO
    */
   private async buildImageAdvanced(src: string, setting: {
-    watermark: boolean; logo: boolean;
+    watermark: boolean; logo: boolean; autoBrightness: boolean;
     removeBg: boolean; addBg: boolean; bgPrompt: string;
     purePrompt: boolean; purePromptText: string;
   }): Promise<string> {
@@ -656,8 +685,8 @@ export class ContentGeneratorComponent implements OnInit {
       imgSrc = await this.callRemoveBg(imgSrc);
     }
 
-    // 最後做 resize + 浮水印 + LOGO
-    return this.buildImage(imgSrc, setting.watermark, setting.logo);
+    // 最後做 resize + 自動亮度 + 浮水印 + LOGO
+    return this.buildImage(imgSrc, setting.watermark, setting.logo, setting.autoBrightness);
   }
 
   /** 呼叫 server 去背 API */

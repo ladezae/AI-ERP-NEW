@@ -443,6 +443,17 @@
                       }
                     </div>
                     <!-- ── 疊加效果 ── -->
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">疊加效果</span>
+                    <!-- 自動亮度調整 -->
+                    <div>
+                      <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" [checked]="imageFields()[fd.key].autoBrightness"
+                               (change)="toggleImageFieldOption(fd.key, 'autoBrightness')"
+                               class="w-3.5 h-3.5 rounded border-gray-300 text-amber-500 focus:ring-amber-400" />
+                        <span class="text-xs text-gray-600 dark:text-gray-400">自動亮度調整</span>
+                        <span class="text-[10px] text-gray-400">（偏暗自動提亮、偏亮自動降低）</span>
+                      </label>
+                    </div>
                     <!-- 浮水印 checkbox + 展開設定 -->
                     <div>
                       <label class="inline-flex items-center gap-1.5 cursor-pointer">
