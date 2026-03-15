@@ -626,7 +626,7 @@ export class ChannelsComponent implements OnInit {
         origin: this.editForm.origin,
         sugar: this.editForm.sugar,
         shelfLife: this.editForm.shelfLife,
-        serviceStatus: this.editForm.serviceStatus as any,
+        // serviceStatus 由 ERP 同步控制，通路端不可寫入
         isCalculable: this.editForm.isCalculable,
         keyProduct: this.editForm.keyProduct as any,
       };

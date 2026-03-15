@@ -1504,13 +1504,21 @@
               <option value="C">C 級 (普通)</option>
             </select>
           </div>
-          <!-- 服務狀態 -->
+          <!-- 服務狀態（唯讀，來自 ERP） -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">服務狀態 (Service Status)</label>
-            <select [(ngModel)]="editForm.serviceStatus"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-              @for (s of editServiceStatuses; track s) { <option [value]="s">{{ s }}</option> }
-            </select>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              服務狀態 (Service Status)
+              <span class="ml-1 text-xs font-normal text-slate-400">（由 ERP 控制，不可編輯）</span>
+            </label>
+            <div class="w-full rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 flex items-center gap-2 cursor-not-allowed">
+              <span class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+                [class.bg-green-500]="editForm.serviceStatus === '正常供貨'"
+                [class.bg-amber-400]="editForm.serviceStatus !== '正常供貨'"></span>
+              <span class="text-sm text-slate-700 dark:text-slate-300">{{ editForm.serviceStatus || '正常供貨' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-300 dark:text-slate-500 ml-auto flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
           </div>
         </div>
 
