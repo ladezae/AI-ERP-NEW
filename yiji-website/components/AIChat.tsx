@@ -24,9 +24,16 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // 跳過首次渲染，避免頁面載入時被強制捲到底部
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    // 僅在聊天容器內部捲動，不影響頁面整體位置
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const sendMessage = async (text: string) => {
