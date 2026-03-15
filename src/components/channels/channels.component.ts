@@ -169,6 +169,12 @@ export class ChannelsComponent implements OnInit {
     return range;
   }
 
+  /** 換頁並捲回表格頂部，確保使用者看到新資料 */
+  goErpPage(page: number, container: HTMLElement) {
+    this.erpPage = page;
+    container.scrollTop = 0;
+  }
+
   get channelProductTotalPages(): number {
     return Math.ceil(this.filteredChannelProducts.length / this.channelProductPageSize);
   }

@@ -445,7 +445,7 @@
             </div>
           </div>
         }
-        <div class="overflow-x-auto max-h-[55vh]">
+        <div class="overflow-x-auto max-h-[55vh]" #erpTableContainer>
           <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
             <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0 z-10">
               <tr>
@@ -605,25 +605,25 @@
           </table>
         </div>
         <!-- ── 分頁控制 ── -->
-        <div class="px-6 py-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        <div class="px-6 py-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between pr-20">
           <span class="text-xs text-slate-400 dark:text-slate-500">
             第 {{ (erpPage - 1) * erpPageSize + 1 }} – {{ erpPage * erpPageSize > filteredErpProducts.length ? filteredErpProducts.length : erpPage * erpPageSize }} 件，共 {{ filteredErpProducts.length }} 件
           </span>
           <div class="flex items-center gap-1">
-            <button (click)="erpPage = 1" [disabled]="erpPage === 1"
+            <button (click)="goErpPage(1, erpTableContainer)" [disabled]="erpPage === 1"
               class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">«</button>
-            <button (click)="erpPage = erpPage - 1" [disabled]="erpPage === 1"
+            <button (click)="goErpPage(erpPage - 1, erpTableContainer)" [disabled]="erpPage === 1"
               class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">‹</button>
             @for (p of erpPageRange(); track p) {
-              <button (click)="erpPage = p"
+              <button (click)="goErpPage(p, erpTableContainer)"
                 class="px-2.5 py-1 text-xs rounded border transition-colors"
                 [class]="p === erpPage ? 'bg-sky-500 text-white border-sky-500' : 'border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'">
                 {{ p }}
               </button>
             }
-            <button (click)="erpPage = erpPage + 1" [disabled]="erpPage === erpTotalPages"
+            <button (click)="goErpPage(erpPage + 1, erpTableContainer)" [disabled]="erpPage === erpTotalPages"
               class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">›</button>
-            <button (click)="erpPage = erpTotalPages" [disabled]="erpPage === erpTotalPages"
+            <button (click)="goErpPage(erpTotalPages, erpTableContainer)" [disabled]="erpPage === erpTotalPages"
               class="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">»</button>
           </div>
         </div>
