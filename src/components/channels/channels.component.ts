@@ -54,16 +54,16 @@ export class ChannelsComponent implements OnInit {
       } catch { return null; }
     })();
 
-  /** 將最後一次調價規則格式化為易讀文字，例如「未稅進價 + NT$50」 */
+  /** 將最後一次調價規則格式化為易讀文字，例如「AI ERP 售價 + NT$50」 */
   get lastPriceRuleLabel(): string {
     if (!this.lastPriceRule) return '';
     const { mode, value } = this.lastPriceRule;
     if (mode === 'fixed') {
       const sign = value >= 0 ? '+' : '−';
-      return `未稅進價 ${sign} NT$${Math.abs(value)}`;
+      return `AI ERP 售價 ${sign} NT$${Math.abs(value)}`;
     } else {
       const sign = value >= 0 ? '+' : '−';
-      return `未稅進價 × (1 ${sign} ${Math.abs(value)}%)，四捨五入至十位`;
+      return `AI ERP 售價 × (1 ${sign} ${Math.abs(value)}%)，四捨五入至十位`;
     }
   }
 

@@ -23,8 +23,8 @@ export default function ProductDetailClient({ product }: { product: Product }) {
     setTimeout(() => setAddedType(null), 2500);
   }, [sampleQty, orderQty, addItem, product]);
 
-  // 批發參考價：優先用 priceBeforeTax，否則以 price 的 95 折近似
-  const wholesalePrice = product.priceBeforeTax ?? Math.round(product.price * 0.95);
+  // 通路售價（ERP 通路管理中的「售價」欄位）
+  const channelPrice = product.price;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
@@ -139,12 +139,12 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           <div className="bg-brand-50 rounded-xl p-5 mb-5">
             <div className="flex items-end gap-3 mb-1">
               <span className="text-3xl font-bold text-earth-800">
-                NT$ {wholesalePrice.toLocaleString()}
+                NT$ {channelPrice.toLocaleString()}
               </span>
               <span className="text-earth-500 mb-1">/ {product.unit}</span>
             </div>
             <p className="text-xs text-earth-400">
-              批發參考價（未稅）・含稅建議售價 NT$ {product.price.toLocaleString()}
+              通路售價（含稅）
             </p>
           </div>
 
@@ -336,8 +336,8 @@ export default function ProductDetailClient({ product }: { product: Product }) {
       {/* ══ 手機版底部固定購物列 ══ */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-brand-200 px-4 py-3 flex gap-3 md:hidden z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
         <div className="text-sm leading-tight flex-shrink-0">
-          <p className="text-earth-500 text-xs">批發價</p>
-          <p className="font-bold text-earth-800">NT$ {wholesalePrice.toLocaleString()}</p>
+          <p className="text-earth-500 text-xs">售價</p>
+          <p className="font-bold text-earth-800">NT$ {channelPrice.toLocaleString()}</p>
         </div>
         <button
           onClick={() => handleAddToCart('sample')}

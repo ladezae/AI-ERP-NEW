@@ -12,8 +12,8 @@ interface ProductCardProps {
 export default function ProductCard({ product, showAddToCart = true }: ProductCardProps) {
   const { addItem } = useCart();
 
-  // 批發參考價
-  const wholesalePrice = product.priceBeforeTax ?? Math.round(product.price * 0.95);
+  // 通路售價（ERP 通路管理中的「售價」欄位）
+  const channelPrice = product.price;
 
   return (
     <div className="card group flex flex-col">
@@ -63,7 +63,7 @@ export default function ProductCard({ product, showAddToCart = true }: ProductCa
         <div className="mt-auto">
           <div className="flex items-end gap-1.5 mb-3">
             <span className="text-lg font-bold text-earth-800">
-              NT$ {wholesalePrice.toLocaleString()}
+              NT$ {channelPrice.toLocaleString()}
             </span>
             <span className="text-xs text-earth-400 mb-0.5">/ {product.unit}</span>
           </div>
