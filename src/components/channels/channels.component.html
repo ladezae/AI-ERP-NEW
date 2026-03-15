@@ -1623,15 +1623,19 @@
           </div>
         </div>
 
-        <!-- ── 6. 供應商（唯讀快照） ── -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商代碼</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600 font-mono">{{ editingProduct.supplierCode || '—' }}</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商名稱</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.supplierName || '—' }}</div>
+        <!-- ── 6. 供應商（唯讀，來自 ERP） ── -->
+        <div>
+          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商 <span class="text-slate-300">（ERP）</span></label>
+          <div class="w-full rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 cursor-not-allowed flex items-center justify-between">
+            @if (editingProduct.supplierCode || editingProduct.supplierName) {
+              <span>
+                <span class="font-mono text-slate-500 dark:text-slate-400 mr-1.5">{{ editingProduct.supplierCode }}</span>
+                <span>{{ editingProduct.supplierName }}</span>
+              </span>
+            } @else {
+              <span class="text-slate-400">—</span>
+            }
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-300 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
           </div>
         </div>
 
