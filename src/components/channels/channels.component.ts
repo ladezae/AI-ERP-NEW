@@ -6,11 +6,12 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase.config';
 import {
-  Channel, ChannelType, ChannelProduct, ChannelOrderSummary, Product, ProductCodeMapping
+  Channel, ChannelType, ChannelProduct, ChannelOrderSummary, Product, ProductCodeMapping,
+  ChannelTask, ChannelTaskStatus, ChannelTaskPriority
 } from '../../models/erp.models';
 import { ImageService } from '../../services/image.service';
 
-type ChannelView = 'overview' | 'products' | 'orders' | 'settings';
+type ChannelView = 'overview' | 'products' | 'orders' | 'settings' | 'tasks';
 type TopView = 'channels' | 'codes';
 type PriceAdjustMode = 'fixed' | 'percent';
 
@@ -752,8 +753,11 @@ export class ChannelsComponent implements OnInit {
     this.activeView = 'products';
     this.selectedProductIds.clear();
     this.channelProductPage = 1; // 重設分頁
-    await this.loadChannelProducts(channel);
-    await this.loadOrderSummary(channel);
+    await Promise.all([
+      this.loadChannelProducts(channel),
+      this.loadOrderSummary(channel),
+      this.loadChannelTasks(channel),
+    ]);
     this.cdr.markForCheck();
   }
 
@@ -1025,5 +1029,210 @@ export class ChannelsComponent implements OnInit {
     this.activeView = 'overview';
     this.channelProducts = [];
     this.orderSummaries = [];
+    this.channelTasks = [];
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  通路待辦事項追蹤
+  // ══════════════════════════════════════════════════════════════════════════
+
+  channelTasks: ChannelTask[] = [];
+  tasksLoading = false;
+
+  // 新增/編輯 Modal
+  showTaskModal = false;
+  editingTask: ChannelTask | null = null;
+  taskForm = this.getEmptyTaskForm();
+
+  // 篩選
+  taskStatusFilter: ChannelTaskStatus | 'all' = 'all';
+
+  /** 空白表單 */
+  private getEmptyTaskForm() {
+    return {
+      title: '',
+      description: '',
+      status: 'todo' as ChannelTaskStatus,
+      priority: 'medium' as ChannelTaskPriority,
+      assignee: '',
+      dueDate: '',
+      progress: 0,
+      tags: '',
+    };
+  }
+
+  /** 取得通路的 task collection 名稱 */
+  private getTaskCollection(channel: Channel): string {
+    return channel.taskCollection || `${channel.id}_tasks`;
+  }
+
+  /** 載入通路待辦 */
+  async loadChannelTasks(channel: Channel) {
+    this.tasksLoading = true;
+    try {
+      const colName = this.getTaskCollection(channel);
+      const snap = await getDocs(collection(db, colName));
+      this.channelTasks = snap.docs
+        .map(d => ({ id: d.id, ...d.data() } as ChannelTask))
+        .sort((a, b) => {
+          // 排序：優先級高→低，再按建立時間新→舊
+          const pOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+          const pDiff = (pOrder[a.priority] ?? 1) - (pOrder[b.priority] ?? 1);
+          if (pDiff !== 0) return pDiff;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+    } catch (e) {
+      console.error('載入通路待辦失敗', e);
+      this.channelTasks = [];
+    } finally {
+      this.tasksLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  /** 各狀態欄的任務清單 */
+  getTasksByStatus(status: ChannelTaskStatus): ChannelTask[] {
+    const list = this.taskStatusFilter === 'all'
+      ? this.channelTasks
+      : this.channelTasks.filter(t => t.status === this.taskStatusFilter);
+    return list.filter(t => t.status === status);
+  }
+
+  /** 各狀態任務數量 */
+  getTaskCount(status: ChannelTaskStatus): number {
+    return this.channelTasks.filter(t => t.status === status).length;
+  }
+
+  /** 全部任務的完成率 */
+  get taskCompletionRate(): number {
+    if (this.channelTasks.length === 0) return 0;
+    return Math.round((this.getTaskCount('done') / this.channelTasks.length) * 100);
+  }
+
+  /** 開啟新增 Modal */
+  openAddTask() {
+    this.editingTask = null;
+    this.taskForm = this.getEmptyTaskForm();
+    this.showTaskModal = true;
+  }
+
+  /** 開啟編輯 Modal */
+  openEditTask(task: ChannelTask) {
+    this.editingTask = task;
+    this.taskForm = {
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      assignee: task.assignee || '',
+      dueDate: task.dueDate || '',
+      progress: task.progress || 0,
+      tags: (task.tags || []).join(', '),
+    };
+    this.showTaskModal = true;
+  }
+
+  /** 儲存（新增或更新） */
+  async saveTask() {
+    if (!this.selectedChannel || !this.taskForm.title.trim()) return;
+    const colName = this.getTaskCollection(this.selectedChannel);
+    const now = new Date().toISOString();
+    const tags = this.taskForm.tags
+      ? this.taskForm.tags.split(/[,，]/).map(t => t.trim()).filter(Boolean)
+      : [];
+
+    if (this.editingTask) {
+      // 更新
+      const updated: ChannelTask = {
+        ...this.editingTask,
+        title: this.taskForm.title.trim(),
+        description: this.taskForm.description.trim(),
+        status: this.taskForm.status,
+        priority: this.taskForm.priority,
+        assignee: this.taskForm.assignee.trim(),
+        dueDate: this.taskForm.dueDate,
+        progress: this.taskForm.status === 'done' ? 100 : this.taskForm.progress,
+        tags,
+        updatedAt: now,
+        completedAt: this.taskForm.status === 'done' && !this.editingTask.completedAt ? now : this.editingTask.completedAt,
+      };
+      await setDoc(doc(db, colName, updated.id), updated);
+      this.channelTasks = this.channelTasks.map(t => t.id === updated.id ? updated : t);
+    } else {
+      // 新增
+      const newTask: Omit<ChannelTask, 'id'> = {
+        channelId: this.selectedChannel.id,
+        title: this.taskForm.title.trim(),
+        description: this.taskForm.description.trim(),
+        status: this.taskForm.status,
+        priority: this.taskForm.priority,
+        assignee: this.taskForm.assignee.trim(),
+        dueDate: this.taskForm.dueDate,
+        progress: 0,
+        tags,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const ref = await addDoc(collection(db, colName), newTask);
+      this.channelTasks.unshift({ ...newTask, id: ref.id } as ChannelTask);
+    }
+
+    this.showTaskModal = false;
+    this.cdr.markForCheck();
+  }
+
+  /** 快速切換狀態（看板拖曳替代：點擊按鈕切換） */
+  async quickChangeTaskStatus(task: ChannelTask, newStatus: ChannelTaskStatus) {
+    if (!this.selectedChannel) return;
+    const colName = this.getTaskCollection(this.selectedChannel);
+    const now = new Date().toISOString();
+    task.status = newStatus;
+    task.updatedAt = now;
+    if (newStatus === 'done') {
+      task.progress = 100;
+      task.completedAt = now;
+    }
+    await updateDoc(doc(db, colName, task.id), {
+      status: newStatus,
+      progress: task.progress,
+      updatedAt: now,
+      ...(newStatus === 'done' ? { completedAt: now } : {}),
+    });
+    this.cdr.markForCheck();
+  }
+
+  /** 刪除任務 */
+  async deleteTask(task: ChannelTask) {
+    if (!this.selectedChannel) return;
+    if (!confirm(`確定刪除「${task.title}」？`)) return;
+    const colName = this.getTaskCollection(this.selectedChannel);
+    await deleteDoc(doc(db, colName, task.id));
+    this.channelTasks = this.channelTasks.filter(t => t.id !== task.id);
+    this.cdr.markForCheck();
+  }
+
+  /** 優先級標籤樣式 */
+  getPriorityClass(p: ChannelTaskPriority): string {
+    switch (p) {
+      case 'high': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      case 'medium': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+      case 'low': return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400';
+    }
+  }
+
+  /** 優先級中文 */
+  getPriorityLabel(p: ChannelTaskPriority): string {
+    return { high: '高', medium: '中', low: '低' }[p];
+  }
+
+  /** 狀態中文 */
+  getStatusLabel(s: ChannelTaskStatus): string {
+    return { todo: '待辦', in_progress: '進行中', done: '已完成' }[s];
+  }
+
+  /** 檢查是否逾期 */
+  isOverdue(task: ChannelTask): boolean {
+    if (!task.dueDate || task.status === 'done') return false;
+    return new Date(task.dueDate) < new Date();
   }
 }

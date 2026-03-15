@@ -12,11 +12,32 @@ export interface Channel {
   productCollection: string;         // Firebase collection e.g. 'yiji_products'
   orderCollection: string;           // Firebase collection e.g. 'yiji_orders'
   inventoryCollection: string;       // Firebase collection e.g. 'yiji_inventory'
+  taskCollection?: string;           // Firebase collection e.g. 'yiji_tasks'（待辦追蹤）
   description?: string;              // 通路說明
   logoUrl?: string;                  // 通路 Logo
   visible: boolean;                  // 是否啟用
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── 通路待辦事項 ──────────────────────────────────────────────────────────────
+export type ChannelTaskStatus = 'todo' | 'in_progress' | 'done';
+export type ChannelTaskPriority = 'high' | 'medium' | 'low';
+
+export interface ChannelTask {
+  id: string;                        // 自動生成 ID
+  channelId: string;                 // 所屬通路 e.g. 'yiji'
+  title: string;                     // 任務標題
+  description?: string;              // 詳細說明
+  status: ChannelTaskStatus;         // 待辦 / 進行中 / 已完成
+  priority: ChannelTaskPriority;     // 優先級：高 / 中 / 低
+  assignee?: string;                 // 負責人
+  dueDate?: string;                  // 到期日 (ISO 格式)
+  progress?: number;                 // 進度百分比 0~100
+  tags?: string[];                   // 標籤 e.g. ['上架', '行銷']
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;              // 完成時間
 }
 
 export interface ChannelProduct {
