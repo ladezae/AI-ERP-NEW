@@ -160,49 +160,63 @@ export class OrdersComponent implements OnDestroy {
     this.dataService.exportTemplates().filter(t => t.type === 'order')
   );
 
-  // New: Computed Action Required Count
+  // 應處理數量計算（排除費用項目，與 groupedOrders 狀態聚合邏輯一致）
   actionRequiredCount = computed(() => {
     const rawOrders = this.orders();
-    const groups = new Map<string, string[]>(); // baseId -> [statuses]
+    const productMap = new Map<string, Product>(this.products().map(p => [p.id, p] as [string, Product]));
+    const groups = new Map<string, Order[]>(); // baseId -> [orders]
 
-    // Group items to determine aggregate status
+    // 依 baseOrderId 分組
     rawOrders.forEach(o => {
         const parts = o.orderId.split('-');
         const baseId = parts.length > 3 ? parts.slice(0, 3).join('-') : o.orderId;
-        
+
         if (!groups.has(baseId)) {
             groups.set(baseId, []);
         }
-        groups.get(baseId)!.push(o.status);
+        groups.get(baseId)!.push(o);
     });
-    
-    let count = 0;
-    const actionableStatuses = ['處理中', '部份出貨']; 
 
-    groups.forEach((statuses) => {
-        // Aggregate Logic (must match groupedOrders logic)
+    let count = 0;
+    const actionableStatuses = ['處理中', '部份出貨'];
+
+    groups.forEach((items) => {
+        // 排除費用/折讓項目（與 groupedOrders 一致）
+        const relevantItems = items.filter(i => {
+            const prod = productMap.get(i.productId);
+            if (prod && prod.isCalculable === false) return false;
+            if (this.SHIPPING_FEE_IDS.includes(i.productId) || i.productId.startsWith('FEE-')) return false;
+            return true;
+        });
+
+        const targetItems = relevantItems.length > 0 ? relevantItems : items;
+        const statuses = targetItems.map(i => i.status || '處理中');
+
+        // 狀態聚合邏輯（與 groupedOrders 完全一致）
         let aggStatus = '處理中';
-        const unique = new Set(statuses);
-        
-        if (unique.size === 1) {
-            aggStatus = statuses[0];
+        const has = (s: string) => statuses.includes(s);
+        const all = (s: string) => statuses.length > 0 && statuses.every(st => st === s);
+        const allDone = statuses.length > 0 && statuses.every(st => st === '已結案' || st === '已出貨');
+
+        if (all('已結案')) {
+            aggStatus = '已結案';
+        } else if (all('取消')) {
+            aggStatus = '取消';
+        } else if (allDone) {
+            aggStatus = '已出貨';
+        } else if (has('部份出貨') || (has('已出貨') && has('處理中'))) {
+            aggStatus = '部份出貨';
+        } else if (has('處理中')) {
+            aggStatus = '處理中';
         } else {
-            const activeStatuses = statuses.filter(s => s !== '取消');
-            if (activeStatuses.length === 0) aggStatus = '取消';
-            else {
-                 const activeUnique = new Set(activeStatuses);
-                 if ([...activeUnique].every(s => s === '已結案')) aggStatus = '已結案';
-                 else if ([...activeUnique].every(s => s === '已出貨' || s === '已結案')) aggStatus = '已出貨';
-                 else if (activeUnique.has('部份出貨') || (activeUnique.has('已出貨') && activeUnique.has('處理中'))) aggStatus = '部份出貨';
-                 else aggStatus = '處理中';
-            }
+            aggStatus = statuses[0] || '處理中';
         }
 
         if (actionableStatuses.includes(aggStatus)) {
             count++;
         }
     });
-    
+
     return count;
   });
 

@@ -398,149 +398,94 @@
               <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1 ml-11">{{ fd.desc }}</p>
 
               @if (imageFields()[fd.key].enabled) {
-                  <div class="mt-2 ml-11 space-y-2">
-                    <!-- ── AI 加工模式（三擇一）── -->
-                    <div class="space-y-1.5 pb-2 border-b border-gray-200 dark:border-slate-700">
-                      <span class="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">AI 加工</span>
-                      <!-- 去背 -->
-                      <label class="flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" [checked]="imageFields()[fd.key].removeBg"
-                               (change)="toggleImageFieldOption(fd.key, 'removeBg')"
-                               class="w-3.5 h-3.5 rounded border-gray-300 text-violet-500 focus:ring-violet-400" />
-                        <span class="text-xs text-gray-600 dark:text-gray-400">去背</span>
-                        <span class="text-[10px] text-gray-400">（移除圖片背景）</span>
-                      </label>
-                      <!-- 去背 + 加背景 -->
-                      <label class="flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" [checked]="imageFields()[fd.key].addBg"
-                               (change)="toggleImageFieldOption(fd.key, 'addBg')"
-                               class="w-3.5 h-3.5 rounded border-gray-300 text-violet-500 focus:ring-violet-400" />
-                        <span class="text-xs text-gray-600 dark:text-gray-400">去背 + 加背景</span>
-                      </label>
-                      @if (imageFields()[fd.key].addBg) {
-                        <div class="pl-5">
-                          <input type="text" [value]="imageFields()[fd.key].bgPrompt"
-                                 (input)="setImageFieldBgPrompt(fd.key, $any($event.target).value)"
-                                 placeholder="背景提示詞（例：clean white studio, soft shadow）"
-                                 class="w-full px-2 py-1 text-xs border border-violet-300 dark:border-violet-700 rounded bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-violet-400 focus:border-violet-400" />
-                        </div>
-                      }
-                      <!-- 純提示詞 -->
-                      <label class="flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" [checked]="imageFields()[fd.key].purePrompt"
-                               (change)="toggleImageFieldOption(fd.key, 'purePrompt')"
-                               class="w-3.5 h-3.5 rounded border-gray-300 text-violet-500 focus:ring-violet-400" />
-                        <span class="text-xs text-gray-600 dark:text-gray-400">純提示詞</span>
-                        <span class="text-[10px] text-gray-400">（不需原圖，AI 生成）</span>
-                      </label>
-                      @if (imageFields()[fd.key].purePrompt) {
-                        <div class="pl-5">
-                          <input type="text" [value]="imageFields()[fd.key].purePromptText"
-                                 (input)="setImageFieldPurePrompt(fd.key, $any($event.target).value)"
-                                 placeholder="圖片提示詞（例：dried mango on white background, product photo）"
-                                 class="w-full px-2 py-1 text-xs border border-violet-300 dark:border-violet-700 rounded bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-violet-400 focus:border-violet-400" />
-                        </div>
-                      }
-                    </div>
-                    <!-- ── 疊加效果 ── -->
-                    <span class="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">疊加效果</span>
-                    <!-- 自動亮度調整 -->
-                    <div>
-                      <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" [checked]="imageFields()[fd.key].autoBrightness"
-                               (change)="toggleImageFieldOption(fd.key, 'autoBrightness')"
-                               class="w-3.5 h-3.5 rounded border-gray-300 text-amber-500 focus:ring-amber-400" />
-                        <span class="text-xs text-gray-600 dark:text-gray-400">自動亮度調整</span>
-                        <span class="text-[10px] text-gray-400">（偏暗自動提亮、偏亮自動降低）</span>
-                      </label>
-                    </div>
-                    <!-- 浮水印 checkbox + 展開設定 -->
-                    <div>
-                      <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" [checked]="imageFields()[fd.key].watermark"
-                               (change)="toggleImageFieldOption(fd.key, 'watermark')"
-                               class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-400" />
-                        <span class="text-xs text-gray-600 dark:text-gray-400">浮水印</span>
-                      </label>
-                      @if (imageFields()[fd.key].watermark) {
-                        <div class="mt-1.5 pl-5 space-y-1.5">
-                          <input type="text" [value]="watermarkText()"
-                                 (input)="onWatermarkTextChange($any($event.target).value)"
-                                 placeholder="浮水印文字" class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-800 dark:text-white" />
-                          <div class="flex items-center gap-3">
-                            <span class="text-[10px] text-gray-400 shrink-0">位置</span>
-                            <div class="grid grid-cols-3 gap-0.5 w-20">
-                              @for (pos of positionKeys; track pos) {
-                                <button (click)="onWatermarkPositionChange(pos)"
-                                        class="w-6 h-6 rounded text-[9px] leading-none border transition-colors flex items-center justify-center"
-                                        [class.bg-indigo-500]="watermarkPosition() === pos" [class.text-white]="watermarkPosition() === pos" [class.border-indigo-500]="watermarkPosition() === pos"
-                                        [class.bg-gray-100]="watermarkPosition() !== pos" [class.dark:bg-slate-700]="watermarkPosition() !== pos"
-                                        [class.border-gray-300]="watermarkPosition() !== pos" [class.dark:border-slate-600]="watermarkPosition() !== pos"
-                                        [class.text-gray-400]="watermarkPosition() !== pos"
-                                        [title]="positionLabels[pos]">
-                                  @if (pos === 'center') { ✦ } @else { · }
-                                </button>
-                              }
-                            </div>
-                            <span class="text-[9px] text-gray-400">正中=滿版</span>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                    <!-- LOGO checkbox + 展開設定 -->
-                    <div>
-                      <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                        <input type="checkbox" [checked]="imageFields()[fd.key].logo"
-                               (change)="toggleImageFieldOption(fd.key, 'logo')"
-                               class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-400" />
-                        <span class="text-xs text-gray-600 dark:text-gray-400">LOGO</span>
-                      </label>
-                      @if (imageFields()[fd.key].logo) {
-                        <div class="mt-1.5 pl-5 space-y-1.5">
-                          <!-- LOGO 上傳 -->
-                          <div class="flex items-center gap-2">
-                            @if (logoImage()) {
-                              <img [src]="logoImage()" class="w-8 h-8 object-contain rounded border border-gray-200 dark:border-slate-600 bg-white" />
-                            }
-                            <label class="text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer">
-                              {{ logoImage() ? '更換' : '上傳 LOGO' }}
-                              <input type="file" accept="image/*" class="hidden" (change)="onLogoUpload($event)" />
-                            </label>
-                          </div>
-                          <!-- LOGO 尺寸 -->
-                          <div class="flex items-center gap-1.5">
-                            <span class="text-[10px] text-gray-400 shrink-0">尺寸</span>
-                            @for (s of logoSizeOptions; track s) {
-                              <button (click)="onLogoSizeChange(s)"
-                                      class="px-1.5 py-0.5 text-[10px] rounded border transition-colors"
-                                      [class.bg-indigo-500]="logoSize() === s" [class.text-white]="logoSize() === s" [class.border-indigo-500]="logoSize() === s"
-                                      [class.border-gray-300]="logoSize() !== s" [class.dark:border-slate-600]="logoSize() !== s"
-                                      [class.text-gray-500]="logoSize() !== s" [class.dark:text-gray-400]="logoSize() !== s">
-                                {{ s }}
+                <div class="mt-2 ml-11 space-y-2">
+                  <!-- 浮水印 checkbox + 展開設定 -->
+                  <div>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" [checked]="imageFields()[fd.key].watermark"
+                             (change)="toggleImageFieldOption(fd.key, 'watermark')"
+                             class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-400" />
+                      <span class="text-xs text-gray-600 dark:text-gray-400">浮水印</span>
+                    </label>
+                    @if (imageFields()[fd.key].watermark) {
+                      <div class="mt-1.5 pl-5 space-y-1.5">
+                        <input type="text" [value]="watermarkText()"
+                               (input)="onWatermarkTextChange($any($event.target).value)"
+                               placeholder="浮水印文字" class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-800 dark:text-white" />
+                        <div class="flex items-center gap-3">
+                          <span class="text-[10px] text-gray-400 shrink-0">位置</span>
+                          <div class="grid grid-cols-3 gap-0.5 w-20">
+                            @for (pos of positionKeys; track pos) {
+                              <button (click)="onWatermarkPositionChange(pos)"
+                                      class="w-6 h-6 rounded text-[9px] leading-none border transition-colors flex items-center justify-center"
+                                      [class.bg-indigo-500]="watermarkPosition() === pos" [class.text-white]="watermarkPosition() === pos" [class.border-indigo-500]="watermarkPosition() === pos"
+                                      [class.bg-gray-100]="watermarkPosition() !== pos" [class.dark:bg-slate-700]="watermarkPosition() !== pos"
+                                      [class.border-gray-300]="watermarkPosition() !== pos" [class.dark:border-slate-600]="watermarkPosition() !== pos"
+                                      [class.text-gray-400]="watermarkPosition() !== pos"
+                                      [title]="positionLabels[pos]">
+                                @if (pos === 'center') { ✦ } @else { · }
                               </button>
                             }
                           </div>
-                          <!-- LOGO 位置 -->
-                          <div class="flex items-center gap-3">
-                            <span class="text-[10px] text-gray-400 shrink-0">位置</span>
-                            <div class="grid grid-cols-3 gap-0.5 w-20">
-                              @for (pos of positionKeys; track pos) {
-                                <button (click)="onLogoPositionChange(pos)"
-                                        class="w-6 h-6 rounded text-[9px] leading-none border transition-colors flex items-center justify-center"
-                                        [class.bg-indigo-500]="logoPosition() === pos" [class.text-white]="logoPosition() === pos" [class.border-indigo-500]="logoPosition() === pos"
-                                        [class.bg-gray-100]="logoPosition() !== pos" [class.dark:bg-slate-700]="logoPosition() !== pos"
-                                        [class.border-gray-300]="logoPosition() !== pos" [class.dark:border-slate-600]="logoPosition() !== pos"
-                                        [class.text-gray-400]="logoPosition() !== pos"
-                                        [title]="positionLabels[pos]">
-                                  @if (logoPosition() === pos) { ✦ } @else { · }
-                                </button>
-                              }
-                            </div>
+                          <span class="text-[9px] text-gray-400">正中=滿版</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  <!-- LOGO checkbox + 展開設定 -->
+                  <div>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" [checked]="imageFields()[fd.key].logo"
+                             (change)="toggleImageFieldOption(fd.key, 'logo')"
+                             class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-400" />
+                      <span class="text-xs text-gray-600 dark:text-gray-400">LOGO</span>
+                    </label>
+                    @if (imageFields()[fd.key].logo) {
+                      <div class="mt-1.5 pl-5 space-y-1.5">
+                        <!-- LOGO 上傳 -->
+                        <div class="flex items-center gap-2">
+                          @if (logoImage()) {
+                            <img [src]="logoImage()" class="w-8 h-8 object-contain rounded border border-gray-200 dark:border-slate-600 bg-white" />
+                          }
+                          <label class="text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer">
+                            {{ logoImage() ? '更換' : '上傳 LOGO' }}
+                            <input type="file" accept="image/*" class="hidden" (change)="onLogoUpload($event)" />
+                          </label>
+                        </div>
+                        <!-- LOGO 尺寸 -->
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-[10px] text-gray-400 shrink-0">尺寸</span>
+                          @for (s of logoSizeOptions; track s) {
+                            <button (click)="onLogoSizeChange(s)"
+                                    class="px-1.5 py-0.5 text-[10px] rounded border transition-colors"
+                                    [class.bg-indigo-500]="logoSize() === s" [class.text-white]="logoSize() === s" [class.border-indigo-500]="logoSize() === s"
+                                    [class.border-gray-300]="logoSize() !== s" [class.dark:border-slate-600]="logoSize() !== s"
+                                    [class.text-gray-500]="logoSize() !== s" [class.dark:text-gray-400]="logoSize() !== s">
+                              {{ s }}
+                            </button>
+                          }
+                        </div>
+                        <!-- LOGO 位置 -->
+                        <div class="flex items-center gap-3">
+                          <span class="text-[10px] text-gray-400 shrink-0">位置</span>
+                          <div class="grid grid-cols-3 gap-0.5 w-20">
+                            @for (pos of positionKeys; track pos) {
+                              <button (click)="onLogoPositionChange(pos)"
+                                      class="w-6 h-6 rounded text-[9px] leading-none border transition-colors flex items-center justify-center"
+                                      [class.bg-indigo-500]="logoPosition() === pos" [class.text-white]="logoPosition() === pos" [class.border-indigo-500]="logoPosition() === pos"
+                                      [class.bg-gray-100]="logoPosition() !== pos" [class.dark:bg-slate-700]="logoPosition() !== pos"
+                                      [class.border-gray-300]="logoPosition() !== pos" [class.dark:border-slate-600]="logoPosition() !== pos"
+                                      [class.text-gray-400]="logoPosition() !== pos"
+                                      [title]="positionLabels[pos]">
+                                @if (logoPosition() === pos) { ✦ } @else { · }
+                              </button>
+                            }
                           </div>
                         </div>
-                      }
-                    </div>
+                      </div>
+                    }
                   </div>
+                </div>
               }
             </div>
           }
@@ -630,39 +575,6 @@
               {{ isUploading() ? '上傳中...' : '上傳文案' }}
             </button>
           </div>
-        }
-      </div>
-    </div>
-  </div>
-
-  <!-- Prompt 預覽區 -->
-  <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-    <!-- 圖片 Prompt 預覽 -->
-    <div class="border border-amber-300 dark:border-amber-600 rounded-lg p-3 bg-amber-50/50 dark:bg-amber-900/20">
-      <div class="flex items-center gap-1.5 mb-2">
-        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span class="text-xs font-semibold text-amber-700 dark:text-amber-300">圖片加工 Prompt 預覽</span>
-      </div>
-      <div class="space-y-1">
-        @for (line of imagePromptPreview(); track line) {
-          <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ line }}</p>
-        }
-      </div>
-    </div>
-
-    <!-- 文案 Prompt 預覽 -->
-    <div class="border border-amber-300 dark:border-amber-600 rounded-lg p-3 bg-amber-50/50 dark:bg-amber-900/20">
-      <div class="flex items-center gap-1.5 mb-2">
-        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-        <span class="text-xs font-semibold text-amber-700 dark:text-amber-300">文案生成 Prompt 預覽</span>
-      </div>
-      <div class="space-y-1">
-        @for (line of copyPromptPreview(); track line) {
-          <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ line }}</p>
         }
       </div>
     </div>

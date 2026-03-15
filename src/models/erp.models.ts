@@ -33,22 +33,38 @@ export interface ChannelProduct {
   syncedAt: string;                  // 最後從 ERP 同步的時間
   createdAt: string;
 
-  // ─── ERP 商品主檔快照（精簡版） ──────────────────────────────────────
+  // ─── ERP 商品主檔快照（全欄位複製，保持與 Product 一致） ───────────────
   name: string;
   keyProduct?: 'A' | 'B' | 'C' | '';
+  stock: number;
+  safetyStock: number;
+  allocatedStock: number;
+  externalStock: number;
+  transitQuantity: number;
+  totalPickingQuantity: number;
+  qualityConfirmed: number;
   category: string;
   unit: string;
   priceBeforeTax: number;
   priceAfterTax: number;
+  costBeforeTax: number;
+  costAfterTax: number;
   recommendedPrice: number;
   supplierCode: string;
   supplierName: string;
-  purchasingStatus: boolean;         // ERP 中心管控：採購狀態（唯讀同步）
-  isDiscontinued: boolean;           // ERP 中心管控：是否停售（唯讀同步）
+  controlStatus: boolean;
+  purchasingStatus: boolean;
+  moq: number;
+  packageType: number;
+  isDiscontinued: boolean;
   isCalculable: boolean;
   origin: string;
   sugar: boolean;
   shelfLife: string;
+  expiryNote: string;
+  highlightNote: string;
+  productFeatures?: string;
+  notes: string;
   nutritionLabelUrl?: string;
   serviceStatus?: '正常供貨' | '缺貨等復供' | '滿箱代訂' | '限量配貨' | '付款順序供貨' | '';
   channelRefs?: string[];

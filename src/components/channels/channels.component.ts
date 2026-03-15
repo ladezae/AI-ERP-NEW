@@ -499,7 +499,7 @@ export class ChannelsComponent implements OnInit {
   savingEdit = false;
   editIsUploading = false; // 圖片上傳 loading 狀態
 
-  /** 編輯表單：通路專屬 + 可覆蓋的商品規格（精簡版） */
+  /** 編輯表單：通路專屬 + 可覆蓋的商品規格 */
   editForm: {
     // 通路專屬
     name: string;
@@ -513,17 +513,30 @@ export class ChannelsComponent implements OnInit {
     category: string;
     unit: string;
     origin: string;
+    moq: number;
+    packageType: number;
     sugar: boolean;
     shelfLife: string;
     serviceStatus: string;
+    controlStatus: boolean;
+    isDiscontinued: boolean;
+    purchasingStatus: boolean;
     isCalculable: boolean;
     keyProduct: string;
+    // 說明文字
+    highlightNote: string;
+    expiryNote: string;
+    productFeatures: string;
+    notes: string;
   } = {
     name: '', price: 0, visible: false, intro: '', description: '',
     imageUrl: '', nutritionLabelUrl: '',
-    category: '', unit: '', origin: '',
+    category: '', unit: '', origin: '', moq: 1, packageType: 1,
     sugar: false, shelfLife: '', serviceStatus: '正常供貨',
-    isCalculable: true, keyProduct: '',
+    controlStatus: false, isDiscontinued: false,
+    purchasingStatus: true, isCalculable: true,
+    keyProduct: '',
+    highlightNote: '', expiryNote: '', productFeatures: '', notes: '',
   };
 
   readonly editCategories = ['水果乾', '水果凍乾', '沖泡類', '蔬果脆片', '蜜餞', '零食', '堅果', '鮮果', '包材', '其他'];
@@ -545,11 +558,20 @@ export class ChannelsComponent implements OnInit {
       category: cp.category,
       unit: cp.unit,
       origin: cp.origin || '',
+      moq: cp.moq || 1,
+      packageType: cp.packageType || 1,
       sugar: cp.sugar || false,
       shelfLife: cp.shelfLife || '',
       serviceStatus: cp.serviceStatus || '正常供貨',
+      controlStatus: cp.controlStatus || false,
+      isDiscontinued: cp.isDiscontinued || false,
+      purchasingStatus: cp.purchasingStatus !== false,
       isCalculable: cp.isCalculable !== false,
       keyProduct: cp.keyProduct || '',
+      highlightNote: cp.highlightNote || '',
+      expiryNote: cp.expiryNote || '',
+      productFeatures: cp.productFeatures || '',
+      notes: cp.notes || '',
     };
     this.showEditProductModal = true;
   }
@@ -617,11 +639,20 @@ export class ChannelsComponent implements OnInit {
         category: this.editForm.category,
         unit: this.editForm.unit,
         origin: this.editForm.origin,
+        moq: this.editForm.moq,
+        packageType: this.editForm.packageType,
         sugar: this.editForm.sugar,
         shelfLife: this.editForm.shelfLife,
         serviceStatus: this.editForm.serviceStatus as any,
+        controlStatus: this.editForm.controlStatus,
+        isDiscontinued: this.editForm.isDiscontinued,
+        purchasingStatus: this.editForm.purchasingStatus,
         isCalculable: this.editForm.isCalculable,
         keyProduct: this.editForm.keyProduct as any,
+        highlightNote: this.editForm.highlightNote,
+        expiryNote: this.editForm.expiryNote,
+        productFeatures: this.editForm.productFeatures,
+        notes: this.editForm.notes,
       };
       await updateDoc(ref, updates as any);
       // 同步更新本地物件
@@ -660,27 +691,13 @@ export class ChannelsComponent implements OnInit {
           const erp = this.erpProducts.find(p => p.id === d.id);
           if (!erp) continue;
           total++;
-          // 只同步精簡後保留的 ERP 快照欄位
-          const erpSnapshot: Record<string, any> = {
-            name: erp.name,
-            keyProduct: erp.keyProduct || '',
-            category: erp.category,
-            unit: erp.unit,
-            priceBeforeTax: erp.priceBeforeTax,
-            priceAfterTax: erp.priceAfterTax,
-            recommendedPrice: erp.recommendedPrice,
-            supplierCode: erp.supplierCode,
-            supplierName: erp.supplierName,
-            purchasingStatus: erp.purchasingStatus,
-            isDiscontinued: erp.isDiscontinued,
-            isCalculable: erp.isCalculable,
-            origin: erp.origin,
-            sugar: erp.sugar,
-            shelfLife: erp.shelfLife,
-            serviceStatus: (erp as any).serviceStatus || '',
+          // 同步所有 ERP 主檔欄位，排除通路專屬欄位（圖片/文案/簡介/售價/上架狀態）
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { imageUrl: _img, channelRefs: _refs, ...erpSnapshot } = erp;
+          await updateDoc(doc(db, channel.productCollection, d.id), {
+            ...erpSnapshot,    // ERP 最新所有欄位（不含 imageUrl/channelRefs）
             syncedAt: now,
-          };
-          await updateDoc(doc(db, channel.productCollection, d.id), erpSnapshot);
+          });
           done++;
         }
       }
@@ -823,38 +840,20 @@ export class ChannelsComponent implements OnInit {
     let done = 0;
 
     for (const product of selected) {
-      // 只匯入精簡後的欄位（不再全部展開 ERP 欄位）
+      // 先複製所有 ERP 主檔欄位，再覆蓋通路專屬欄位
       const channelProduct: ChannelProduct = {
-        // 基本識別
-        id: product.id,
+        ...product,                       // ERP 所有欄位全部帶入
         productRef: product.id,
         channelId: this.selectedChannel.id,
-        // 通路專屬欄位（初始空白）
-        imageUrl: '',
+        // ── 通路專屬欄位（覆蓋 ERP 原值）──
+        imageUrl: '',                     // 通路圖片初始空白，等另行上傳
         images: [],
-        description: '',
-        intro: '',
+        description: '',                  // 通路文案初始空白
+        intro: '',                        // 商品簡介初始空白
         price: product.recommendedPrice || product.priceAfterTax || 0,
-        visible: false,
+        visible: false,                   // 預設不上架，等圖文準備好再開啟
         syncedAt: now,
         createdAt: now,
-        // ERP 快照（精簡版）
-        name: product.name,
-        keyProduct: product.keyProduct || '',
-        category: product.category,
-        unit: product.unit,
-        priceBeforeTax: product.priceBeforeTax,
-        priceAfterTax: product.priceAfterTax,
-        recommendedPrice: product.recommendedPrice,
-        supplierCode: product.supplierCode,
-        supplierName: product.supplierName,
-        purchasingStatus: product.purchasingStatus,
-        isDiscontinued: product.isDiscontinued,
-        isCalculable: product.isCalculable,
-        origin: product.origin,
-        sugar: product.sugar,
-        shelfLife: product.shelfLife,
-        serviceStatus: (product as any).serviceStatus || '',
       };
 
       // 寫入通路專屬 collection
