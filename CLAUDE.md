@@ -62,15 +62,18 @@ AI-ERP-NEW/
 │   │   ├── sidebar/       # 側邊欄
 │   │   └── bottom-nav/    # 底部導覽 (手機版)
 │   ├── services/
-│   │   ├── data.service.ts    # 核心資料服務 (Firestore CRUD, Signals)
-│   │   ├── ai.service.ts      # Gemini AI 服務
-│   │   ├── edge-ai.service.ts # Edge AI 服務
-│   │   ├── order.service.ts   # 訂單相關邏輯
-│   │   ├── excel.service.ts   # Excel 匯出
-│   │   ├── pdf.service.ts     # PDF 匯出
-│   │   ├── print.service.ts   # 列印服務
-│   │   ├── image.service.ts   # 圖片處理
-│   │   └── screen.service.ts  # 螢幕/RWD 偵測
+│   │   ├── data.service.ts        # 核心資料服務 (Firestore CRUD, Signals)
+│   │   ├── ai.service.ts          # 文字 AI 服務 (Groq/Llama，委託模式)
+│   │   ├── ai-voice.service.ts    # 即時語音對話 (OpenAI Realtime GPT-4o)
+│   │   ├── ai-config.service.ts   # AI API Key 統一管理 (Groq/Gemini/OpenAI)
+│   │   ├── ai-training.service.ts # AI 訓練：知識庫、人設、角色管理
+│   │   ├── edge-ai.service.ts     # [已棄用] 原 Chrome Gemini Nano，已清空
+│   │   ├── order.service.ts       # 訂單相關邏輯
+│   │   ├── excel.service.ts       # Excel 匯出
+│   │   ├── pdf.service.ts         # PDF 匯出
+│   │   ├── print.service.ts       # 列印服務
+│   │   ├── image.service.ts       # 圖片處理
+│   │   └── screen.service.ts      # 螢幕/RWD 偵測
 │   ├── models/
 │   │   └── erp.models.ts # 所有 TypeScript 介面定義
 │   ├── pipes/             # taiwan-date, safe-html
@@ -175,3 +178,99 @@ products, orders, shippingOrders, purchaseOrders, customers, suppliers, employee
 - Fooocus 使用 Python 3.12 虛擬環境（`py -3.12`），因 PyTorch 不支援 3.14
 - Windows 繁體中文環境需設定 `$env:PYTHONUTF8=1` 或 `set PYTHONUTF8=1` 避免編碼錯誤
 - Ollama API: `http://localhost:11434`（可供 ERP 系統 ai.service.ts 串接）
+
+## AI 層重建記錄（2026/03/15）
+
+### 重建背景
+原本語音使用瀏覽器內建 Web Speech API（品質差、不即時），AI 引擎全部集中在單一 ai.service.ts 中（職責混雜）。此次重建目標：即時語音對話 + Service 職責分離。
+
+### 新架構：AI Service 分層
+
+| Service | 職責 | 引擎 |
+|---|---|---|
+| **ai-voice.service.ts** | 即時語音對話（STT + 推理 + TTS 一體式） | OpenAI Realtime API (GPT-4o) |
+| **ai.service.ts** | 文字 AI 任務（對話、OCR、資料解析、匯入） | Groq API (Llama 4 Scout) |
+| **ai-training.service.ts** | 知識庫管理、人設指令、角色定義、buildSystemPrompt() | Firestore 同步 |
+| **ai-config.service.ts** | API Key 統一管理（Groq / Gemini / OpenAI） | Firestore 同步 |
+| **edge-ai.service.ts** | [已棄用] 原 Chrome Gemini Nano，已清空為空殼 | — |
+
+### 語音對話流程
+使用者語音 → OpenAI Realtime WebSocket → GPT-4o（即時 STT+推理+TTS）→ PCM16 音訊回傳 → 瀏覽器播放
+- 音訊格式：PCM16 24kHz mono
+- 延遲：~500-800ms 語音對語音
+- 支援打斷：使用者說話時自動停止 AI 播放（Server VAD）
+
+### Firestore 新增欄位（systemConfig/gemini）
+- `geminiApiKey` — Gemini API Key
+- `openaiApiKey` — OpenAI API Key
+- `defaultVoiceEngine` — 預設語音引擎（目前固定 openai）
+
+### 圖文生成維持不變
+- 本機 Ollama + Qwen2.5:7b（文案）
+- 本機 Fooocus（修圖）
+- 物流單 OCR 維持 Groq/Llama
+
+### 重建改動清單
+
+**新建檔案：**
+- `src/services/ai-config.service.ts` — API Key 統一管理（Groq/Gemini/OpenAI），Firestore 即時同步
+- `src/services/ai-training.service.ts` — 知識庫 + 人設 + 角色管理，提供 buildSystemPrompt(role) 組合三層 prompt
+- `src/services/ai-voice.service.ts` — OpenAI Realtime 即時語音對話，WebSocket + PCM16 24kHz 音訊串流
+
+**重寫檔案：**
+- `src/services/ai.service.ts` — 改為委託模式（Key→AiConfigService，訓練→AiTrainingService），對外 API 不變，19 個元件零修改
+- `src/components/ai-assistant/ai-assistant.component.ts` — 語音模式改用 AiVoiceService（OpenAI Realtime），拿掉 Web Speech API
+- `src/components/ai-assistant/ai-assistant.component.html` — 語音 UI 重設計：連線動畫、即時轉錄、音波動畫、打斷支援
+
+**清理檔案：**
+- `src/services/edge-ai.service.ts` — 清空為空殼（deprecated），功能已遷移
+- `src/components/external-portal/external-portal.component.ts` — EdgeAiService → AiService，商品摘要改用 Groq/Llama
+
+### 費用與帳號設定
+- OpenAI API（Realtime）與 ChatGPT Plus 訂閱是**分開計費**的
+- API 餘額需在 platform.openai.com → Billing 單獨儲值
+- Realtime API 費率：音訊輸入 $0.06/分鐘、音訊輸出 $0.24/分鐘
+- 建議在 Usage limits 設定每月上限避免超支
+- API Key 存放於 Firestore `systemConfig/gemini` → `openaiApiKey` 欄位
+
+### AI 訓練中心重構（2026/03/15）
+
+**改動背景**
+原本知識庫只有一個「載入標準範本」按鈕，無法區分內部/外部資訊，也無法驗證不同角色看到的內容差異。重構目標：內外部知識自動過濾 + 預建範本 + 角色測試。
+
+**改動檔案：**
+- `src/services/ai-training.service.ts` — `KnowledgeDoc` 新增 `isInternal` 欄位；`buildSystemPrompt()` 在 external 角色時自動過濾含 `[內部]` 或 `【僅限內部】` 標記的知識文件
+- `src/components/ai-training/ai-training.component.ts` — 完整重構：
+  - 直接注入 `AiTrainingService`（不再只透過 AiService）
+  - 7 組預建範本（一吉水果乾專用）：價格規則、成本毛利（內部）、商品術語、出貨物流、供應商代工（內部）、客服 FAQ、禁止事項
+  - 文件支援「僅限內部 / 公開」標記，可即時切換
+  - 一鍵全部載入範本 / 單獨選擇
+  - 測試場支援「內部特助 / 外部客服」角色切換
+- `src/components/ai-training/ai-training.component.html` — 全新 UI：
+  - Header 顯示公開/內部文件數量統計
+  - 知識庫 Tab 頂部「快速範本」卡片式排列，內部範本紅色標記
+  - 文件列表每筆可點擊切換「內部/公開」徽章
+  - 測試面板新增角色切換按鈕，外部模式顯示過濾提示
+  - 引擎標示修正為 Groq/Llama
+
+**知識庫儲存格式：**
+- 公開文件：`[文件: NAME]\nCONTENT`
+- 內部文件：`[文件: NAME][內部]\nCONTENT`（buildSystemPrompt 會過濾）
+
+**預建範本清單：**
+| 範本名稱 | 內部/公開 | 內容概要 |
+|---------|----------|---------|
+| 價格與訂單規則 | 公開 | 報價、運費、付款、最低訂購量 |
+| 成本與毛利規則 | 內部 | 毛利底線、議價空間、代工費用 |
+| 商品知識與術語 | 公開 | 品質等級、品項分類、保存方式 |
+| 出貨與物流規則 | 公開 | 出貨時程、物流商、退換貨 |
+| 供應商與代工資訊 | 內部 | 代工流程、庫存管理、品檢 |
+| 客服常見問答 | 公開 | FAQ 標準回覆 |
+| 禁止事項與合規 | 公開 | AI 行為準則、應對原則 |
+
+### 待完成 / 後續優化
+- [ ] 實際語音對話測試與除錯
+- [x] AI 訓練介面重構（知識庫內外部標記、預建範本、角色測試）
+- [x] 知識庫補充：客服 FAQ、退換貨流程、訂單查詢話術、禁止事項
+- [ ] ScriptProcessorNode 未來可升級為 AudioWorklet（效能更好）
+- [ ] 考慮語音 session 的角色切換 UX 優化（目前會重建整個 session）

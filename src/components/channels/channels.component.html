@@ -839,19 +839,19 @@
                         (change)="onCpPriceUpdate(cp, $event)"
                         class="w-24 px-2 py-1 text-right text-sm font-mono font-semibold text-sky-700 dark:text-sky-400 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-sky-400 rounded bg-transparent focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition-colors" />
                     </td>
-                    <!-- 狀態 badges -->
+                    <!-- 狀態（ERP 中心管控 + 供貨） -->
                     <td class="px-3 py-2.5 text-center">
                       <div class="flex flex-col gap-0.5 items-center">
-                        @if (cp.controlStatus) {
-                          <span class="text-xs px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded leading-tight">控貨</span>
-                        }
                         @if (cp.isDiscontinued) {
                           <span class="text-xs px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded leading-tight">停售</span>
+                        }
+                        @if (!cp.purchasingStatus) {
+                          <span class="text-xs px-1.5 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded leading-tight">停購</span>
                         }
                         @if (cp.serviceStatus && cp.serviceStatus !== '正常供貨') {
                           <span class="text-xs px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded leading-tight whitespace-nowrap">{{ cp.serviceStatus }}</span>
                         }
-                        @if (!cp.controlStatus && !cp.isDiscontinued && (!cp.serviceStatus || cp.serviceStatus === '正常供貨')) {
+                        @if (!cp.isDiscontinued && cp.purchasingStatus !== false && (!cp.serviceStatus || cp.serviceStatus === '正常供貨')) {
                           <span class="text-xs text-slate-300 dark:text-slate-600">—</span>
                         }
                       </div>
@@ -1400,10 +1400,6 @@
               <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.priceAfterTax | number }}</div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">未稅成本</label>
-              <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.costBeforeTax | number }}</div>
-            </div>
-            <div>
               <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 <span class="text-sky-600 dark:text-sky-400">建議售價 (cost/0.9)</span>
               </label>
@@ -1412,32 +1408,8 @@
           </div>
         </div>
 
-        <!-- ── 6. 庫存資訊（唯讀快照） ── -->
+        <!-- ── 6. 供應商（唯讀快照） ── -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">現有庫存</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.stock | number }}</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">已挑揀數量</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.qualityConfirmed | number }}</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">外庫數量</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.externalStock | number }}</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">安全庫存</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.safetyStock | number }}</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">訂單備貨（已鎖定）</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.totalPickingQuantity | number }}</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">在途數量（系統計算）</label>
-            <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600">{{ editingProduct.transitQuantity | number }}</div>
-          </div>
           <div>
             <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">供應商代碼</label>
             <div class="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-600 font-mono">{{ editingProduct.supplierCode || '—' }}</div>
@@ -1458,12 +1430,6 @@
               <option value="">— 未設定 —</option>
               @for (o of editOrigins; track o) { <option [value]="o">{{ o }}</option> }
             </select>
-          </div>
-          <!-- 最小訂購量 -->
-          <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">最小訂購量 (MOQ)</label>
-            <input type="number" [(ngModel)]="editForm.moq" min="1"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
           </div>
           <!-- 保存期限 -->
           <div class="sm:col-span-2">
@@ -1490,53 +1456,10 @@
               class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
               placeholder="官網或銷售頁面用的完整商品文案..."></textarea>
           </div>
-          <!-- 商品特色 -->
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">商品特色</label>
-            <input type="text" [(ngModel)]="editForm.productFeatures"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-              placeholder="例：天然無添加、低糖低熱量..." />
-          </div>
-          <!-- 亮點說明 -->
-          <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">亮點說明 (highlightNote)</label>
-            <input type="text" [(ngModel)]="editForm.highlightNote"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-              placeholder="例：嚴選泰國芒果..." />
-          </div>
-          <!-- 到期說明 -->
-          <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">到期說明 (expiryNote)</label>
-            <input type="text" [(ngModel)]="editForm.expiryNote"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-              placeholder="例：距有效期限六個月以上..." />
-          </div>
-          <!-- 詳細備註 -->
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">詳細備註</label>
-            <textarea [(ngModel)]="editForm.notes" rows="2"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
-              placeholder="內部管理備註..."></textarea>
-          </div>
         </div>
 
         <!-- ── 9. 旗標 Checkboxes ── -->
         <div class="flex flex-wrap gap-6 pt-2 border-t border-slate-200 dark:border-slate-700">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="editForm.isDiscontinued"
-              class="rounded border-slate-300 text-rose-500 focus:ring-rose-500" />
-            <span class="text-sm text-slate-700 dark:text-slate-300">已停售</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="editForm.controlStatus"
-              class="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
-            <span class="text-sm text-slate-700 dark:text-slate-300">控貨中</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="editForm.purchasingStatus"
-              class="rounded border-slate-300 text-sky-500 focus:ring-sky-500" />
-            <span class="text-sm text-slate-700 dark:text-slate-300">正常採購</span>
-          </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" [(ngModel)]="editForm.sugar"
               class="rounded border-slate-300 text-amber-500 focus:ring-amber-500" />

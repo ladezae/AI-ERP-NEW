@@ -1,36 +1,49 @@
-import { Injectable, signal, OnDestroy } from '@angular/core';
-import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase.config';
+/**
+ * AI 文字服務（重構版）
+ *
+ * 負責所有文字類 AI 任務：對話、OCR、公式生成、資料解析等。
+ * 底層使用 Groq API + Llama 模型。
+ *
+ * 重構說明：
+ * - API Key 管理已委託給 AiConfigService
+ * - 知識庫/人設管理已委託給 AiTrainingService
+ * - 本 Service 保留原有對外 API（sendMessage、parseLogisticsImage 等）
+ *   以維持 19 個現有元件的相容性
+ */
+import { Injectable, signal, inject } from '@angular/core';
+import { AiConfigService } from './ai-config.service';
+import { AiTrainingService, AiRole } from './ai-training.service';
 
-export type AiRole = string;
+// 重新匯出 AiRole，讓現有 import { AiRole } from ai.service 的元件不用改
+export type { AiRole } from './ai-training.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AiService implements OnDestroy {
-  private unsubscribeConfig: any = null;
-  private firestore = db;
+export class AiService {
+  private configService = inject(AiConfigService);
+  private trainingService = inject(AiTrainingService);
+
   private readonly GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
   private readonly GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
-  sharedKey = signal<string>('');
-  researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
-  knowledgeBase = signal<string[]>([]);
-  currentSystemInstruction = signal<string>('');
-  currentRole = signal<AiRole>('default');
+  // === 向下相容的 Signals（委託給子 Service） ===
+  get sharedKey() { return this.configService.groqKey; }
+  get knowledgeBase() { return this.trainingService.knowledgeBase; }
+  get currentSystemInstruction() { return this.trainingService.systemInstruction; }
+  get currentRole() { return this.trainingService.currentRole; }
 
-  constructor() {
-    this.subscribeToConfigurationChanges();
-    this.fetchSharedKey();
-  }
+  researchResult = signal<{ text: string; sources: any[] }>({ text: '', sources: [] });
+
+  // === 向下相容方法 ===
 
   setRole(role: AiRole): void {
-    this.currentRole.set(role);
+    this.trainingService.setRole(role);
   }
 
   // --- 【1. 萬用通訊核心】 ---
   async sendMessage(prompt: string, image?: string, context?: any): Promise<string> {
-    const apiKey = await this.getGroqApiKey();
+    const apiKey = await this.configService.getGroqKey();
     const finalPrompt = context
       ? `上下文環境: ${JSON.stringify(context)}\n\n使用者問題: ${prompt}`
       : prompt;
@@ -82,8 +95,8 @@ export class AiService implements OnDestroy {
     trackingId: string;
     trackingUrl: string;
   }> {
-    const key = this.sharedKey() || await this.fetchSharedKey();
-    if (!key) {
+    const hasKey = await this.configService.ensureGroqKey();
+    if (!hasKey) {
       throw new Error('API Key 未設定，請至系統設定配置 Groq API Key');
     }
 
@@ -115,7 +128,7 @@ export class AiService implements OnDestroy {
         trackingUrl: ''
       };
     } catch (e) {
-      console.error('[AiService] parseLogisticsImage JSON parse failed:', response);
+      console.error('[AiService] parseLogisticsImage JSON 解析失敗:', response);
       return { provider: '', trackingId: '未辨識', trackingUrl: '' };
     }
   }
@@ -139,31 +152,31 @@ export class AiService implements OnDestroy {
   }
 
   async generateBusinessInsight(context: any): Promise<string> {
-    return this.sendMessage("請分析以下商業數據並提供洞察", undefined, context);
+    return this.sendMessage('請分析以下商業數據並提供洞察', undefined, context);
   }
 
-  // --- 【3. 訓練與系統設定】 ---
+  // --- 【3. 訓練與系統設定（委託給 AiTrainingService）】 ---
+
   async generateSystemInstruction(direction: string): Promise<string> {
     const text = await this.sendMessage(`請幫我生成一段 AI 系統指令，方向為：${direction}`);
-    this.currentSystemInstruction.set(text);
+    this.trainingService.systemInstruction.set(text);
     return text;
   }
 
   async updateConfiguration(systemInstruction: string, keywords?: string[]): Promise<void> {
-    const docRef = doc(this.firestore, 'systemConfig', 'gemini');
-    await updateDoc(docRef, { systemInstruction, keywords: keywords || [] });
+    return this.trainingService.updateConfiguration(systemInstruction, keywords);
   }
 
-  // --- 【4. 基礎管理與同步】 ---
+  // --- 【4. 向下相容方法（委託給 AiConfigService）】 ---
 
   getStoredKey(): string | null {
-    const key = this.sharedKey();
+    const key = this.configService.groqKey();
     return key && key.trim().length > 0 ? key.trim() : null;
   }
 
   saveKeyToStorage(key: string): boolean {
     try {
-      this.sharedKey.set(key.trim());
+      this.configService.groqKey.set(key.trim());
       return true;
     } catch (e) {
       return false;
@@ -171,52 +184,10 @@ export class AiService implements OnDestroy {
   }
 
   clearStoredKey(): void {
-    this.sharedKey.set('');
+    this.configService.groqKey.set('');
   }
 
   async ensureApiKey(): Promise<boolean> {
-    if (this.sharedKey() && this.sharedKey().trim().length > 0) {
-      return true;
-    }
-    const key = await this.fetchSharedKey();
-    return !!(key && key.trim().length > 0);
-  }
-
-  private subscribeToConfigurationChanges() {
-    this.unsubscribeConfig = onSnapshot(doc(this.firestore, 'systemConfig', 'gemini'), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data['apiKey']) this.sharedKey.set(data['apiKey'].trim());
-        if (data['keywords']) this.knowledgeBase.set(data['keywords']);
-        if (data['systemInstruction']) this.currentSystemInstruction.set(data['systemInstruction']);
-        if (data['role']) this.currentRole.set(data['role']);
-      }
-    });
-  }
-
-  async fetchSharedKey(): Promise<string | null> {
-    try {
-      const snap = await getDoc(doc(this.firestore, 'systemConfig', 'gemini'));
-      if (snap.exists() && snap.data()['apiKey']) {
-        const key = snap.data()['apiKey'].trim();
-        this.sharedKey.set(key);
-        return key;
-      }
-    } catch (e) {
-      console.error('[AiService] fetchSharedKey failed:', e);
-    }
-    return null;
-  }
-
-  private async getGroqApiKey(): Promise<string> {
-    const key = this.sharedKey() || await this.fetchSharedKey();
-    if (!key || !key.trim()) {
-      throw new Error('API Key 缺失，請至系統設定配置 Groq API Key。');
-    }
-    return key.trim();
-  }
-
-  ngOnDestroy() {
-    if (this.unsubscribeConfig) this.unsubscribeConfig();
+    return this.configService.ensureGroqKey();
   }
 }

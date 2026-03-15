@@ -1,20 +1,28 @@
-
-// Force re-compilation to fix dynamic import error
-import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewChild, WritableSignal, computed, effect, signal, inject } from '@angular/core';
+/**
+ * AI 助手元件（重構版）
+ *
+ * 支援兩種模式：
+ * 1. 文字模式 — 傳統聊天介面，使用 AiService (Groq/Llama)
+ * 2. 語音模式 — 即時語音對話，使用 AiVoiceService (OpenAI Realtime)
+ *
+ * 保留功能：
+ * - 內部/外部角色切換
+ * - 圖片上傳分析（文字模式）
+ * - 對話歷史紀錄
+ */
+import {
+  ChangeDetectionStrategy, Component, ElementRef, NgZone,
+  OnDestroy, ViewChild, WritableSignal, computed, effect,
+  signal, inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { AiService, AiRole } from '../../services/ai.service';
+import { AiVoiceService, VoiceSessionState } from '../../services/ai-voice.service';
+import { AiTrainingService } from '../../services/ai-training.service';
 import { DataService } from '../../services/data.service';
 import { ChatMessage } from '../../models/erp.models';
-
-// Helper to get SpeechRecognition safely
-function getSpeechRecognition() {
-  if (typeof window === 'undefined') return null;
-  return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-}
-
-const SpeechRecognition = getSpeechRecognition();
 
 @Component({
   selector: 'app-ai-assistant',
@@ -29,12 +37,16 @@ const SpeechRecognition = getSpeechRecognition();
     .chat-window-anim {
       animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .voice-wave {
-      animation: wave 1.5s infinite ease-in-out;
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.5; }
+      100% { transform: scale(1.6); opacity: 0; }
     }
-    @keyframes wave {
-      0%, 100% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.1); opacity: 0.2; }
+    .pulse-ring {
+      animation: pulse-ring 1.5s ease-out infinite;
+    }
+    @keyframes voice-bar {
+      0%, 100% { height: 8px; }
+      50% { height: 24px; }
     }
   `],
   templateUrl: './ai-assistant.component.html'
@@ -43,241 +55,227 @@ export class AiAssistantComponent implements OnDestroy {
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
   @ViewChild('fileInput') private fileInput!: ElementRef;
 
+  // === 注入 Services ===
   aiService = inject(AiService);
+  voiceService = inject(AiVoiceService);
+  private trainingService = inject(AiTrainingService);
   private dataService = inject(DataService);
   private zone = inject(NgZone);
 
+  // === UI 狀態 ===
   isOpen = signal(false);
-  isVoiceMode = signal(false); 
-  
+  isVoiceMode = signal(false);
+
+  // === 文字模式 ===
   messages: WritableSignal<ChatMessage[]> = signal([]);
   userInput = signal('');
-  
   isLoading = signal(false);
-  isListening = signal(false);
-  isSpeaking = signal(false); 
-  
   selectedImage = signal<string | null>(null);
 
-  private recognition: any | null = null;
-  private synth: SpeechSynthesis | null = typeof window !== 'undefined' ? window.speechSynthesis : null;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
-  private availableVoices: SpeechSynthesisVoice[] = [];
-  
-  hasSpeechRecognition = computed(() => !!SpeechRecognition);
+  // === 語音模式 ===
+  voiceState = signal<VoiceSessionState>('disconnected');
+  voiceTranscript = signal<string>('');       // 使用者說的話（即時轉錄）
+  voiceResponseText = signal<string>('');     // AI 回覆文字（累積串流）
+  private voiceResponseBuffer = '';            // 用於累積串流文字片段
+
+  // === 角色 ===
+  currentRole = computed(() => this.trainingService.currentRole());
 
   constructor() {
-    // Initialize messages from persisted DataService history
+    // 從 DataService 載入歷史訊息
     this.messages.set(this.dataService.chatHistory());
 
-    if (this.hasSpeechRecognition()) {
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = false;
-      this.recognition.lang = 'zh-TW';
-      this.recognition.interimResults = false;
-      this.recognition.maxAlternatives = 1;
-
-      this.recognition.onstart = () => {
-        this.zone.run(() => {
-          this.isListening.set(true);
-          this.stopSpeaking();
-        });
-      };
-
-      this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        this.zone.run(() => {
-          this.userInput.set(transcript);
-          if (this.isVoiceMode()) {
-            setTimeout(() => this.sendMessage(), 800); 
-          }
-        });
-      };
-
-      this.recognition.onspeechend = () => {
-         this.zone.run(() => this.isListening.set(false));
-      };
-      
-      this.recognition.onend = () => {
-        this.zone.run(() => this.isListening.set(false));
-      };
-      
-      this.recognition.onerror = (event: any) => {
-         console.error('Speech recognition error:', event.error);
-         this.zone.run(() => this.isListening.set(false));
-      };
-    }
-    
-    this.loadVoices();
-    if (this.synth) {
-       this.synth.onvoiceschanged = () => {
-         this.loadVoices();
-       };
-    }
-    
-    // Auto-scroll effect
-    effect(() => {
-        if(this.messages().length > 0 && this.isOpen() && !this.isVoiceMode()) {
-            this.scrollToBottom();
-        }
-    });
-
-    // Sync messages from DataService
+    // 同步 DataService 歷史訊息
     effect(() => {
       const history = this.dataService.chatHistory();
       this.zone.run(() => {
         this.messages.set(history);
       });
     });
+
+    // 自動捲動到最新訊息
+    effect(() => {
+      if (this.messages().length > 0 && this.isOpen() && !this.isVoiceMode()) {
+        this.scrollToBottom();
+      }
+    });
   }
 
-  loadVoices() {
-    if (!this.synth) return;
-    setTimeout(() => {
-        this.availableVoices = this.synth.getVoices();
-    }, 100);
-  }
+  // --- 【視窗控制】 ---
 
   toggleChat(): void {
     this.isOpen.update(open => !open);
     if (!this.isOpen()) {
-      this.stopSpeaking();
-      this.stopListening();
+      // 關閉視窗時停止語音
+      if (this.voiceService.isSessionActive()) {
+        this.voiceService.stopSession();
+      }
     } else if (this.messages().length === 0) {
-      this.addMessage('ai', "您好！我是您的 Gemini ERP 智能助理 😊\n有什麼我可以幫您的嗎？您可以問我庫存狀況，或者上傳照片讓我看看喔！");
+      this.addMessage('ai', '您好！我是您的 ERP 智能助理\n有什麼我可以幫您的嗎？');
     }
   }
-  
-  toggleVoiceMode(): void {
+
+  // --- 【模式切換】 ---
+
+  async toggleVoiceMode(): Promise<void> {
     this.isVoiceMode.update(v => !v);
+
     if (this.isVoiceMode()) {
-      this.stopSpeaking();
+      // 進入語音模式：啟動即時語音 session
+      await this.startVoiceSession();
     } else {
-      this.stopListening();
-      this.stopSpeaking();
+      // 離開語音模式：停止語音 session
+      await this.voiceService.stopSession();
+      this.resetVoiceState();
     }
   }
+
+  // --- 【角色切換】 ---
 
   toggleRole(role: AiRole): void {
-      this.aiService.setRole(role);
-      // Don't clear history on role toggle, just announce change
-      if (role === 'internal') {
-          this.addMessage('ai', '已切換為【內部特助模式】。我可以存取所有成本與供應商數據。');
-      } else {
-          this.addMessage('ai', '已切換為【外部客服模式】。我是客服專員，很高興為您服務！(已遮蔽敏感數據)');
-      }
-  }
+    this.trainingService.setRole(role);
 
-  private getSystemContext(): string {
-    const role = this.aiService.currentRole();
-    const products = this.dataService.products();
-    const metrics = this.dataService.businessMetrics(); 
-    
-    // NEW: Inject Calculated Values Directly
-    const definitions = this.dataService.metricDefinitions();
-    // Only calculate unlocked/safe definitions or all if internal
-    const calculatedStats = definitions.map(def => {
-        const val = this.dataService.evaluateFormula(def.formula);
-        return `- ${def.fieldTw} (${def.fieldEn}): ${val}`;
-    }).join('\n');
-
-    // 共同數據：公開產品資訊
-    const publicProducts = products.map(p => ({
-        name: p.name,
-        category: p.category,
-        price: p.priceAfterTax,
-        stockStatus: role === 'internal' ? p.stock : (p.stock > 0 ? '有現貨' : '缺貨'), 
-        sugar: p.sugar ? '有糖' : '無糖'
-    }));
-
-    if (role === 'external') {
-        // --- 外部客服 Context ---
-        return `
-        【系統公開數據快照 (客戶視角)】
-        - 商品列表: ${JSON.stringify(publicProducts)}
-        
-        (注意：您是外部客服，請勿透露具體庫存數量，僅告知有或無。若客戶詢問敏感數據，請婉拒。)
-        `;
+    if (role === 'internal') {
+      this.addMessage('ai', '已切換為【內部特助模式】。我可以存取所有成本與供應商數據。');
     } else {
-        // --- 內部特助 Context ---
-        const internalProducts = products.map(p => ({
-            id: p.id,
-            name: p.name,
-            stock: p.stock,
-            safety: p.safetyStock,
-            transit: p.transitQuantity, // Added transit quantity
-            cost: p.costBeforeTax,
-            supplier: p.supplierName,
-            sugar: p.sugar ? '有糖' : '無糖'
-        }));
+      this.addMessage('ai', '已切換為【外部客服模式】。我是客服專員，很高興為您服務！(已遮蔽敏感數據)');
+    }
 
-        return `
-        【📊 即時計算指標 (Defined Metrics)】
-        ${calculatedStats}
-
-        【📊 戰情中心數據 (Cheat Sheet - Snapshot)】
-        * 本月營收: $${metrics.revenue.currentMonth} (年度累計: $${metrics.revenue.totalYear})
-        * 訂單狀態: 今日新增 ${metrics.orders.todayCount} 筆, 處理中 ${metrics.orders.pendingCount} 筆
-        * 庫存警示: ⚠️ ${metrics.inventory.lowStockCount} 項商品低於安全水位, ⛔ ${metrics.inventory.outOfStockCount} 項缺貨
-        * 生產進度: 進行中代工單 ${metrics.manufacturing.activeOrders} 筆
-        * 數據更新時間: ${metrics.lastUpdated}
-
-        【系統內部數據詳情 (管理員視角)】
-        - 商品完整列表: ${JSON.stringify(internalProducts)}
-        
-        (注意：您是內部特助，請優先參考【即時計算指標】的數值回答問題，這些是經過系統公式精確計算的結果。)
-        `;
+    // 如果語音 session 正在執行，需要重新建立（因為 system prompt 會不同）
+    if (this.voiceService.isSessionActive()) {
+      this.restartVoiceSession();
     }
   }
 
-  async sendMessage() {
+  // --- 【語音模式】 ---
+
+  async startVoiceSession(): Promise<void> {
+    this.voiceResponseBuffer = '';
+    this.voiceTranscript.set('');
+    this.voiceResponseText.set('');
+
+    try {
+      await this.voiceService.startSession(this.currentRole(), {
+        onStateChange: (state) => {
+          this.zone.run(() => {
+            this.voiceState.set(state);
+          });
+        },
+
+        onTranscript: (text, isFinal) => {
+          this.zone.run(() => {
+            this.voiceTranscript.set(text);
+            if (isFinal) {
+              // 使用者說完一句話，加入聊天記錄
+              this.addMessage('user', text);
+            }
+          });
+        },
+
+        onTextResponse: (text) => {
+          this.zone.run(() => {
+            this.voiceResponseBuffer += text;
+            this.voiceResponseText.set(this.voiceResponseBuffer);
+          });
+        },
+
+        onInterrupted: () => {
+          this.zone.run(() => {
+            // AI 被打斷，保存已收到的回覆
+            if (this.voiceResponseBuffer.trim()) {
+              this.addMessage('ai', this.voiceResponseBuffer + '（被打斷）');
+            }
+            this.voiceResponseBuffer = '';
+            this.voiceResponseText.set('');
+          });
+        },
+
+        onError: (error) => {
+          this.zone.run(() => {
+            this.voiceState.set('error');
+            console.error('[AiAssistant] 語音錯誤:', error);
+          });
+        }
+      });
+    } catch (e: any) {
+      this.voiceState.set('error');
+      console.error('[AiAssistant] 啟動語音失敗:', e);
+    }
+  }
+
+  /** 停止語音 session 並回到語音待機 */
+  async stopVoiceSession(): Promise<void> {
+    // 保存未完成的回覆
+    if (this.voiceResponseBuffer.trim()) {
+      this.addMessage('ai', this.voiceResponseBuffer);
+    }
+
+    await this.voiceService.stopSession();
+    this.resetVoiceState();
+  }
+
+  /** 重啟語音 session（角色切換時用） */
+  private async restartVoiceSession(): Promise<void> {
+    await this.voiceService.stopSession();
+    this.resetVoiceState();
+    await this.startVoiceSession();
+  }
+
+  private resetVoiceState(): void {
+    this.voiceResponseBuffer = '';
+    this.voiceTranscript.set('');
+    this.voiceResponseText.set('');
+    this.voiceState.set('disconnected');
+  }
+
+  // --- 【文字模式】 ---
+
+  private getSystemContext(): string {
+    return this.trainingService.buildSystemPrompt(this.currentRole());
+  }
+
+  async sendMessage(): Promise<void> {
     const text = this.userInput().trim();
     if (!text && !this.selectedImage()) return;
 
-    // Check for API Key first
+    // 檢查 API Key
     const hasKey = await this.aiService.ensureApiKey();
     if (!hasKey) return;
 
     this.addMessage('user', text, this.selectedImage() || undefined);
     const imageToSend = this.selectedImage();
-    
+
     this.userInput.set('');
     this.selectedImage.set(null);
-    
     this.isLoading.set(true);
 
     try {
-        const context = this.getSystemContext();
-        const response = await this.aiService.sendMessage(text, imageToSend || undefined, context);
-        this.addMessage('ai', response);
-        
-        if (this.isVoiceMode()) {
-            this.speakResponse(response);
-        }
-
+      const context = this.getSystemContext();
+      const response = await this.aiService.sendMessage(text, imageToSend || undefined, context);
+      this.addMessage('ai', response);
     } catch (err) {
-        this.addMessage('ai', '抱歉，我現在有點忙不過來，請稍後再試。');
+      this.addMessage('ai', '抱歉，我現在有點忙不過來，請稍後再試。');
     } finally {
-        this.isLoading.set(false);
+      this.isLoading.set(false);
     }
   }
 
-  addMessage(sender: 'user' | 'ai', text: string, image?: string) {
+  // --- 【共用方法】 ---
+
+  addMessage(sender: 'user' | 'ai', text: string, image?: string): void {
     const newMsg: ChatMessage = { sender, text, image, timestamp: new Date().toISOString() };
     this.messages.update(msgs => [...msgs, newMsg]);
-    // Save to persistence
     this.dataService.updateChatHistory(this.messages());
   }
 
-  clearHistory() {
-      if (confirm('確定要清除所有對話紀錄嗎？')) {
-          this.dataService.clearChatHistory();
-          // Re-add welcome message
-          this.addMessage('ai', "紀錄已清除。我是您的 Gemini ERP 智能助理，有什麼可以幫您的嗎？");
-      }
+  clearHistory(): void {
+    if (confirm('確定要清除所有對話紀錄嗎？')) {
+      this.dataService.clearChatHistory();
+      this.addMessage('ai', '紀錄已清除。有什麼可以幫您的嗎？');
+    }
   }
 
-  private scrollToBottom() {
+  private scrollToBottom(): void {
     setTimeout(() => {
       if (this.messageContainer) {
         const el = this.messageContainer.nativeElement;
@@ -286,11 +284,13 @@ export class AiAssistantComponent implements OnDestroy {
     }, 100);
   }
 
-  triggerImageUpload() {
+  // --- 【圖片上傳】 ---
+
+  triggerImageUpload(): void {
     this.fileInput.nativeElement.click();
   }
 
-  onFileSelected(event: Event) {
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
@@ -302,67 +302,15 @@ export class AiAssistantComponent implements OnDestroy {
     }
   }
 
-  removeImage() {
+  removeImage(): void {
     this.selectedImage.set(null);
   }
 
-  ngOnDestroy() {
-    this.stopSpeaking();
-    this.stopListening();
-  }
+  // --- 【生命週期】 ---
 
-  speakResponse(text: string) {
-    if (!this.synth) return;
-    this.stopSpeaking();
-    this.isSpeaking.set(true);
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'zh-TW';
-    
-    const voice = this.availableVoices.find(v => v.lang.includes('TW') || v.lang.includes('zh'));
-    if (voice) utterance.voice = voice;
-
-    utterance.onend = () => {
-      this.zone.run(() => this.isSpeaking.set(false));
-    };
-    
-    utterance.onerror = () => {
-        this.zone.run(() => this.isSpeaking.set(false));
-    };
-
-    this.currentUtterance = utterance;
-    this.synth.speak(utterance);
-  }
-
-  stopSpeaking() {
-    if (this.synth) {
-      this.synth.cancel();
-      this.isSpeaking.set(false);
-      this.currentUtterance = null;
+  ngOnDestroy(): void {
+    if (this.voiceService.isSessionActive()) {
+      this.voiceService.stopSession();
     }
-  }
-
-  toggleListening() {
-    if (!this.recognition) {
-        alert('您的瀏覽器不支援語音識別。');
-        return;
-    }
-
-    if (this.isListening()) {
-        this.stopListening();
-    } else {
-        try {
-            this.recognition.start();
-        } catch(e) {
-            console.error(e);
-        }
-    }
-  }
-
-  stopListening() {
-      if (this.recognition) {
-          this.recognition.stop();
-      }
-      this.isListening.set(false);
   }
 }

@@ -1,5 +1,6 @@
 
 <div class="p-8 h-full flex flex-col">
+  <!-- === Header === -->
   <header class="mb-6 flex-shrink-0 flex justify-between items-start">
     <div>
         <h1 class="text-3xl font-bold text-slate-800 dark:text-white flex items-center">
@@ -8,17 +9,31 @@
             </span>
             AI 訓練中心
         </h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-2 ml-14">自定義 AI 角色設定 (Persona) 與注入企業知識庫 (Knowledge Base)。</p>
+        <p class="text-slate-500 dark:text-slate-400 mt-2 ml-14">
+          自定義 AI 角色設定與注入企業知識庫。知識文件支援
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 mx-0.5">僅限內部</span>
+          標記，外部客服模式自動過濾。
+        </p>
     </div>
-    
-    <div class="flex space-x-3">
+
+    <div class="flex items-center space-x-3">
+        <!-- 文件統計 -->
+        <div class="hidden md:flex items-center space-x-2 text-xs">
+          <span class="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            公開 {{ publicDocCount }} 篇
+          </span>
+          <span class="px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+            內部 {{ internalDocCount }} 篇
+          </span>
+        </div>
+
         @if (isSaved()) {
             <span class="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 transition-opacity duration-500">
                 <svg class="mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                設定已儲存
+                已儲存
             </span>
         }
-        <button (click)="saveConfiguration()" 
+        <button (click)="saveConfiguration()"
                 [disabled]="isSaving()"
                 class="px-6 py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-lg shadow-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
             @if (isSaving()) {
@@ -32,14 +47,15 @@
     </div>
   </header>
 
+  <!-- === 主要內容 === -->
   <div class="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
-      
-      <!-- Left Config Panel -->
+
+      <!-- ====== 左側設定面板 ====== -->
       <div class="flex-1 flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
-          
-          <!-- Tabs -->
+
+          <!-- Tab 選項 -->
           <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-              <button (click)="setActiveTab('persona')" 
+              <button (click)="setActiveTab('persona')"
                       class="flex-1 py-4 text-center font-medium transition-colors border-b-2"
                       [class.border-purple-500]="activeTab() === 'persona'"
                       [class.text-purple-600]="activeTab() === 'persona'"
@@ -49,7 +65,7 @@
                       [class.dark:text-slate-400]="activeTab() !== 'persona'">
                   1. 角色設定 (Persona)
               </button>
-              <button (click)="setActiveTab('knowledge')" 
+              <button (click)="setActiveTab('knowledge')"
                       class="flex-1 py-4 text-center font-medium transition-colors border-b-2"
                       [class.border-purple-500]="activeTab() === 'knowledge'"
                       [class.text-purple-600]="activeTab() === 'knowledge'"
@@ -57,27 +73,29 @@
                       [class.border-transparent]="activeTab() !== 'knowledge'"
                       [class.text-slate-500]="activeTab() !== 'knowledge'"
                       [class.dark:text-slate-400]="activeTab() !== 'knowledge'">
-                  2. 知識庫 (Knowledge Base)
+                  2. 知識庫 ({{ knowledgeDocs().length }})
               </button>
           </div>
 
           <div class="flex-1 p-6 overflow-y-auto">
+
+              <!-- ========== Tab 1: 角色設定 ========== -->
               @if (activeTab() === 'persona') {
                   <div class="space-y-6 h-full flex flex-col">
-                      <!-- Executive Input Section -->
+                      <!-- 主管指令輸入區 -->
                       <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-5 shadow-sm">
                           <h3 class="flex items-center text-amber-800 dark:text-amber-400 font-bold mb-3">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.616a1 1 0 01.894-1.79l1.599.8L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                              👑 主管指令輸入區 (Executive Mode)
+                              主管指令輸入區 (Executive Mode)
                           </h3>
                           <div class="flex gap-3">
-                              <input type="text" 
-                                     [(ngModel)]="executiveDirective" 
+                              <input type="text"
+                                     [(ngModel)]="executiveDirective"
                                      (keydown.enter)="convertDirective()"
-                                     placeholder="請直接輸入您的要求，例如：「你是專業的採購經理，對供應商要強硬，但對內部同仁要有耐心。」" 
+                                     placeholder="直接輸入要求，例如：「對供應商要強硬，對客戶要有耐心，回答要簡潔有力。」"
                                      class="flex-1 border-amber-300 dark:border-amber-700 focus:ring-amber-500 focus:border-amber-500 rounded-lg p-3 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm">
-                              
-                              <button (click)="convertDirective()" 
+
+                              <button (click)="convertDirective()"
                                       [disabled]="isConvertingDirective()"
                                       class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium shadow-md transition-all flex items-center whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed">
                                   @if (isConvertingDirective()) {
@@ -85,79 +103,161 @@
                                       轉換中...
                                   } @else {
                                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2.25a.75.75 0 01.75.75v2.25H15a.75.75 0 010 1.5h-2.25V9a.75.75 0 01-1.5 0V6.75H9a.75.75 0 010-1.5h2.25V3a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
-                                      AI 自動生成設定
+                                      AI 自動生成
                                   }
                               </button>
                           </div>
                           <p class="text-xs text-amber-700/60 dark:text-amber-400/60 mt-2 ml-1">
-                              * AI 會自動將您的自然語言指令轉換為下方嚴謹的系統 Prompt 格式。
+                              AI 會將自然語言指令轉換為下方嚴謹的 System Prompt。
                           </p>
                       </div>
 
+                      <!-- 系統指令編輯區 -->
                       <div class="flex-1 flex flex-col">
                           <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">系統指令 (System Instruction)</label>
                           <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                              定義 AI 的人格特質、說話語氣以及行為準則。這是 AI 的「大腦設定」。
+                              定義 AI 的人格特質、語氣以及行為準則。此指令同時適用於文字和語音模式。
                           </p>
-                          <textarea 
+                          <textarea
                               [(ngModel)]="systemInstruction"
                               class="w-full flex-1 p-4 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm leading-relaxed bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 resize-none"
-                              placeholder="例如：你是一位專業的 ERP 顧問..."></textarea>
+                              placeholder="例如：你是一吉水果乾的 ERP 智能助理，擅長處理訂單查詢、庫存管理、客戶服務等任務..."></textarea>
                       </div>
                   </div>
               }
 
+              <!-- ========== Tab 2: 知識庫 ========== -->
               @if (activeTab() === 'knowledge') {
                   <div class="space-y-6">
-                      <!-- Add New -->
-                      <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+
+                      <!-- 範本快速載入區 -->
+                      <div class="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/10 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
                           <div class="flex justify-between items-center mb-3">
-                              <h3 class="font-bold text-slate-700 dark:text-slate-300">新增知識文件</h3>
-                              <button (click)="loadStandardTemplate()" class="text-xs px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50 rounded-full transition-colors flex items-center shadow-sm">
-                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                              <h3 class="font-bold text-indigo-800 dark:text-indigo-400 flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
                                   </svg>
-                                  載入 AI 標準範本
+                                  快速範本
+                              </h3>
+                              <button (click)="loadAllTemplates()"
+                                      class="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-colors flex items-center shadow-sm">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                  一鍵全部載入
                               </button>
                           </div>
-                          
-                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                              <input type="text" [(ngModel)]="newDocName" placeholder="文件標題 (例如：公司請假規定)" class="border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                              <div class="relative">
-                                  <input type="file" (change)="onFileUpload($event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                  <div class="border border-slate-300 dark:border-slate-600 border-dashed rounded px-3 py-2 text-sm text-slate-500 dark:text-slate-400 text-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                      或是上傳文字檔 (.txt, .md, .csv)...
+                          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              @for (t of templates; track t.id) {
+                                  <button (click)="loadTemplate(t)"
+                                          class="text-left p-3 rounded-lg border transition-all hover:shadow-md"
+                                          [class]="t.isInternal
+                                            ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/20'
+                                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'">
+                                      <div class="flex items-center mb-1">
+                                          <span class="font-medium text-sm text-slate-800 dark:text-slate-200 truncate">{{ t.name }}</span>
+                                          @if (t.isInternal) {
+                                              <span class="ml-1.5 flex-shrink-0 px-1.5 py-0.5 text-[10px] font-bold rounded bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">內部</span>
+                                          }
+                                      </div>
+                                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ t.description }}</p>
+                                  </button>
+                              }
+                          </div>
+                      </div>
+
+                      <!-- 新增知識文件 -->
+                      <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3">新增知識文件</h3>
+
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                              <input type="text" [(ngModel)]="newDocName" placeholder="文件標題" class="border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                              <div class="flex gap-2">
+                                  <div class="relative flex-1">
+                                      <input type="file" (change)="onFileUpload($event)" accept=".txt,.md,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                      <div class="border border-slate-300 dark:border-slate-600 border-dashed rounded px-3 py-2 text-sm text-slate-500 dark:text-slate-400 text-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                          上傳文字檔
+                                      </div>
                                   </div>
+                                  <!-- 僅限內部切換 -->
+                                  <button (click)="newDocIsInternal.set(!newDocIsInternal())"
+                                          class="px-3 py-2 rounded text-sm font-medium border transition-all flex items-center whitespace-nowrap"
+                                          [class]="newDocIsInternal()
+                                            ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
+                                            : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'">
+                                      @if (newDocIsInternal()) {
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+                                          僅限內部
+                                      } @else {
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                                          公開
+                                      }
+                                  </button>
                               </div>
                           </div>
-                          <textarea [(ngModel)]="newDocContent" placeholder="在此貼上文件內容，建議使用 Markdown 格式..." rows="8" class="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm mb-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono leading-relaxed"></textarea>
-                          <button (click)="addKnowledgeDoc()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded text-sm font-medium transition-colors">
+
+                          <textarea [(ngModel)]="newDocContent" placeholder="在此貼上文件內容，建議使用 Markdown 格式..." rows="6" class="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm mb-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono leading-relaxed"></textarea>
+                          <button (click)="addKnowledgeDoc()"
+                                  [disabled]="!newDocContent()"
+                                  class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 disabled:dark:bg-slate-600 text-white py-2 rounded text-sm font-medium transition-colors disabled:cursor-not-allowed">
                               加入知識庫
                           </button>
                       </div>
 
-                      <!-- List -->
+                      <!-- 文件列表 -->
                       <div>
-                          <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3">目前生效的文件 ({{ knowledgeDocs().length }})</h3>
+                          <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3">
+                            目前生效的文件 ({{ knowledgeDocs().length }})
+                            @if (knowledgeDocs().length > 0) {
+                              <span class="text-xs font-normal text-slate-400 ml-2">點擊標記可切換內部/公開</span>
+                            }
+                          </h3>
                           <div class="space-y-2">
                               @for (doc of knowledgeDocs(); track doc.id) {
-                                  <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm hover:shadow transition-shadow group">
-                                      <div class="flex items-center overflow-hidden">
-                                          <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0">
-                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                  <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border rounded shadow-sm hover:shadow transition-shadow group"
+                                       [class]="doc.isInternal
+                                         ? 'border-red-200 dark:border-red-800/50'
+                                         : 'border-slate-200 dark:border-slate-700'">
+                                      <div class="flex items-center overflow-hidden flex-1">
+                                          <!-- 圖示 -->
+                                          <div class="p-2 rounded mr-3 flex-shrink-0"
+                                               [class]="doc.isInternal
+                                                 ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                 : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'">
+                                              @if (doc.isInternal) {
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+                                              } @else {
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                              }
                                           </div>
-                                          <div class="truncate">
-                                              <p class="font-medium text-slate-800 dark:text-slate-200 truncate">{{ doc.name }}</p>
-                                              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ doc.content.substring(0, 50) }}...</p>
+                                          <!-- 名稱與預覽 -->
+                                          <div class="truncate flex-1 min-w-0">
+                                              <div class="flex items-center">
+                                                  <p class="font-medium text-slate-800 dark:text-slate-200 truncate">{{ doc.name }}</p>
+                                              </div>
+                                              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ doc.content.substring(0, 60) }}...</p>
                                           </div>
                                       </div>
-                                      <button (click)="removeDoc(doc.id)" class="text-slate-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all">
-                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                      </button>
+
+                                      <!-- 操作按鈕 -->
+                                      <div class="flex items-center space-x-2 ml-3 flex-shrink-0">
+                                          <!-- 內部/公開切換徽章 -->
+                                          <button (click)="toggleDocInternal(doc.id)"
+                                                  class="px-2 py-1 rounded text-xs font-bold transition-all"
+                                                  [class]="doc.isInternal
+                                                    ? 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 hover:bg-red-300 dark:hover:bg-red-700'
+                                                    : 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 hover:bg-green-300 dark:hover:bg-green-700'"
+                                                  [title]="doc.isInternal ? '點擊切換為公開' : '點擊切換為僅限內部'">
+                                              {{ doc.isInternal ? '內部' : '公開' }}
+                                          </button>
+                                          <!-- 刪除 -->
+                                          <button (click)="removeDoc(doc.id)" class="text-slate-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all">
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                          </button>
+                                      </div>
                                   </div>
                               } @empty {
                                   <div class="text-center py-8 text-slate-400 dark:text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
-                                      尚無知識文件，請從上方新增。
+                                      <p class="mb-2">尚無知識文件</p>
+                                      <p class="text-xs">使用上方「快速範本」一鍵載入推薦內容，或手動新增。</p>
                                   </div>
                               }
                           </div>
@@ -167,13 +267,39 @@
           </div>
       </div>
 
-      <!-- Right Test Panel -->
+      <!-- ====== 右側測試面板 ====== -->
       <div class="w-full lg:w-96 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-          <div class="p-4 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 flex justify-between items-center">
-              <span>即時測試 (Playground)</span>
-              <span class="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">Gemini 2.5</span>
+          <!-- 標題列 + 角色切換 -->
+          <div class="p-4 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+              <div class="flex justify-between items-center mb-3">
+                  <span class="font-bold text-slate-700 dark:text-slate-300">即時測試</span>
+                  <span class="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full">Groq / Llama</span>
+              </div>
+              <!-- 角色切換 -->
+              <div class="flex rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
+                  <button (click)="setTestRole('internal')"
+                          class="flex-1 py-1.5 text-xs font-medium transition-colors"
+                          [class]="testRole() === 'internal'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+                      內部特助
+                  </button>
+                  <button (click)="setTestRole('external')"
+                          class="flex-1 py-1.5 text-xs font-medium transition-colors border-l border-slate-300 dark:border-slate-600"
+                          [class]="testRole() === 'external'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+                      外部客服
+                  </button>
+              </div>
+              @if (testRole() === 'external') {
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 text-center">
+                  外部模式：標記為「僅限內部」的知識文件將被過濾，成本/供應商數據隱藏
+                </p>
+              }
           </div>
-          
+
+          <!-- 對話區域 -->
           <div class="flex-1 p-4 overflow-y-auto bg-slate-50 dark:bg-slate-900/30">
               @if (testResponse()) {
                   <div class="flex flex-col space-y-2 mb-4">
@@ -181,25 +307,29 @@
                           {{ testMessage() }}
                       </div>
                       <div class="self-start bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 px-3 py-2 rounded-lg rounded-bl-none text-sm shadow-sm max-w-[95%]">
-                          <div [innerHTML]="testResponse()"></div>
+                          <div class="whitespace-pre-wrap">{{ testResponse() }}</div>
                       </div>
                   </div>
               } @else {
                   <div class="h-full flex items-center justify-center text-slate-400 text-sm text-center px-4">
-                      <p>修改左側設定後，可在此直接測試 AI 的反應。</p>
+                      <div>
+                        <p class="mb-2">修改設定後，在此測試 AI 回應。</p>
+                        <p class="text-xs">切換「內部/外部」角色，驗證知識過濾是否正確。</p>
+                      </div>
                   </div>
               }
           </div>
 
+          <!-- 輸入區 -->
           <div class="p-3 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <div class="relative">
-                  <textarea 
-                      [(ngModel)]="testMessage" 
-                      placeholder="輸入測試訊息..." 
+                  <textarea
+                      [(ngModel)]="testMessage"
+                      placeholder="輸入測試訊息..."
                       rows="2"
                       (keydown.enter.prevent)="runTest()"
                       class="w-full pr-10 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"></textarea>
-                  <button 
+                  <button
                       (click)="runTest()"
                       [disabled]="isTesting()"
                       class="absolute right-2 bottom-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 disabled:text-slate-300">

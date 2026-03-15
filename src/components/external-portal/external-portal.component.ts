@@ -3,7 +3,7 @@ import { Component, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
-import { EdgeAiService } from '../../services/edge-ai.service';
+import { AiService } from '../../services/ai.service';
 import { Product } from '../../models/erp.models';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -23,11 +23,9 @@ import { MatIconModule } from '@angular/material/icon';
             <h1 class="text-xl font-bold text-slate-800 dark:text-white hidden sm:block">
               客戶專屬入口
             </h1>
-            @if (edgeAi.isAvailable()) {
-              <span class="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] font-bold tracking-wider uppercase shadow-sm">
+            <span class="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] font-bold tracking-wider uppercase shadow-sm">
                 AI Enhanced
               </span>
-            }
           </div>
 
           <div class="flex items-center gap-4">
@@ -185,7 +183,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class ExternalPortalComponent {
   dataService = inject(DataService);
-  edgeAi = inject(EdgeAiService);
+  private aiService = inject(AiService);
   
   // State
   searchQuery = signal('');
@@ -243,34 +241,25 @@ export class ExternalPortalComponent {
         };
       });
 
-    // Trigger AI summarization for visible products without summaries
-    if (this.edgeAi.isAvailable()) {
-      products.forEach(p => {
-        if (!this.aiSummaries.has(p.id)) {
-          this.edgeAi.summarizeProduct(p.name, p.notes || '').then(summary => {
-            if (summary) {
-              this.aiSummaries.set(p.id, summary);
-              // Note: This won't trigger a re-render of computed immediately 
-              // but will be available on next cycle or manual trigger.
-              // In a real app, we might use a signal-based cache.
-            }
-          });
-        }
-      });
-    }
+    // 使用 AiService 為商品產生簡短摘要
+    products.forEach(p => {
+      if (!this.aiSummaries.has(p.id)) {
+        this.aiService.sendMessage(
+          `請用一句話（30字以內）為客戶描述這個商品的特色：${p.name}${p.notes ? '，備註：' + p.notes : ''}`
+        ).then(summary => {
+          if (summary) {
+            this.aiSummaries.set(p.id, summary);
+          }
+        }).catch(() => { /* 靜默處理 AI 摘要失敗 */ });
+      }
+    });
 
     return products;
   });
 
   constructor() {
-    // Effect to trigger AI summarization if available
-    effect(() => {
-      if (this.edgeAi.isAvailable()) {
-        // In a real app, we would batch this or do it on hover to save resources
-        // For demo, we just log capability
-        console.log('Edge AI is ready to summarize products');
-      }
-    });
+    // AI 摘要功能已整合至 filteredProducts computed 中
+    // 使用 AiService（Groq/Llama）替代原本的 Edge AI
   }
 
   toggleVoiceSearch() {
