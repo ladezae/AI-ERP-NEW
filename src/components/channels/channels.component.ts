@@ -44,6 +44,28 @@ export class ChannelsComponent implements OnInit {
     (localStorage.getItem('channelPriceAdjustMode') as PriceAdjustMode) || 'fixed';
   priceAdjustValue: number = 0;
 
+  /** 最後一次成功執行的調價規則（localStorage 持久化） */
+  lastPriceRule: { mode: PriceAdjustMode; value: number; executedAt: string } | null =
+    (() => {
+      try {
+        const raw = localStorage.getItem('channelLastPriceRule');
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    })();
+
+  /** 將最後一次調價規則格式化為易讀文字，例如「未稅進價 + NT$50」 */
+  get lastPriceRuleLabel(): string {
+    if (!this.lastPriceRule) return '';
+    const { mode, value } = this.lastPriceRule;
+    if (mode === 'fixed') {
+      const sign = value >= 0 ? '+' : '−';
+      return `未稅進價 ${sign} NT$${Math.abs(value)}`;
+    } else {
+      const sign = value >= 0 ? '+' : '−';
+      return `未稅進價 × (1 ${sign} ${Math.abs(value)}%)，四捨五入至十位`;
+    }
+  }
+
   /** 切換調價模式時，將選擇記錄到 localStorage */
   savePriceAdjustMode() {
     localStorage.setItem('channelPriceAdjustMode', this.priceAdjustMode);
@@ -79,6 +101,13 @@ export class ChannelsComponent implements OnInit {
         await updateDoc(ref, { price: newPrice });
         cp.price = newPrice;
       }
+      // 儲存本次執行的調價規則，供下次開啟時顯示追蹤
+      this.lastPriceRule = {
+        mode: this.priceAdjustMode,
+        value: this.priceAdjustValue,
+        executedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('channelLastPriceRule', JSON.stringify(this.lastPriceRule));
     } finally {
       this.priceAdjusting = false;
       this.cdr.markForCheck();

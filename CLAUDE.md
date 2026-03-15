@@ -140,6 +140,18 @@ products, orders, shippingOrders, purchaseOrders, customers, suppliers, employee
 - 通路商品編輯 Modal 升級：支援圖片上傳、價格參考、所有 checkbox 欄位
 - `Channel` model 新增 `adminUrl?: string`（後台管理網址）
 - 通路設定 tab 新增可內嵌編輯的「前台網址」與「後台管理網址」，填入後顯示為可點擊超連結
+- ERP 商品主表格欄位調整：
+  - 新增獨立「售價」欄，移至「建議售價」正後方，黃色顯示（`text-amber-600`）
+  - 建議售價改為灰色顯示（`text-slate-400`），降低視覺重心
+  - 欄位順序：重點 / 名稱 / 分類 / 供應商 / 未稅進價 / **建議售價（灰）** / **售價（黃）** / 控管 / 銷售 / 通路狀態+操作
+  - 各欄可拖曳調整寬度（`appResizable`）
+- 供應商顯示改為「代碼 + 簡稱」合併格式
+- 通路商品 ERP 控制欄位（分類/單位/產地/保存期限/加糖/應計算/服務狀態）改為唯讀，Lock 圖示標示，從 Firestore 寫入中排除
+- 批次調整通路售價：
+  - 套用後自動儲存調價規則至 `localStorage`（`channelLastPriceRule`）
+  - 面板右上角顯示「上次執行規則」徽章，例如「未稅進價 + NT$50」或「未稅進價 × (1 + 20%)，四捨五入至十位」
+  - 顯示上次執行時間，重新整理頁面不消失
+  - `lastPriceRule` 屬性 + `lastPriceRuleLabel` getter 於 channels.component.ts
 
 ### ERP 商品管理 (products.component)
 - 商品表格新增分頁功能（預設 10 筆/頁）
