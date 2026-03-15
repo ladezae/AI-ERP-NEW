@@ -613,6 +613,9 @@ export class ChannelsComponent implements OnInit {
     this.savingEdit = true;
     try {
       const ref = doc(db, this.selectedChannel.productCollection, this.editingProduct.id);
+      // 僅寫入通路可自訂的欄位
+      // 以下由 ERP 主檔控制，不可由通路端覆蓋：
+      //   category, unit, origin, shelfLife, sugar, isCalculable, serviceStatus
       const updates: Partial<ChannelProduct> = {
         name: this.editForm.name.trim(),
         price: this.editForm.price,
@@ -621,13 +624,6 @@ export class ChannelsComponent implements OnInit {
         description: this.editForm.description.trim(),
         imageUrl: this.editForm.imageUrl,
         nutritionLabelUrl: this.editForm.nutritionLabelUrl,
-        category: this.editForm.category,
-        unit: this.editForm.unit,
-        origin: this.editForm.origin,
-        sugar: this.editForm.sugar,
-        shelfLife: this.editForm.shelfLife,
-        // serviceStatus 由 ERP 同步控制，通路端不可寫入
-        isCalculable: this.editForm.isCalculable,
         keyProduct: this.editForm.keyProduct as any,
       };
       await updateDoc(ref, updates as any);

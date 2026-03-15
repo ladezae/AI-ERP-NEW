@@ -1477,21 +1477,21 @@
               class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
               placeholder="消費者看到的商品名稱" />
           </div>
-          <!-- 分類 -->
+          <!-- 分類（唯讀，來自 ERP） -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">分類</label>
-            <select [(ngModel)]="editForm.category"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-              @for (c of editCategories; track c) { <option [value]="c">{{ c }}</option> }
-            </select>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">分類 <span class="ml-1 text-xs font-normal text-slate-400">（ERP 控制）</span></label>
+            <div class="w-full rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 cursor-not-allowed flex items-center justify-between">
+              {{ editingProduct.category || '—' }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-300 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
           </div>
-          <!-- 單位 -->
+          <!-- 單位（唯讀，來自 ERP） -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">單位</label>
-            <select [(ngModel)]="editForm.unit"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-              @for (u of editUnits; track u) { <option [value]="u">{{ u }}</option> }
-            </select>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">單位 <span class="ml-1 text-xs font-normal text-slate-400">（ERP 控制）</span></label>
+            <div class="w-full rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 cursor-not-allowed flex items-center justify-between">
+              {{ editingProduct.unit || '—' }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-300 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
           </div>
           <!-- 重點分級 -->
           <div>
@@ -1635,23 +1635,23 @@
           </div>
         </div>
 
-        <!-- ── 7. 商品規格 ── -->
+        <!-- ── 7. 商品規格（唯讀，來自 ERP） ── -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <!-- 產地 -->
           <div>
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">產地</label>
-            <select [(ngModel)]="editForm.origin"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
-              <option value="">— 未設定 —</option>
-              @for (o of editOrigins; track o) { <option [value]="o">{{ o }}</option> }
-            </select>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">產地 <span class="text-slate-300">（ERP）</span></label>
+            <div class="w-full rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 cursor-not-allowed flex items-center justify-between">
+              {{ editingProduct.origin || '—' }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-300 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
           </div>
           <!-- 保存期限 -->
           <div class="sm:col-span-2">
-            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">保存期限</label>
-            <input type="text" [(ngModel)]="editForm.shelfLife"
-              class="w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-              placeholder="例：12個月" />
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">保存期限 <span class="text-slate-300">（ERP）</span></label>
+            <div class="w-full rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 cursor-not-allowed flex items-center justify-between">
+              {{ editingProduct.shelfLife || '—' }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-300 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
           </div>
         </div>
 
@@ -1673,18 +1673,19 @@
           </div>
         </div>
 
-        <!-- ── 9. 旗標 Checkboxes ── -->
-        <div class="flex flex-wrap gap-6 pt-2 border-t border-slate-200 dark:border-slate-700">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="editForm.sugar"
-              class="rounded border-slate-300 text-amber-500 focus:ring-amber-500" />
-            <span class="text-sm text-slate-700 dark:text-slate-300">有糖</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="editForm.isCalculable"
-              class="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" />
-            <span class="text-sm text-slate-700 dark:text-slate-300">應計算商品</span>
-          </label>
+        <!-- ── 9. 旗標（唯讀，來自 ERP） ── -->
+        <div class="flex flex-wrap gap-4 pt-2 border-t border-slate-200 dark:border-slate-700 items-center">
+          <span class="text-xs text-slate-400">ERP 屬性（不可編輯）：</span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
+            [class]="editingProduct.sugar ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-400'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {{ editingProduct.sugar ? '有糖' : '無糖' }}
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
+            [class]="editingProduct.isCalculable !== false ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-400'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {{ editingProduct.isCalculable !== false ? '應計算商品' : '非計算商品' }}
+          </span>
         </div>
 
       </div>
