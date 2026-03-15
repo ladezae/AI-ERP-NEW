@@ -87,6 +87,7 @@ export class OrdersComponent implements OnDestroy {
   // List View State
   searchTerm = signal('');
   expandedOrderNotes = signal<Set<string>>(new Set()); // Track expanded notes in list view
+  isVisualMode = signal(false); // 圖表模式開關（目前停用，保留 template 相容）
   
   // Sorting Signals
   sortColumn = signal<string>('orderId');
