@@ -10,6 +10,7 @@ import {
   ChannelTask, ChannelTaskStatus, ChannelTaskPriority
 } from '../../models/erp.models';
 import { ImageService } from '../../services/image.service';
+import { ResizableDirective } from '../../directives/resizable.directive';
 
 type ChannelView = 'overview' | 'products' | 'orders' | 'settings' | 'tasks';
 type TopView = 'channels' | 'codes';
@@ -19,7 +20,7 @@ type PriceAdjustMode = 'fixed' | 'percent';
   selector: 'app-channels',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ResizableDirective],
   templateUrl: './channels.component.html',
 })
 export class ChannelsComponent implements OnInit {

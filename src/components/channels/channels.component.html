@@ -763,35 +763,44 @@
                   <!-- 圖 -->
                   <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase w-10">圖</th>
                   <!-- 品名 -->
-                  <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                  <th appResizable tableId="channel-products" colId="name" [minWidth]="120"
+                    class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
                     (click)="toggleCpSort('name')">
                     品名 / 簡介
                     @if (cpSortField === 'name') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
                   </th>
                   <!-- 分類 -->
-                  <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                  <th appResizable tableId="channel-products" colId="category" [minWidth]="60"
+                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
                     (click)="toggleCpSort('category')">
                     分類
                     @if (cpSortField === 'category') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
                   </th>
                   <!-- 產地 -->
-                  <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">產地</th>
+                  <th appResizable tableId="channel-products" colId="origin" [minWidth]="50"
+                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">產地</th>
                   <!-- 單位 -->
-                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">單位</th>
+                  <th appResizable tableId="channel-products" colId="unit" [minWidth]="40"
+                    class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">單位</th>
                   <!-- ERP進價 -->
-                  <th class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">ERP進價</th>
+                  <th appResizable tableId="channel-products" colId="erpPrice" [minWidth]="60"
+                    class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">ERP進價</th>
                   <!-- 通路售價 -->
-                  <th class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                  <th appResizable tableId="channel-products" colId="price" [minWidth]="60"
+                    class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
                     (click)="toggleCpSort('price')">
                     通路售價
                     @if (cpSortField === 'price') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
                   </th>
                   <!-- 狀態 -->
-                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">狀態</th>
+                  <th appResizable tableId="channel-products" colId="status" [minWidth]="50"
+                    class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">狀態</th>
                   <!-- 備料 -->
-                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">備料</th>
+                  <th appResizable tableId="channel-products" colId="stock" [minWidth]="50"
+                    class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">備料</th>
                   <!-- 上架 -->
-                  <th class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
+                  <th appResizable tableId="channel-products" colId="visible" [minWidth]="50"
+                    class="px-3 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase cursor-pointer select-none hover:text-sky-600"
                     (click)="toggleCpSort('visible')">
                     上架
                     @if (cpSortField === 'visible') { <span class="ml-0.5">{{ cpSortAsc ? '↑' : '↓' }}</span> }
