@@ -87,6 +87,36 @@ export class ContentGeneratorComponent implements OnInit {
     return parts.join(' ／ ');
   });
 
+  /** Prompt 預覽：圖片加工（依各欄位設定彙整） */
+  imagePromptPreview = computed(() => {
+    const fields = this.imageFields();
+    const lines: string[] = [];
+    for (const fd of this.imageFieldDefs) {
+      const f = fields[fd.key];
+      if (!f.enabled) continue;
+      const ops: string[] = ['resize 1:1 (1000×1000)'];
+      if (f.removeBg) ops.push('去背');
+      if (f.addBg) ops.push(`去背 + 加背景「${f.bgPrompt || '(未填)'}」`);
+      if (f.purePrompt) ops.push(`純提示詞「${f.purePromptText || '(未填)'}」`);
+      if (f.watermark) ops.push(`浮水印「${this.watermarkText()}」→ ${this.positionLabels[this.watermarkPosition()]}`);
+      if (f.logo) ops.push(`LOGO ${this.logoSize()}px → ${this.positionLabels[this.logoPosition()]}`);
+      lines.push(`【${fd.label}】${ops.join(' → ')}`);
+    }
+    return lines.length ? lines : ['（未啟用任何圖片欄位）'];
+  });
+
+  /** Prompt 預覽：文案生成（模擬送出的 prompt） */
+  copyPromptPreview = computed(() => {
+    const txtFields = this.textFields();
+    const lines: string[] = [];
+    for (const fd of this.textFieldDefs) {
+      const f = txtFields[fd.key];
+      if (!f.enabled) continue;
+      lines.push(`【${fd.label}】${f.charLimit} 字以內 · 禁療效用語 · Ollama qwen2.5:7b`);
+    }
+    return lines.length ? lines : ['（未啟用任何文案欄位）'];
+  });
+
   // ─── 文案相關 ───
   /** 商品名稱 */
   productName = signal('');
@@ -106,10 +136,19 @@ export class ContentGeneratorComponent implements OnInit {
   channelProducts = signal<ChannelProduct[]>([]);
   /** 選定的通路商品（__ALL__ = 全部商品） */
   selectedProductId = signal<string>('__ALL__');
-  /** 圖片欄位設定（各自帶浮水印/LOGO 子選項） */
-  imageFields = signal<Record<string, { enabled: boolean; watermark: boolean; logo: boolean }>>({
-    imageUrl: { enabled: true, watermark: false, logo: false },
-    images:   { enabled: false, watermark: false, logo: false }
+  /** 圖片欄位設定（主圖禁止任何加工；附加圖支援浮水印/LOGO/去背/加背景/純提示詞） */
+  imageFields = signal<Record<string, {
+    enabled: boolean;
+    watermark: boolean;
+    logo: boolean;
+    removeBg: boolean;        // 去背
+    addBg: boolean;           // 去背 + 加上 AI 背景
+    bgPrompt: string;         // 背景提示詞（addBg 用）
+    purePrompt: boolean;      // 純提示詞（不需原圖，AI 生成）
+    purePromptText: string;   // 純提示詞文字
+  }>>({
+    imageUrl: { enabled: true, watermark: false, logo: false, removeBg: false, addBg: false, bgPrompt: '', purePrompt: false, purePromptText: '' },
+    images:   { enabled: false, watermark: false, logo: false, removeBg: false, addBg: false, bgPrompt: '', purePrompt: false, purePromptText: '' }
   });
   /** 文案欄位設定（各自帶字數選擇） */
   textFields = signal<Record<string, { enabled: boolean; charLimit: number }>>({
@@ -359,10 +398,34 @@ export class ContentGeneratorComponent implements OnInit {
       ...prev, [key]: { ...prev[key], enabled: !prev[key].enabled }
     }));
   }
-  /** 切換圖片欄位子選項（watermark / logo） */
-  toggleImageFieldOption(key: string, option: 'watermark' | 'logo'): void {
+  /** 切換圖片欄位子選項（watermark / logo / removeBg / addBg / purePrompt） */
+  toggleImageFieldOption(key: string, option: 'watermark' | 'logo' | 'removeBg' | 'addBg' | 'purePrompt'): void {
+    this.imageFields.update(prev => {
+      const field = { ...prev[key], [option]: !prev[key][option] };
+      // 互斥：去背/加背景/純提示詞三擇一
+      if (option === 'removeBg' && field.removeBg) {
+        field.addBg = false;
+        field.purePrompt = false;
+      } else if (option === 'addBg' && field.addBg) {
+        field.removeBg = false;
+        field.purePrompt = false;
+      } else if (option === 'purePrompt' && field.purePrompt) {
+        field.removeBg = false;
+        field.addBg = false;
+      }
+      return { ...prev, [key]: field };
+    });
+  }
+  /** 設定背景提示詞 */
+  setImageFieldBgPrompt(key: string, prompt: string): void {
     this.imageFields.update(prev => ({
-      ...prev, [key]: { ...prev[key], [option]: !prev[key][option] }
+      ...prev, [key]: { ...prev[key], bgPrompt: prompt }
+    }));
+  }
+  /** 設定純提示詞文字 */
+  setImageFieldPurePrompt(key: string, text: string): void {
+    this.imageFields.update(prev => ({
+      ...prev, [key]: { ...prev[key], purePromptText: text }
     }));
   }
   /** 切換文案欄位啟用 */
@@ -484,8 +547,9 @@ export class ContentGeneratorComponent implements OnInit {
 
       for (const key of enabledKeys) {
         const setting = fields[key];
-        // 依該欄位的浮水印/LOGO 設定產生對應圖片
-        const image = await this.buildImage(imgSrc, setting.watermark, setting.logo);
+        let image: string;
+        // 主圖與附加圖都走完整加工流程
+        image = await this.buildImageAdvanced(imgSrc, setting);
         if (key === 'imageUrl') {
           updateData['imageUrl'] = image;
         } else {
@@ -561,6 +625,75 @@ export class ContentGeneratorComponent implements OnInit {
     }
 
     return canvas.toDataURL('image/jpeg', 0.9);
+  }
+
+  /**
+   * 進階圖片加工（附加圖專用）
+   * 支援：去背 → 加背景 → 純提示詞 → 浮水印 → LOGO
+   */
+  private async buildImageAdvanced(src: string, setting: {
+    watermark: boolean; logo: boolean;
+    removeBg: boolean; addBg: boolean; bgPrompt: string;
+    purePrompt: boolean; purePromptText: string;
+  }): Promise<string> {
+    let imgSrc = src;
+
+    // 純提示詞模式：完全不用原圖，由 AI 生成
+    if (setting.purePrompt && setting.purePromptText.trim()) {
+      imgSrc = await this.callGenerateImage(setting.purePromptText.trim());
+    }
+    // 去背 + 加背景：先去背再用提示詞生成背景
+    else if (setting.addBg) {
+      const noBgSrc = await this.callRemoveBg(imgSrc);
+      if (setting.bgPrompt.trim()) {
+        imgSrc = await this.callAddBackground(noBgSrc, setting.bgPrompt.trim());
+      } else {
+        imgSrc = noBgSrc;
+      }
+    }
+    // 純去背
+    else if (setting.removeBg) {
+      imgSrc = await this.callRemoveBg(imgSrc);
+    }
+
+    // 最後做 resize + 浮水印 + LOGO
+    return this.buildImage(imgSrc, setting.watermark, setting.logo);
+  }
+
+  /** 呼叫 server 去背 API */
+  private async callRemoveBg(dataUrl: string): Promise<string> {
+    const res = await fetch('/api/image/remove-bg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl })
+    });
+    if (!res.ok) throw new Error(`去背失敗: ${res.statusText}`);
+    const data = await res.json();
+    return data.image;
+  }
+
+  /** 呼叫 server 去背 + 加背景 API */
+  private async callAddBackground(dataUrl: string, prompt: string): Promise<string> {
+    const res = await fetch('/api/image/add-background', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl, prompt })
+    });
+    if (!res.ok) throw new Error(`加背景失敗: ${res.statusText}`);
+    const data = await res.json();
+    return data.image;
+  }
+
+  /** 呼叫 server 純提示詞生成圖片 API */
+  private async callGenerateImage(prompt: string): Promise<string> {
+    const res = await fetch('/api/image/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    if (!res.ok) throw new Error(`圖片生成失敗: ${res.statusText}`);
+    const data = await res.json();
+    return data.image;
   }
 
   /** 上傳文案到通路商品（依各欄位設定決定字數與寫入） */
@@ -750,7 +883,15 @@ export class ContentGeneratorComponent implements OnInit {
     });
   }
 
-  /** 開始批次圖片 */
+  /** 從 server 讀取指定商品的資料夾圖片 */
+  private async fetchProductImages(channelName: string, productName: string): Promise<{ filename: string; dataUrl: string }[]> {
+    const safeName = productName.replace(/[<>:"/\\|?*]/g, '_').trim();
+    const res = await fetch(`/api/product-images/${encodeURIComponent(channelName)}/${encodeURIComponent(safeName)}`);
+    const data = await res.json();
+    return data.images || [];
+  }
+
+  /** 開始批次圖片（從 D:\AI_Products 資料夾讀取各商品圖片） */
   async startBatchImages(): Promise<void> {
     const channel = this.selectedChannel();
     if (!channel) { alert('請先選擇通路'); return; }
@@ -769,6 +910,8 @@ export class ContentGeneratorComponent implements OnInit {
     this.batchTotal.set(pending.length);
     this.batchLog.set([`開始批次圖片 (${pending.length} 個待處理)`]);
 
+    const fields = this.imageFields();
+
     for (let i = 0; i < pending.length; i++) {
       // 檢查暫停
       if (this.batchPaused()) {
@@ -782,23 +925,48 @@ export class ContentGeneratorComponent implements OnInit {
       this.addLog(`[${i + 1}/${pending.length}] 處理圖片：${cp.name}`);
 
       try {
-        // 這裡需要圖片來源 — 批次模式下從 Skill 資料夾讀取
-        // 目前先用已上傳的 originalImage 做示範
-        const imgSrc = this.originalImage();
-        if (!imgSrc) {
-          this.addLog(`⚠ ${cp.name}：未上傳圖片，跳過`);
+        // 從本機資料夾讀取圖片
+        const folderImages = await this.fetchProductImages(channel.name, cp.name);
+        if (!folderImages.length) {
+          this.addLog(`⚠ ${cp.name}：資料夾無圖片，跳過`);
+          this.batchProcessed.set(i + 1);
           continue;
         }
 
         const ref = doc(db, channel.productCollection, cp.id);
         const updateData: Record<string, any> = {};
-        const fields = this.imageFields();
 
+        // 主圖：取第一張，走完整加工流程
         if (fields['imageUrl'].enabled && !cp.imageUrl) {
-          updateData['imageUrl'] = await this.buildImage(imgSrc, fields['imageUrl'].watermark, fields['imageUrl'].logo);
+          const imgSetting = fields['imageUrl'];
+          if (imgSetting.purePrompt && imgSetting.purePromptText.trim()) {
+            updateData['imageUrl'] = await this.buildImageAdvanced('', imgSetting);
+            this.addLog(`  → 主圖：AI 純提示詞生成`);
+          } else {
+            updateData['imageUrl'] = await this.buildImageAdvanced(folderImages[0].dataUrl, imgSetting);
+            const mode = imgSetting.removeBg ? '(去背)' : imgSetting.addBg ? '(去背+加背景)' : '';
+            this.addLog(`  → 主圖：${folderImages[0].filename} ${mode}`);
+          }
         }
+
+        // 附加圖：主圖用第一張，附加圖用剩餘的（若只有一張則也用第一張）
         if (fields['images'].enabled && (!cp.images || cp.images.length === 0)) {
-          updateData['images'] = [await this.buildImage(imgSrc, fields['images'].watermark, fields['images'].logo)];
+          const imgSetting = fields['images'];
+          // 純提示詞模式：不需要資料夾圖片
+          if (imgSetting.purePrompt && imgSetting.purePromptText.trim()) {
+            const generated = await this.buildImageAdvanced('', imgSetting);
+            updateData['images'] = [generated];
+            this.addLog(`  → 附加圖：AI 純提示詞生成 1 張`);
+          } else {
+            const extraImages = folderImages.length > 1 ? folderImages.slice(1) : folderImages;
+            const processed: string[] = [];
+            for (const img of extraImages) {
+              processed.push(await this.buildImageAdvanced(img.dataUrl, imgSetting));
+            }
+            updateData['images'] = processed;
+            const mode = imgSetting.removeBg ? '(去背)' : imgSetting.addBg ? '(去背+加背景)' : '';
+            this.addLog(`  → 附加圖：${extraImages.length} 張 ${mode}`);
+          }
         }
 
         if (Object.keys(updateData).length) {

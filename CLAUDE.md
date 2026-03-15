@@ -144,3 +144,29 @@ products, orders, shippingOrders, purchaseOrders, customers, suppliers, employee
 ### App 層級修正 (app.component)
 - 修正登入後頁面自動捲動至底部的問題（iOS Safari keyboard dismiss scroll 殘留）
   → 偵測 currentUser 切換時，在下一個 tick 重設所有捲動容器位置
+
+## 本地 AI 工作站（免費方案）
+
+### 硬體環境
+- GPU: RTX 3060 Ti (8GB VRAM)
+- RAM: 16GB
+- OS: Windows
+- 顯存管理原則：8GB VRAM 一次只能跑一個任務，先文案 → 釋放顯存 → 再修圖
+
+### 免費 AI 工具鏈
+
+| 工具 | 用途 | 備註 |
+|---|---|---|
+| **Ollama** | 本地 LLM 執行引擎 | ollama.com，免費開源 |
+| **Qwen2.5:7b** | 電商文案（標題/貼文/商品描述） | `ollama pull qwen2.5:7b`，約 4.7GB，中文優秀 |
+| **Page Assist** | 瀏覽器 AI 對話介面 | Chrome 插件，連接 `localhost:11434`，已設定一吉品牌 Prompt |
+| **Fooocus 2.5.5** | AI 圖片生成/修改（去背/換背景/局部重繪） | `D:\AI_Tools\Fooocus`，內建 SDXL 模型，開 `127.0.0.1:7865` |
+
+### 自動化腳本（放桌面）
+- **`啟動Fooocus.bat`** → 一鍵啟動修圖工具
+- **`AI工作流切換.bat`** → 選單式管理（1.文案 / 2.修圖 / 3.查顯存 / 4.全部關閉）
+
+### 安裝注意事項
+- Fooocus 使用 Python 3.12 虛擬環境（`py -3.12`），因 PyTorch 不支援 3.14
+- Windows 繁體中文環境需設定 `$env:PYTHONUTF8=1` 或 `set PYTHONUTF8=1` 避免編碼錯誤
+- Ollama API: `http://localhost:11434`（可供 ERP 系統 ai.service.ts 串接）
