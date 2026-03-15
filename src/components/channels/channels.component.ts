@@ -294,16 +294,19 @@ export class ChannelsComponent implements OnInit {
     }
     // 觸發 Angular 髒檢查
     this.filterCategories = new Set(this.filterCategories);
+    this.erpPage = 1; // 分類改變時回到第一頁
   }
 
   /** 清除所有分類篩選（等同「全部分類」） */
   clearCategoryFilter() {
     this.filterCategories = new Set();
+    this.erpPage = 1;
   }
 
   /** 重設回預設 6 類 */
   resetCategoryFilter() {
     this.filterCategories = new Set(this.PRESET_CATEGORIES);
+    this.erpPage = 1;
   }
 
   get isAllCategorySelected(): boolean {
@@ -1039,7 +1042,6 @@ export class ChannelsComponent implements OnInit {
       return this.sortAsc ? cmp : -cmp;
     });
 
-    this.erpPage = 1; // 篩選條件改變時重設至第一頁
     return sorted;
   }
 
@@ -1050,6 +1052,7 @@ export class ChannelsComponent implements OnInit {
       this.sortField = field;
       this.sortAsc = true;
     }
+    this.erpPage = 1; // 排序改變時回到第一頁
   }
 
   get channelTypeLabel(): (types: ChannelType[]) => string {

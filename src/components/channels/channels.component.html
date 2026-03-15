@@ -344,20 +344,20 @@
           <div class="flex flex-wrap items-center gap-2">
             <!-- 關鍵字搜尋 -->
             <div class="relative min-w-[160px] max-w-xs flex-1">
-              <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋..."
+              <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="erpPage = 1" placeholder="搜尋..."
                 class="w-full pl-9 pr-8 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 text-sm" />
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
               @if (searchQuery) {
-                <button (click)="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                <button (click)="searchQuery = ''; erpPage = 1" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               }
             </div>
             <!-- 排序 -->
             <div class="flex items-center gap-1">
-              <select [(ngModel)]="sortField"
+              <select [(ngModel)]="sortField" (ngModelChange)="erpPage = 1"
                 class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
                 <option value="default">預設排序</option>
                 <option value="name">名稱</option>
@@ -365,14 +365,14 @@
                 <option value="price">未稅進價</option>
                 <option value="visible">上架狀態</option>
               </select>
-              <button (click)="sortAsc = !sortAsc"
+              <button (click)="sortAsc = !sortAsc; erpPage = 1"
                 class="p-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
                 [title]="sortAsc ? '升冪' : '降冪'">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" [class.rotate-180]="!sortAsc" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
               </button>
             </div>
             <!-- 供應商 -->
-            <select [(ngModel)]="filterSupplier"
+            <select [(ngModel)]="filterSupplier" (ngModelChange)="erpPage = 1"
               class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
               <option value="">全部供應商</option>
               @for (s of supplierOptions; track s.name) {
@@ -380,7 +380,7 @@
               }
             </select>
             <!-- 重點分級 -->
-            <select [(ngModel)]="filterKeyProduct"
+            <select [(ngModel)]="filterKeyProduct" (ngModelChange)="erpPage = 1"
               class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
               <option value="">重點：全部</option>
               <option value="A">⭐ A 級</option>
@@ -389,21 +389,21 @@
               <option value="none">未設定</option>
             </select>
             <!-- 控管 -->
-            <select [(ngModel)]="filterControl"
+            <select [(ngModel)]="filterControl" (ngModelChange)="erpPage = 1"
               class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
               <option value="">控管：全部</option>
               <option value="true">控貨中</option>
               <option value="false">正常</option>
             </select>
             <!-- 銷售狀態 -->
-            <select [(ngModel)]="filterSalesStatus"
+            <select [(ngModel)]="filterSalesStatus" (ngModelChange)="erpPage = 1"
               class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
               <option value="">全部</option>
               <option value="selling">銷售中</option>
               <option value="discontinued">停售</option>
             </select>
             <!-- 通路上架狀態 -->
-            <select [(ngModel)]="filterChannelVisible"
+            <select [(ngModel)]="filterChannelVisible" (ngModelChange)="erpPage = 1"
               class="py-1.5 pl-2 pr-7 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500">
               <option value="">上架：全部</option>
               <option value="visible">上架中</option>
