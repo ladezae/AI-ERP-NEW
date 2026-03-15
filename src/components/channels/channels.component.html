@@ -282,6 +282,11 @@
         [class]="activeView === 'settings' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
         ⚙️ 通路設定
       </button>
+      <button (click)="activeView = 'site_config'; loadSiteConfig()"
+        class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        [class]="activeView === 'site_config' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+        🌐 網站設定
+      </button>
       <button (click)="activeView = 'tasks'"
         class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px relative"
         [class]="activeView === 'tasks' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
@@ -1033,6 +1038,265 @@
           <div class="flex gap-3 mt-5">
             <button (click)="saveChannelUrls()" class="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors">💾 儲存</button>
             <button (click)="cancelEditChannelUrls()" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors">取消</button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════
+         網站設定 Tab
+    ═══════════════════════════════════════════════════════════ -->
+    @if (activeView === 'site_config') {
+      <div class="space-y-4">
+        <!-- 頂部儲存列 -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between sticky top-0 z-10">
+          <div>
+            <h3 class="font-semibold text-slate-800 dark:text-white">🌐 前台網站內容管理</h3>
+            <p class="text-xs text-slate-400 mt-0.5">修改後按儲存，前台網站會即時更新</p>
+          </div>
+          <div class="flex items-center gap-3">
+            @if (siteConfigDirty) {
+              <span class="text-xs text-amber-500 font-medium">● 有未儲存的變更</span>
+            }
+            <button (click)="saveSiteConfig()"
+              [disabled]="siteConfigSaving || !siteConfigDirty"
+              class="px-5 py-2 rounded-lg bg-green-500 hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors shadow-sm">
+              @if (siteConfigSaving) { 儲存中... } @else { 💾 儲存設定 }
+            </button>
+          </div>
+        </div>
+
+        <!-- ── 1. Hero 區塊 ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('hero')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">🏠 首頁 Hero 區塊</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['hero']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['hero']) {
+            <div class="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">小標語（上方標籤）</label>
+                <input type="text" [(ngModel)]="siteConfig['heroTagline']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">主標題（支援換行 \n）</label>
+                <textarea [(ngModel)]="siteConfig['heroTitle']" (ngModelChange)="markSiteConfigDirty()" rows="2" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">副標題</label>
+                <textarea [(ngModel)]="siteConfig['heroSubtitle']" (ngModelChange)="markSiteConfigDirty()" rows="2" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- ── 2. 品牌特色 ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('features')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">✨ 品牌特色（4 項）</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['features']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['features']) {
+            <div class="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              @for (f of siteConfig['features'] || []; track $index) {
+                <div class="flex gap-3 items-start p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                  <div class="shrink-0">
+                    <label class="block text-xs text-slate-400 mb-1">圖示</label>
+                    <input type="text" [(ngModel)]="f.icon" (ngModelChange)="markSiteConfigDirty()" class="w-14 text-center text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-1 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                  </div>
+                  <div class="flex-1 space-y-2">
+                    <div>
+                      <label class="block text-xs text-slate-400 mb-1">標題</label>
+                      <input type="text" [(ngModel)]="f.title" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-400 mb-1">說明</label>
+                      <input type="text" [(ngModel)]="f.desc" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                    </div>
+                  </div>
+                  <button (click)="removeFeature($index)" class="text-red-400 hover:text-red-600 mt-6 text-lg">✕</button>
+                </div>
+              }
+              <button (click)="addFeature()" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">＋ 新增特色</button>
+            </div>
+          }
+        </div>
+
+        <!-- ── 3. 詢價說明 ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('inquiry')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">💰 詢價說明區塊</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['inquiry']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['inquiry']) {
+            <div class="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">標題</label>
+                <input type="text" [(ngModel)]="siteConfig['inquiryTitle']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">說明文字</label>
+                <textarea [(ngModel)]="siteConfig['inquiryDesc']" (ngModelChange)="markSiteConfigDirty()" rows="3" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+              </div>
+              @for (step of siteConfig['inquirySteps'] || []; track $index) {
+                <div class="flex gap-3 items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                  <input type="text" [(ngModel)]="step.icon" (ngModelChange)="markSiteConfigDirty()" class="w-14 text-center text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-1 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                  <input type="text" [(ngModel)]="step.title" (ngModelChange)="markSiteConfigDirty()" placeholder="標題" class="w-32 text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                  <input type="text" [(ngModel)]="step.desc" (ngModelChange)="markSiteConfigDirty()" placeholder="說明" class="flex-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- ── 4. 聯絡資訊 ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('contact')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">📞 聯絡資訊</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['contact']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['contact']) {
+            <div class="px-5 pb-5 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">電話</label>
+                  <input type="text" [(ngModel)]="siteConfig['contactPhone']" (ngModelChange)="markSiteConfigDirty()" placeholder="請洽業務人員" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">電話備註</label>
+                  <input type="text" [(ngModel)]="siteConfig['contactPhoneNote']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Email</label>
+                  <input type="email" [(ngModel)]="siteConfig['contactEmail']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Email 備註</label>
+                  <input type="text" [(ngModel)]="siteConfig['contactEmailNote']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">LINE</label>
+                  <input type="text" [(ngModel)]="siteConfig['contactLine']" (ngModelChange)="markSiteConfigDirty()" placeholder="LINE 官方帳號 ID" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">LINE 備註</label>
+                  <input type="text" [(ngModel)]="siteConfig['contactLineNote']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- ── 5. AI 助手 ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('aiChat')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">🤖 AI 助手設定</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['aiChat']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['aiChat']) {
+            <div class="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">歡迎訊息</label>
+                <textarea [(ngModel)]="siteConfig['aiWelcomeMessage']" (ngModelChange)="markSiteConfigDirty()" rows="3" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">快捷問題按鈕</label>
+                <div class="space-y-2">
+                  @for (q of siteConfig['aiSuggestedQuestions'] || []; track $index) {
+                    <div class="flex gap-2">
+                      <input type="text" [(ngModel)]="siteConfig['aiSuggestedQuestions'][$index]" (ngModelChange)="markSiteConfigDirty()" class="flex-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                      <button (click)="removeSuggestedQuestion($index)" class="text-red-400 hover:text-red-600 text-lg px-2">✕</button>
+                    </div>
+                  }
+                  <button (click)="addSuggestedQuestion()" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">＋ 新增問題</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- ── 6. 預設 FAQ ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('faq')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">❓ 預設常見問答（FAQ）</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['faq']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['faq']) {
+            <div class="px-5 pb-5 space-y-3 border-t border-slate-100 dark:border-slate-700 pt-4">
+              @for (item of siteConfig['faq'] || []; track $index) {
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg space-y-2">
+                  <div class="flex gap-2 items-center">
+                    <span class="text-xs font-bold text-sky-600 shrink-0">Q{{ $index + 1 }}</span>
+                    <input type="text" [(ngModel)]="item.q" (ngModelChange)="markSiteConfigDirty()" placeholder="問題" class="flex-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+                    <button (click)="removeFaqItem($index)" class="text-red-400 hover:text-red-600 text-lg px-2">✕</button>
+                  </div>
+                  <div class="flex gap-2 items-start ml-6">
+                    <span class="text-xs font-bold text-green-600 shrink-0 mt-2">A</span>
+                    <textarea [(ngModel)]="item.a" (ngModelChange)="markSiteConfigDirty()" rows="2" placeholder="回答" class="flex-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+                  </div>
+                </div>
+              }
+              <button (click)="addFaqItem()" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">＋ 新增問答</button>
+            </div>
+          }
+        </div>
+
+        <!-- ── 7. 頁尾 ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('footer')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">📄 頁尾資訊</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['footer']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['footer']) {
+            <div class="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">品牌名稱</label>
+                <input type="text" [(ngModel)]="siteConfig['footerBrandName']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">品牌標語</label>
+                <input type="text" [(ngModel)]="siteConfig['footerTagline']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">品牌介紹</label>
+                <textarea [(ngModel)]="siteConfig['footerDesc']" (ngModelChange)="markSiteConfigDirty()" rows="3" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">版權宣告</label>
+                <input type="text" [(ngModel)]="siteConfig['footerCopyright']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- ── 8. SEO / Meta ── -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <button (click)="toggleSiteSection('meta')" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+            <span class="font-semibold text-slate-800 dark:text-white">🔍 SEO / Meta 設定</span>
+            <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="siteConfigSections['meta']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (siteConfigSections['meta']) {
+            <div class="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">網頁標題（瀏覽器分頁顯示）</label>
+                <input type="text" [(ngModel)]="siteConfig['metaTitle']" (ngModelChange)="markSiteConfigDirty()" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">網頁描述（搜尋結果顯示）</label>
+                <textarea [(ngModel)]="siteConfig['metaDescription']" (ngModelChange)="markSiteConfigDirty()" rows="2" class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- 底部儲存按鈕（方便長頁面操作） -->
+        @if (siteConfigDirty) {
+          <div class="text-center py-4">
+            <button (click)="saveSiteConfig()"
+              [disabled]="siteConfigSaving"
+              class="px-8 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 disabled:bg-slate-300 text-white text-sm font-medium transition-colors shadow-sm">
+              @if (siteConfigSaving) { 儲存中... } @else { 💾 儲存所有設定 }
+            </button>
           </div>
         }
       </div>

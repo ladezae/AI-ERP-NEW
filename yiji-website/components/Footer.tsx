@@ -1,6 +1,23 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { getSiteConfig } from '@/lib/firebase';
 
 export default function Footer() {
+  const [cfg, setCfg] = useState<Record<string, any> | null>(null);
+
+  useEffect(() => {
+    getSiteConfig('yiji').then(setCfg).catch(() => {});
+  }, []);
+
+  const brandName  = cfg?.footerBrandName ?? '一吉水果乾批發零售';
+  const tagline    = cfg?.footerTagline   ?? '天然 · 健康 · 信賴';
+  const desc       = cfg?.footerDesc      ?? '嚴選台灣及世界各地優質水果，以衛生專業的加工技術，\n提供天然美味的水果乾與蔬果脆片。適合零售、禮盒、烘焙等多種用途。';
+  const copyright  = cfg?.footerCopyright ?? '© 2024 一吉水果乾批發零售. All rights reserved.';
+  const phone      = cfg?.contactPhone    ?? '';
+  const email      = cfg?.contactEmail    ?? 'service@yiji.com.tw';
+
   return (
     <footer className="bg-earth-800 text-earth-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -13,13 +30,12 @@ export default function Footer() {
                 <span className="text-white font-serif font-bold text-lg">吉</span>
               </div>
               <div>
-                <div className="font-serif font-bold text-white text-lg">一吉水果乾批發零售</div>
-                <div className="text-xs text-earth-400">天然 · 健康 · 信賴</div>
+                <div className="font-serif font-bold text-white text-lg">{brandName}</div>
+                <div className="text-xs text-earth-400">{tagline}</div>
               </div>
             </div>
-            <p className="text-sm text-earth-400 leading-relaxed max-w-sm">
-              嚴選台灣及世界各地優質水果，以衛生專業的加工技術，
-              提供天然美味的水果乾與蔬果脆片。適合零售、禮盒、烘焙等多種用途。
+            <p className="text-sm text-earth-400 leading-relaxed max-w-sm whitespace-pre-line">
+              {desc}
             </p>
           </div>
 
@@ -40,11 +56,11 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-earth-400">
               <li className="flex items-start gap-2">
                 <span className="mt-0.5">📞</span>
-                <span>請洽業務人員</span>
+                <span>{phone || '請洽業務人員'}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5">📧</span>
-                <span>service@yiji.com.tw</span>
+                <span>{email}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5">🏭</span>
@@ -57,7 +73,7 @@ export default function Footer() {
         {/* 版權 */}
         <div className="border-t border-earth-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-earth-500">
-            © 2024 一吉水果乾批發零售. All rights reserved.
+            {copyright}
           </p>
           <div className="flex gap-4 text-xs text-earth-500">
             <span>綠界金流保障安全付款</span>

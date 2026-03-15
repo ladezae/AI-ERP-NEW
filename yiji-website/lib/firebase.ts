@@ -22,6 +22,14 @@ const PRODUCT_COLLECTION = 'yiji_products';
 const ORDER_COLLECTION   = 'yiji_orders';
 const SALES_COLLECTION   = 'yiji_sales_summary';
 
+// ─── 網站設定（siteConfig）────────────────────────────────────────────────────
+
+/** 從 Firestore siteConfig/{channelId} 取得前台網站可編輯內容 */
+export async function getSiteConfig(channelId: string = 'yiji'): Promise<Record<string, any> | null> {
+  const snap = await getDoc(doc(db, 'siteConfig', channelId));
+  return snap.exists() ? snap.data() : null;
+}
+
 // ─── 商品 ────────────────────────────────────────────────────────────────────
 
 /**

@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { getVisibleProducts } from '@/lib/firebase';
+import { getVisibleProducts, getSiteConfig } from '@/lib/firebase';
 import ProductCard from '@/components/ProductCard';
 import AIChat from '@/components/AIChat';
 
-// 分類資料
+// 分類資料（固定，不需動態管理）
 const CATEGORIES = [
   { name: '水果乾', icon: '🍎', desc: '天然風味濃縮' },
   { name: '蔬果脆片', icon: '🥕', desc: '輕盈酥脆口感' },
@@ -11,39 +11,43 @@ const CATEGORIES = [
   { name: '綜合堅果', icon: '🌰', desc: '香脆豐富營養' },
 ];
 
-// 品牌特點
-const FEATURES = [
-  {
-    icon: '🏅',
-    title: '嚴格品質把關',
-    desc: '每批商品皆經品管檢驗，符合食品安全標準。',
-  },
-  {
-    icon: '🌿',
-    title: '天然無添加',
-    desc: '堅持使用優質原料，減少不必要的添加物。',
-  },
-  {
-    icon: '🚚',
-    title: '快速配送出貨',
-    desc: '自簽物流，貨到付款，安心方便。',
-  },
-  {
-    icon: '🤝',
-    title: '彈性詢價採購',
-    desc: '大量採購享優惠，歡迎洽談長期合作。',
-  },
+// 預設品牌特點（Firestore 無資料時 fallback）
+const DEFAULT_FEATURES = [
+  { icon: '🏅', title: '嚴格品質把關', desc: '每批商品皆經品管檢驗，符合食品安全標準。' },
+  { icon: '🌿', title: '天然無添加', desc: '堅持使用優質原料，減少不必要的添加物。' },
+  { icon: '🚚', title: '快速配送出貨', desc: '自簽物流，貨到付款，安心方便。' },
+  { icon: '🤝', title: '彈性詢價採購', desc: '大量採購享優惠，歡迎洽談長期合作。' },
 ];
 
 export default async function HomePage() {
-  let featuredProducts: Awaited<ReturnType<typeof getVisibleProducts>> = [];
-  try {
-    const all = await getVisibleProducts();
-    featuredProducts = all.slice(0, 8);
-  } catch {
-    // Firebase 未設定時，顯示空商品列表
-    featuredProducts = [];
-  }
+  // 並行載入商品與網站設定
+  const [allProducts, cfg] = await Promise.all([
+    getVisibleProducts().catch(() => []),
+    getSiteConfig('yiji').catch(() => null),
+  ]);
+  const featuredProducts = allProducts.slice(0, 8);
+
+  // 從 siteConfig 取值，無資料時用預設值
+  const heroTagline   = cfg?.heroTagline   ?? '台灣在地・天然健康';
+  const heroTitle     = cfg?.heroTitle     ?? '嚴選水果乾\n批發直供';
+  const heroSubtitle  = cfg?.heroSubtitle  ?? '水果乾・蔬果脆片・沖泡果乾\n品質保證・衛生可靠・彈性詢價';
+  const features      = cfg?.features      ?? DEFAULT_FEATURES;
+  const inquiryTitle  = cfg?.inquiryTitle  ?? '批發詢價說明';
+  const inquiryDesc   = cfg?.inquiryDesc   ?? '我們提供透明的批發價格，無需填寫任何資料即可直接查看商品定價。\n如需進一步的量大優惠或長期合作方案，歡迎聯絡我們的業務人員。';
+  const inquirySteps  = cfg?.inquirySteps  ?? [
+    { icon: '👀', title: '直接查看', desc: '商品頁面即可查看批發參考價' },
+    { icon: '📦', title: '樣品試購', desc: '小量購買確認品質後再大量訂購' },
+    { icon: '💎', title: '量大議價', desc: '聯絡業務洽談更優惠的專案報價' },
+  ];
+  const contactPhone     = cfg?.contactPhone     ?? '';
+  const contactPhoneNote = cfg?.contactPhoneNote ?? '業務時間：週一至週五 9:00 - 18:00';
+  const contactEmail     = cfg?.contactEmail     ?? 'service@yiji.com.tw';
+  const contactEmailNote = cfg?.contactEmailNote ?? '24 小時內回覆';
+  const contactLine      = cfg?.contactLine      ?? '';
+  const contactLineNote  = cfg?.contactLineNote  ?? '即時回覆，快速報價';
+
+  // Hero 標題分行
+  const heroLines = heroTitle.split('\n');
 
   return (
     <div>
@@ -61,15 +65,13 @@ export default async function HomePage() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 text-sm mb-6">
               <span>🌿</span>
-              <span>台灣在地・天然健康</span>
+              <span>{heroTagline}</span>
             </div>
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              嚴選水果乾<br />
-              <span className="text-brand-200">批發直供</span>
+              {heroLines[0]}{heroLines.length > 1 && <><br /><span className="text-brand-200">{heroLines[1]}</span></>}
             </h1>
-            <p className="text-lg text-white/90 mb-8 leading-relaxed">
-              水果乾・蔬果脆片・沖泡果乾<br />
-              品質保證・衛生可靠・彈性詢價
+            <p className="text-lg text-white/90 mb-8 leading-relaxed whitespace-pre-line">
+              {heroSubtitle}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/products" className="btn-primary bg-white text-leaf-700 hover:bg-brand-50">
@@ -87,8 +89,8 @@ export default async function HomePage() {
       <section className="bg-white border-b border-brand-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {FEATURES.map(f => (
-              <div key={f.title} className="text-center p-4">
+            {features.map((f: any, i: number) => (
+              <div key={i} className="text-center p-4">
                 <div className="text-4xl mb-3">{f.icon}</div>
                 <h3 className="font-semibold text-earth-800 mb-2">{f.title}</h3>
                 <p className="text-sm text-earth-500 leading-relaxed">{f.desc}</p>
@@ -150,19 +152,14 @@ export default async function HomePage() {
       <section id="inquiry" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="bg-gradient-to-r from-earth-700 to-earth-800 rounded-2xl p-8 md:p-12 text-white">
           <div className="max-w-2xl">
-            <h2 className="font-serif text-3xl font-bold mb-4">批發詢價說明</h2>
-            <p className="text-earth-200 mb-6 leading-relaxed">
-              我們提供透明的批發價格，無需填寫任何資料即可直接查看商品定價。
-              如需進一步的量大優惠或長期合作方案，歡迎聯絡我們的業務人員。
+            <h2 className="font-serif text-3xl font-bold mb-4">{inquiryTitle}</h2>
+            <p className="text-earth-200 mb-6 leading-relaxed whitespace-pre-line">
+              {inquiryDesc}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              {[
-                { label: '直接查看', desc: '商品頁面即可查看批發參考價' },
-                { label: '樣品試購', desc: '小量購買確認品質後再大量訂購' },
-                { label: '量大議價', desc: '聯絡業務洽談更優惠的專案報價' },
-              ].map(item => (
-                <div key={item.label} className="bg-white/10 rounded-xl p-4">
-                  <div className="font-semibold mb-1">{item.label}</div>
+              {inquirySteps.map((item: any, i: number) => (
+                <div key={i} className="bg-white/10 rounded-xl p-4">
+                  <div className="font-semibold mb-1">{item.icon ?? ''} {item.title}</div>
                   <div className="text-sm text-earth-300">{item.desc}</div>
                 </div>
               ))}
@@ -182,7 +179,7 @@ export default async function HomePage() {
             <p className="text-earth-500">有關商品成分、保存方式、詢價建議？直接問 AI！</p>
           </div>
           <div className="max-w-3xl mx-auto">
-            <AIChat />
+            <AIChat siteConfig={cfg} />
           </div>
         </div>
       </section>
@@ -198,22 +195,22 @@ export default async function HomePage() {
             <div className="flex items-center gap-3">
               <span className="text-2xl">📞</span>
               <div>
-                <div className="font-medium">電話洽詢</div>
-                <div className="text-sm text-earth-500">業務時間：週一至週五 9:00 - 18:00</div>
+                <div className="font-medium">{contactPhone || '電話洽詢'}</div>
+                <div className="text-sm text-earth-500">{contactPhoneNote}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">📧</span>
               <div>
-                <div className="font-medium">service@yiji.com.tw</div>
-                <div className="text-sm text-earth-500">24 小時內回覆</div>
+                <div className="font-medium">{contactEmail}</div>
+                <div className="text-sm text-earth-500">{contactEmailNote}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">💬</span>
               <div>
-                <div className="font-medium">LINE 官方帳號</div>
-                <div className="text-sm text-earth-500">即時回覆，快速報價</div>
+                <div className="font-medium">{contactLine || 'LINE 官方帳號'}</div>
+                <div className="text-sm text-earth-500">{contactLineNote}</div>
               </div>
             </div>
           </div>

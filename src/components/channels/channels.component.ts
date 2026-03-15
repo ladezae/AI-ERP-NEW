@@ -13,7 +13,7 @@ import {
 import { ImageService } from '../../services/image.service';
 import { ResizableDirective } from '../../directives/resizable.directive';
 
-type ChannelView = 'overview' | 'products' | 'orders' | 'settings' | 'tasks';
+type ChannelView = 'overview' | 'products' | 'orders' | 'settings' | 'tasks' | 'site_config';
 type TopView = 'channels' | 'codes';
 type PriceAdjustMode = 'fixed' | 'percent';
 
@@ -1278,5 +1278,167 @@ export class ChannelsComponent implements OnInit {
   isOverdue(task: ChannelTask): boolean {
     if (!task.dueDate || task.status === 'done') return false;
     return new Date(task.dueDate) < new Date();
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  //  網站設定（siteConfig）— 管理前台網站可編輯內容
+  // ══════════════════════════════════════════════════════════════════
+
+  siteConfig: Record<string, any> = {};
+  siteConfigLoaded = false;
+  siteConfigSaving = false;
+  siteConfigDirty = false;
+
+  /** 網站設定各區塊的展開/收合狀態 */
+  siteConfigSections: Record<string, boolean> = {
+    hero: true, features: false, inquiry: false, contact: false,
+    aiChat: false, faq: false, footer: false, meta: false,
+  };
+
+  /** 切換區塊展開/收合 */
+  toggleSiteSection(key: string) {
+    this.siteConfigSections[key] = !this.siteConfigSections[key];
+  }
+
+  /** 載入網站設定 */
+  async loadSiteConfig() {
+    if (this.siteConfigLoaded || !this.selectedChannel) return;
+    const channelId = this.selectedChannel.id;
+    const snap = await getDoc(doc(db, 'siteConfig', channelId));
+    if (snap.exists()) {
+      this.siteConfig = snap.data();
+    } else {
+      // 預設值（首次使用時填入）
+      this.siteConfig = this.getDefaultSiteConfig();
+    }
+    this.siteConfigLoaded = true;
+    this.siteConfigDirty = false;
+    this.cdr.markForCheck();
+  }
+
+  /** 儲存網站設定到 Firestore */
+  async saveSiteConfig() {
+    if (!this.selectedChannel) return;
+    this.siteConfigSaving = true;
+    this.cdr.markForCheck();
+    try {
+      const channelId = this.selectedChannel.id;
+      await setDoc(doc(db, 'siteConfig', channelId), {
+        ...this.siteConfig,
+        updatedAt: new Date().toISOString(),
+      });
+      this.siteConfigDirty = false;
+    } catch (e) {
+      console.error('儲存網站設定失敗', e);
+    } finally {
+      this.siteConfigSaving = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  /** 標記有變更 */
+  markSiteConfigDirty() {
+    this.siteConfigDirty = true;
+  }
+
+  /** 新增 FAQ 項目 */
+  addFaqItem() {
+    if (!this.siteConfig['faq']) this.siteConfig['faq'] = [];
+    this.siteConfig['faq'].push({ q: '', a: '' });
+    this.markSiteConfigDirty();
+  }
+
+  /** 刪除 FAQ 項目 */
+  removeFaqItem(i: number) {
+    this.siteConfig['faq']?.splice(i, 1);
+    this.markSiteConfigDirty();
+  }
+
+  /** 新增 AI 快捷問題 */
+  addSuggestedQuestion() {
+    if (!this.siteConfig['aiSuggestedQuestions']) this.siteConfig['aiSuggestedQuestions'] = [];
+    this.siteConfig['aiSuggestedQuestions'].push('');
+    this.markSiteConfigDirty();
+  }
+
+  /** 刪除 AI 快捷問題 */
+  removeSuggestedQuestion(i: number) {
+    this.siteConfig['aiSuggestedQuestions']?.splice(i, 1);
+    this.markSiteConfigDirty();
+  }
+
+  /** 新增品牌特色 */
+  addFeature() {
+    if (!this.siteConfig['features']) this.siteConfig['features'] = [];
+    this.siteConfig['features'].push({ icon: '✨', title: '', desc: '' });
+    this.markSiteConfigDirty();
+  }
+
+  /** 刪除品牌特色 */
+  removeFeature(i: number) {
+    this.siteConfig['features']?.splice(i, 1);
+    this.markSiteConfigDirty();
+  }
+
+  /** 預設網站設定 */
+  private getDefaultSiteConfig(): Record<string, any> {
+    return {
+      // ── Hero 區塊 ──
+      heroTagline: '台灣在地・天然健康',
+      heroTitle: '嚴選水果乾\n批發直供',
+      heroSubtitle: '水果乾・蔬果脆片・沖泡果乾\n品質保證・衛生可靠・彈性詢價',
+
+      // ── 品牌特色 ──
+      features: [
+        { icon: '🔍', title: '嚴格品質把關', desc: '每批商品皆經品管檢驗，符合食品安全標準。' },
+        { icon: '🌿', title: '天然無添加', desc: '堅持使用優質原料，減少不必要的添加物。' },
+        { icon: '🚚', title: '快速配送出貨', desc: '自簽物流，貨到付款，安心方便。' },
+        { icon: '💰', title: '彈性詢價採購', desc: '大量採購享優惠，歡迎洽談長期合作。' },
+      ],
+
+      // ── 詢價說明 ──
+      inquiryTitle: '批發詢價說明',
+      inquiryDesc: '我們提供透明的批發價格，無需填寫任何資料即可直接查看商品定價。\n如需進一步的量大優惠或長期合作方案，歡迎聯絡我們的業務人員。',
+      inquirySteps: [
+        { icon: '👀', title: '直接查看', desc: '商品頁面即可查看批發參考價' },
+        { icon: '📦', title: '樣品試購', desc: '小量購買確認品質後再大量訂購' },
+        { icon: '💎', title: '量大議價', desc: '聯絡業務洽談更優惠的專案報價' },
+      ],
+
+      // ── 聯絡資訊 ──
+      contactPhone: '',
+      contactPhoneNote: '業務時間：週一至週五 9:00 - 18:00',
+      contactEmail: 'service@yiji.com.tw',
+      contactEmailNote: '24 小時內回覆',
+      contactLine: '',
+      contactLineNote: '即時回覆，快速報價',
+
+      // ── AI 助手 ──
+      aiWelcomeMessage: '您好！我是一吉水果乾的 AI 助手 🍎\n\n我可以回答您關於商品成分、保存方式、採購建議以及搭配推薦等問題。請問有什麼可以幫您？',
+      aiSuggestedQuestions: [
+        '這些水果乾有添加糖分嗎？',
+        '水果乾要怎麼保存？保存期限多長？',
+        '我想進貨，大概需要訂多少才合適？',
+        '蔬果脆片適合做哪些料理搭配？',
+      ],
+
+      // ── 預設 FAQ ──
+      faq: [
+        { q: '如何購買樣品？', a: '直接在上方「購買樣品」區塊加入購物車即可。樣品不限最低訂購量，可先試吃確認品質。' },
+        { q: '大量採購有優惠嗎？', a: '歡迎聯絡我們的業務人員洽談長期合作或量大優惠方案。' },
+        { q: '出貨時間多久？', a: '一般訂單在付款確認後 1-3 個工作天出貨，採自簽物流配送。' },
+        { q: '可以開發票嗎？', a: '可以！結帳時填寫公司名稱與統一編號，我們會開立正式發票。' },
+      ],
+
+      // ── 頁尾 ──
+      footerBrandName: '一吉水果乾批發零售',
+      footerTagline: '天然 · 健康 · 信賴',
+      footerDesc: '嚴選台灣及世界各地優質水果，以衛生專業的加工技術，\n提供天然美味的水果乾與蔬果脆片。適合零售、禮盒、烘焙等多種用途。',
+      footerCopyright: '© 2024 一吉水果乾批發零售. All rights reserved.',
+
+      // ── SEO / Meta ──
+      metaTitle: '一吉水果乾批發零售 | 天然健康・台灣品質',
+      metaDescription: '嚴選台灣及世界各地優質水果乾、蔬果脆片批發零售。天然、無添加、衛生可靠。提供樣品試購、彈性詢價、快速出貨服務。',
+    };
   }
 }

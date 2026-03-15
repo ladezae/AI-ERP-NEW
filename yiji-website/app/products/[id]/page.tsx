@@ -1,4 +1,4 @@
-import { getProduct } from '@/lib/firebase';
+import { getProduct, getSiteConfig } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
@@ -7,12 +7,16 @@ export const dynamic = 'force-dynamic';
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   let product = null;
+  let siteConfig = null;
   try {
-    product = await getProduct(params.id);
+    [product, siteConfig] = await Promise.all([
+      getProduct(params.id),
+      getSiteConfig('yiji').catch(() => null),
+    ]);
   } catch {
     // Firebase 未設定
   }
 
   if (!product) notFound();
-  return <ProductDetailClient product={product} />;
+  return <ProductDetailClient product={product} siteConfig={siteConfig} />;
 }

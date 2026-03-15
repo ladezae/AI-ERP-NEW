@@ -7,19 +7,26 @@ interface Message {
   content: string;
 }
 
-const SUGGESTED_QUESTIONS = [
+interface AIChatProps {
+  siteConfig?: Record<string, any> | null;
+}
+
+const DEFAULT_QUESTIONS = [
   '這些水果乾有添加糖分嗎？',
   '水果乾要怎麼保存？保存期限多長？',
   '我想進貨，大概需要訂多少才合適？',
   '蔬果脆片適合做哪些料理搭配？',
 ];
 
-export default function AIChat() {
+const DEFAULT_WELCOME = '您好！我是一吉水果乾的 AI 助手 🍎\n\n我可以回答您關於商品成分、保存方式、採購建議以及搭配推薦等問題。請問有什麼可以幫您？';
+
+export default function AIChat({ siteConfig }: AIChatProps) {
+  // 從 siteConfig 讀取，無資料時用預設值
+  const suggestedQuestions = siteConfig?.aiSuggestedQuestions ?? DEFAULT_QUESTIONS;
+  const welcomeMessage = siteConfig?.aiWelcomeMessage ?? DEFAULT_WELCOME;
+
   const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: '您好！我是一吉水果乾的 AI 助手 🍎\n\n我可以回答您關於商品成分、保存方式、採購建議以及搭配推薦等問題。請問有什麼可以幫您？',
-    },
+    { role: 'assistant', content: welcomeMessage },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -115,7 +122,7 @@ export default function AIChat() {
       {/* 快捷問題 */}
       <div className="px-4 py-3 border-t border-brand-100 bg-white">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {SUGGESTED_QUESTIONS.map(q => (
+          {suggestedQuestions.map((q: string) => (
             <button
               key={q}
               onClick={() => sendMessage(q)}

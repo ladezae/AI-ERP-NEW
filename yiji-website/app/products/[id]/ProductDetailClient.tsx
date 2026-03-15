@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChannelProduct as Product } from '@/lib/types';
 import { useCart } from '@/components/CartContext';
 
-export default function ProductDetailClient({ product }: { product: Product }) {
+export default function ProductDetailClient({ product, siteConfig }: { product: Product; siteConfig?: Record<string, any> | null }) {
   const { addItem } = useCart();
   const [orderQty, setOrderQty] = useState(product.moq || 1);
   const [sampleQty, setSampleQty] = useState(1);
@@ -313,14 +313,14 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                   </div>
                 ))
               ) : (
-                // 預設常見問題
+                // 預設常見問題（從 siteConfig 讀取，無資料時用預設值）
                 <div className="space-y-4">
-                  {[
+                  {(siteConfig?.faq ?? [
                     { q: '如何購買樣品？', a: '直接在上方「購買樣品」區塊加入購物車即可。樣品不限最低訂購量，可先試吃確認品質。' },
                     { q: '大量採購有優惠嗎？', a: '歡迎聯絡我們的業務人員洽談長期合作或量大優惠方案。' },
                     { q: '出貨時間多久？', a: '一般訂單在付款確認後 1-3 個工作天出貨，採自簽物流配送。' },
                     { q: '可以開發票嗎？', a: '可以！結帳時填寫公司名稱與統一編號，我們會開立正式發票。' },
-                  ].map((item, i) => (
+                  ]).map((item: any, i: number) => (
                     <div key={i} className="bg-white border border-brand-100 rounded-xl p-5">
                       <p className="font-medium text-earth-800 mb-2">Q：{item.q}</p>
                       <p className="text-sm text-earth-600">A：{item.a}</p>
